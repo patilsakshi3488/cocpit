@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "313141347370",
+    "project_id": "cocpit-90dfb",
+    "storage_bucket": "cocpit-90dfb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:313141347370:android:7d4e5763e47a8a1c866f53",
+        "android_client_info": {
+          "package_name": "com.example.techm_practice"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "313141347370-43ddu4ttbkp6kclivvkepku4e4n5hoah.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPnz8z168U3F-EKHQH2sVrmERgApoAeas"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "313141347370-43ddu4ttbkp6kclivvkepku4e4n5hoah.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
