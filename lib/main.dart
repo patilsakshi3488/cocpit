@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
               '/feed': (_) => const HomeScreen(),
               '/jobs': (_) => const JobsScreen(),
               '/add': (_) => const CreatePostScreen(),
-              '/events': (_) => const EventsScreen(),
+              '/events': (_) => EventsScreen(),
               '/profile': (_) => const ProfileScreen(),
               '/notifications': (_) => const NotificationScreen(),
             },

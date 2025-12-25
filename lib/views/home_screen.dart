@@ -15,6 +15,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool showTop = true;
+  // ===== STORY CONTROL CALLBACKS =====
+  VoidCallback? onNextStory;
+  VoidCallback? onPrevStory;
+  VoidCallback? onPauseStory;
+  VoidCallback? onResumeStory;
+  VoidCallback? onReply;
+
 
   final LinearGradient gradient = const LinearGradient(
     colors: [Color(0xFF7C83FF), Color(0xFFEC4899)],
@@ -209,7 +216,8 @@ class _HomeScreenState extends State<HomeScreen> {
           final m = careerMoments[index];
 
           return GestureDetector(
-            onTap: () {
+            onTap: () async {
+
               if (m['isMine']) {
                 Navigator.push(
                   context,
@@ -218,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               } else {
-                Navigator.push(
+                final completed = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => CareerMomentViewer(
@@ -227,6 +235,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 );
+
+                if (completed == true && index + 1 < careerMoments.length) {
+                  final next = careerMoments[index + 1];
+                  if (!next['isMine']) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CareerMomentViewer(
+                          name: next['name'],
+                          stories: next['stories'],
+                        ),
+                      ),
+                    );
+                  }
+                }
+
               }
             },
             child: Container(
@@ -291,7 +315,47 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _pill(String text, bool selected, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+
+      // 👉 TAP: next / previous based on position
+      onTapUp: (details) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        if (details.localPosition.dx < screenWidth / 2) {
+          onPrevStory?.call(); // previous
+        } else {
+          onNextStory?.call(); // next
+        }
+      },
+
+      // 👉 SWIPE LEFT / RIGHT
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity == null) return;
+
+        if (details.primaryVelocity! < 0) {
+          onNextStory?.call(); // swipe left
+        } else {
+          onPrevStory?.call(); // swipe right
+        }
+      },
+
+      // 👉 LONG PRESS = PAUSE STORY
+      onLongPressStart: (_) {
+        onPauseStory?.call();
+      },
+
+      // 👉 RELEASE = RESUME STORY
+      onLongPressEnd: (_) {
+        onResumeStory?.call();
+      },
+
+      // 👉 SWIPE UP = REPLY (optional)
+      onVerticalDragEnd: (details) {
+        if (details.primaryVelocity != null &&
+            details.primaryVelocity! < 0) {
+          onReply?.call();
+        }
+      },
+
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
@@ -299,9 +363,13 @@ class _HomeScreenState extends State<HomeScreen> {
           color: selected ? null : const Color(0xFF1F2937),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(text, style: const TextStyle(color: Colors.white)),
+        child: Text(
+          text,
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
     );
+
   }
 
   // ---------------- FEED ----------------
@@ -401,30 +469,103 @@ class CareerMomentViewer extends StatefulWidget {
 
 class _CareerMomentViewerState extends State<CareerMomentViewer> {
   int currentIndex = 0;
+  Set<int> seenStories = {};
+
   double progress = 0;
   Timer? timer;
   late PageController _pageController;
 
+
+  @override
   @override
   void initState() {
     super.initState();
+
+    if (widget.stories.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pop(context);
+      });
+      return;
+    }
+
     _pageController = PageController();
     _startTimer();
   }
+  // ================= STORY CONTROL =================
+
+  // ================= STORY CONTROL =================
+
+  void _pauseStory() {
+    timer?.cancel();
+  }
+
+  void _resumeStory() {
+    _startTimer();
+  }
+
+// ================= REPLY SHEET =================
+
+  void _openReplySheet(BuildContext context) {
+    _pauseStory();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1F2937),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: TextField(
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: "Send a reply...",
+            hintStyle: TextStyle(color: Colors.white54),
+            border: InputBorder.none,
+          ),
+          onSubmitted: (_) {
+            Navigator.pop(context);
+            _resumeStory();
+          },
+        ),
+      ),
+    ).whenComplete(_resumeStory);
+  }
+
+
+
 
   void _startTimer() {
     timer?.cancel();
     progress = 0;
 
+    // ✅ MARK STORY AS SEEN
+    seenStories.add(currentIndex);
+
+    // ✅ INCREMENT VIEWS (ANALYTICS)
+    widget.stories[currentIndex]['views']++;
+
     timer = Timer.periodic(const Duration(milliseconds: 50), (t) {
       setState(() => progress += 0.01);
-      if (progress >= 1) _nextStory();
+      if (progress >= 1) {
+        _nextStory();
+      }
     });
   }
 
+
   void _nextStory() {
+    timer?.cancel();
+
     if (currentIndex < widget.stories.length - 1) {
-      currentIndex++;
+      setState(() => currentIndex++);
       _pageController.animateToPage(
         currentIndex,
         duration: const Duration(milliseconds: 300),
@@ -432,21 +573,37 @@ class _CareerMomentViewerState extends State<CareerMomentViewer> {
       );
       _startTimer();
     } else {
-      Navigator.pop(context);
+      // ✅ AUTO MOVE TO NEXT USER
+      Navigator.pop(context, true); // return "completed"
     }
+
   }
 
+
+
+
+
+
+
   void _prevStory() {
+    timer?.cancel();
+
     if (currentIndex > 0) {
-      currentIndex--;
+      setState(() {
+        currentIndex--;
+        progress = 0;
+      });
+
       _pageController.animateToPage(
         currentIndex,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+
       _startTimer();
     }
   }
+
 
   @override
   void dispose() {
@@ -460,6 +617,9 @@ class _CareerMomentViewerState extends State<CareerMomentViewer> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
+        onLongPress: _pauseStory,
+        onLongPressUp: _resumeStory,
+
         onHorizontalDragEnd: (d) {
           if (d.primaryVelocity! < 0) {
             _nextStory();
@@ -467,6 +627,7 @@ class _CareerMomentViewerState extends State<CareerMomentViewer> {
             _prevStory();
           }
         },
+
         onTapUp: (d) {
           if (d.localPosition.dx <
               MediaQuery.of(context).size.width / 2) {
@@ -475,6 +636,7 @@ class _CareerMomentViewerState extends State<CareerMomentViewer> {
             _nextStory();
           }
         },
+
         child: Stack(
           children: [
             PageView.builder(
@@ -520,6 +682,30 @@ class _CareerMomentViewerState extends State<CareerMomentViewer> {
               child: Text(widget.name,
                   style: const TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+
+            Positioned(
+              bottom: 80,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: GestureDetector(
+                  onTap: () => _openReplySheet(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: const Text(
+                      "Reply...",
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  ),
+                ),
+
+              ),
             ),
 
             // Bottom reaction bar
@@ -624,301 +810,6 @@ class _PostAction extends StatelessWidget {
 
 
 
-/*import 'package:flutter/material.dart';
 
-import 'profile_screen.dart';
-import 'chat_screen.dart';
-import 'notification_screen.dart';
-import 'create_post_screen.dart';
-import 'jobs_screen.dart';
-import 'bottom_navigation.dart';
-
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-  bool showTop = true;
-
-  final LinearGradient gradient = const LinearGradient(
-    colors: [Color(0xFF7C83FF), Color(0xFFEC4899)],
-  );
-
-  final _posts = [
-    {
-      'name': 'Sarah Johnson',
-      'title': 'Product Manager at Google',
-      'time': '2h ago',
-      'text':
-      "Excited to share that our team just launched a new feature that will revolutionize how users interact with our platform!",
-      'image': 'lib/images/profile.jpg',
-    },
-    {
-      'name': 'John Smith',
-      'title': 'Senior Software Engineer at Meta',
-      'time': '5h ago',
-      'text':
-      "Great discussions at today’s architecture review. Scaling systems is always a fun challenge 🚀",
-      'image': 'lib/images/profile.jpg',
-    },
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _topBar(),
-            _stories(),
-            _topRecentToggle(),
-            Expanded(child: _feed()),
-          ],
-        ),
-      ),
-
-      // ✅ BOTTOM NAV FROM SEPARATE FILE
-      bottomNavigationBar: const AppBottomNavigation(currentIndex: 0),
-    );
-  }
-
-  // ---------------- TOP BAR ----------------
-
-  Widget _topBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 42,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1F2937),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.search, color: Colors.white54),
-                  SizedBox(width: 10),
-                  Text("Search...",
-                      style: TextStyle(color: Colors.white54)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ChatScreen()),
-              );
-            },
-            child: const Icon(Icons.chat_bubble_outline,
-                color: Colors.white),
-          ),
-          const SizedBox(width: 14),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const NotificationScreen()),
-              );
-            },
-            child: const Icon(Icons.notifications_none,
-                color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------- STORIES ----------------
-
-  Widget _stories() {
-    return SizedBox(
-      height: 120,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        children: [
-          _yourStory(),
-          _story("John Smith"),
-          _story("Sarah Johnson"),
-        ],
-      ),
-    );
-  }
-
-  Widget _yourStory() {
-    return Container(
-      width: 90,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Center(
-        child: Text(
-          "+\nYour Update",
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
-  }
-
-  Widget _story(String name) {
-    return Container(
-      width: 90,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        image: const DecorationImage(
-          image: AssetImage('lib/images/profile.jpg'),
-          fit: BoxFit.cover,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      alignment: Alignment.bottomLeft,
-      padding: const EdgeInsets.all(8),
-      child: Text(
-        name,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-    );
-  }
-
-  // ---------------- TOP / RECENT ----------------
-
-  Widget _topRecentToggle() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Row(
-        children: [
-          _pill("Top", showTop, () => setState(() => showTop = true)),
-          const SizedBox(width: 10),
-          _pill("Recent", !showTop,
-                  () => setState(() => showTop = false)),
-        ],
-      ),
-    );
-  }
-
-  Widget _pill(String text, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-        const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: selected ? gradient : null,
-          color: selected ? null : const Color(0xFF1F2937),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child:
-        Text(text, style: const TextStyle(color: Colors.white)),
-      ),
-    );
-  }
-
-  // ---------------- FEED ----------------
-
-  Widget _feed() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: _posts.length,
-      itemBuilder: (context, index) {
-        return _postCard(_posts[index]);
-      },
-    );
-  }
-
-  Widget _postCard(Map post) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1F2937),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundImage:
-              AssetImage('lib/images/profile.jpg'),
-            ),
-            title: Text(
-              post['name'],
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              "${post['title']} • ${post['time']}",
-              style: const TextStyle(
-                  color: Colors.white54, fontSize: 12),
-            ),
-            trailing: const Icon(Icons.more_horiz,
-                color: Colors.white54),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text(post['text'],
-                style:
-                const TextStyle(color: Colors.white)),
-          ),
-          const SizedBox(height: 12),
-          Image.asset(post['image'], fit: BoxFit.cover),
-          const Divider(color: Colors.white12),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              mainAxisAlignment:
-              MainAxisAlignment.spaceAround,
-              children: const [
-                _Action(
-                    icon: Icons.thumb_up_alt_outlined,
-                    label: "Like"),
-                _Action(
-                    icon: Icons.comment_outlined,
-                    label: "Comment"),
-                _Action(
-                    icon: Icons.share_outlined,
-                    label: "Share"),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Action extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _Action({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white70, size: 20),
-        const SizedBox(width: 6),
-        Text(label,
-            style: const TextStyle(color: Colors.white70)),
-      ],
-    );
-  }
-}*/
 
 

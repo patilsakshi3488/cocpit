@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../views/create_post_screen.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
@@ -11,11 +12,23 @@ class AppBottomNavigation extends StatelessWidget {
   void _onTap(BuildContext context, int index) {
     if (index == currentIndex) return;
 
+    // 👉 ADD button opens CreatePostScreen MODALLY
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          fullscreenDialog: true, // ✅ iOS-style close behavior
+          builder: (_) => const CreatePostScreen(),
+        ),
+      );
+      return;
+    }
+
     final routes = [
       '/feed',
       '/jobs',
-      '/add',
-      '/events',   // ✅ EVENTS route
+      '/add',     // unused (handled above)
+      '/events',
       '/profile',
     ];
 
@@ -50,8 +63,8 @@ class AppBottomNavigation extends StatelessWidget {
           label: 'Add',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.event), // ✅ EVENTS icon
-          label: 'Events',         // ✅ EVENTS label
+          icon: Icon(Icons.event),
+          label: 'Events',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),
