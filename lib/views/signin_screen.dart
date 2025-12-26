@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../services/user_service.dart';
+import '../services/validator.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'home_screen.dart';
@@ -15,11 +16,13 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  final _formKey = GlobalKey<FormState>();
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
 
   bool keepLoggedIn = false;
   bool showPassword = false;
+  bool isLoading = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -27,8 +30,20 @@ class _SignInScreenState extends State<SignInScreen> {
     colors: [Color(0xFF7C83FF), Color(0xFFEC4899)],
   );
 
+  @override
+  void dispose() {
+    emailCtrl.dispose();
+    passCtrl.dispose();
+    super.dispose();
+  }
+
   // ---------------- EMAIL / PASSWORD ----------------
   Future<void> _signInWithEmail() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => isLoading = true);
+    FocusScope.of(context).unfocus();
+
     try {
       await _auth.signInWithEmailAndPassword(
         email: emailCtrl.text.trim(),
@@ -39,16 +54,22 @@ class _SignInScreenState extends State<SignInScreen> {
       _goToHome();
     } on FirebaseAuthException catch (e) {
       _showSnack(e.message ?? "Login failed");
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   // ---------------- GOOGLE SIGN IN ----------------
   Future<void> _signInWithGoogle() async {
+    setState(() => isLoading = true);
     try {
       final GoogleSignInAccount? googleUser =
       await GoogleSignIn().signIn();
 
-      if (googleUser == null) return;
+      if (googleUser == null) {
+        setState(() => isLoading = false);
+        return;
+      }
 
       final GoogleSignInAuthentication googleAuth =
       await googleUser.authentication;
@@ -64,11 +85,13 @@ class _SignInScreenState extends State<SignInScreen> {
       _goToHome();
     } catch (_) {
       _showSnack("Google sign-in failed");
+      setState(() => isLoading = false);
     }
   }
 
   // ---------------- GITHUB SIGN IN ----------------
   Future<void> _signInWithGitHub() async {
+    setState(() => isLoading = true);
     try {
       GithubAuthProvider githubProvider = GithubAuthProvider();
       await _auth.signInWithProvider(githubProvider);
@@ -77,6 +100,7 @@ class _SignInScreenState extends State<SignInScreen> {
       _goToHome();
     } catch (_) {
       _showSnack("GitHub sign-in failed");
+      setState(() => isLoading = false);
     }
   }
 
@@ -114,160 +138,175 @@ class _SignInScreenState extends State<SignInScreen> {
                 )
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _logoHeader(),
-                const SizedBox(height: 28),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _logoHeader(),
+                  const SizedBox(height: 28),
 
-                const Text(
-                  "Sign in",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "Welcome back! Enter your details below.",
-                  style: TextStyle(color: Color(0xFF94A3B8)),
-                ),
-                const SizedBox(height: 24),
-
-                _input(
-                  "Email address",
-                  "Your email address",
-                  Icons.email,
-                  emailCtrl,
-                ),
-                const SizedBox(height: 16),
-
-                _passwordInput(),
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Checkbox(
-                      value: keepLoggedIn,
-                      activeColor: const Color(0xFFEC4899),
-                      onChanged: (v) =>
-                          setState(() => keepLoggedIn = v!),
-                    ),
-                    const Text(
-                      "Keep me logged in",
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                            const ForgotPasswordScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        "Forgot password?",
-                        style: TextStyle(color: Color(0xFF7C83FF)),
-                      ),
-                    )
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                // 🔥 Gradient Sign In Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: InkWell(
-                    onTap: _signInWithEmail,
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: appGradient,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Sign in",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                  const Text(
+                    "Sign in",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Welcome back! Enter your details below.",
+                    style: TextStyle(color: Color(0xFF94A3B8)),
+                  ),
+                  const SizedBox(height: 24),
 
-                const SizedBox(height: 20),
+                  _input(
+                    "Email address",
+                    "Your email address",
+                    Icons.email,
+                    emailCtrl,
+                    AppValidator.validateEmail,
+                    TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
 
-                Row(
-                  children: const [
-                    Expanded(child: Divider(color: Colors.white12)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        "OR",
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Colors.white12)),
-                  ],
-                ),
+                  _passwordInput(),
+                  const SizedBox(height: 12),
 
-                const SizedBox(height: 18),
-
-                // 🔗 Social Buttons (Side-by-side)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _socialBtn(
-                          "GitHub", Icons.code, _signInWithGitHub),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _socialBtn(
-                          "Google", Icons.g_mobiledata, _signInWithGoogle),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Row(
                     children: [
+                      Checkbox(
+                        value: keepLoggedIn,
+                        activeColor: const Color(0xFFEC4899),
+                        onChanged: isLoading ? null : (v) =>
+                            setState(() => keepLoggedIn = v!),
+                      ),
                       const Text(
-                        "Don't have an account? ",
+                        "Keep me logged in",
                         style: TextStyle(color: Colors.white70),
                       ),
-                      GestureDetector(
-                        onTap: () {
+                      const Spacer(),
+                      TextButton(
+                        onPressed: isLoading ? null : () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const SignupScreen(),
+                              builder: (_) =>
+                              const ForgotPasswordScreen(),
                             ),
                           );
                         },
                         child: const Text(
-                          "Sign up",
-                          style: TextStyle(
-                            color: Color(0xFFEC4899),
-                            fontWeight: FontWeight.bold,
-                          ),
+                          "Forgot password?",
+                          style: TextStyle(color: Color(0xFF7C83FF)),
                         ),
+                      )
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // 🔥 Gradient Sign In Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: InkWell(
+                      onTap: isLoading ? null : _signInWithEmail,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: isLoading ? null : appGradient,
+                          color: isLoading ? Colors.grey : null,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  "Sign in",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: const [
+                      Expanded(child: Divider(color: Colors.white12)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          "OR",
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.white12)),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // 🔗 Social Buttons (Side-by-side)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _socialBtn(
+                            "GitHub", Icons.code, isLoading ? () {} : _signInWithGitHub),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _socialBtn(
+                            "Google", Icons.g_mobiledata, isLoading ? () {} : _signInWithGoogle),
                       ),
                     ],
                   ),
-                )
-              ],
+
+                  const SizedBox(height: 20),
+
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Don't have an account? ",
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        GestureDetector(
+                          onTap: isLoading ? null : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SignupScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Sign up",
+                            style: TextStyle(
+                              color: Color(0xFFEC4899),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
         ),
@@ -315,26 +354,40 @@ class _SignInScreenState extends State<SignInScreen> {
       String hint,
       IconData icon,
       TextEditingController controller,
+      String? Function(String?) validator,
+      TextInputAction action,
       ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(color: Colors.white70)),
         const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF111827),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF1F2937)),
-          ),
-          child: TextField(
-            controller: controller,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: Colors.white54),
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white38),
-              border: InputBorder.none,
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          textInputAction: action,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: Colors.white54),
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white38),
+            filled: true,
+            fillColor: const Color(0xFF111827),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF1F2937)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF1F2937)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF7C83FF)),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.redAccent),
             ),
           ),
         ),
@@ -349,33 +402,46 @@ class _SignInScreenState extends State<SignInScreen> {
         const Text("Password",
             style: TextStyle(color: Colors.white70)),
         const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF111827),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF1F2937)),
-          ),
-          child: TextField(
-            controller: passCtrl,
-            obscureText: !showPassword,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              prefixIcon:
-              const Icon(Icons.lock, color: Colors.white54),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  showPassword
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: Colors.white54,
-                ),
-                onPressed: () =>
-                    setState(() => showPassword = !showPassword),
+        TextFormField(
+          controller: passCtrl,
+          obscureText: !showPassword,
+          validator: AppValidator.validatePassword,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => _signInWithEmail(),
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            prefixIcon:
+            const Icon(Icons.lock, color: Colors.white54),
+            suffixIcon: IconButton(
+              icon: Icon(
+                showPassword
+                    ? Icons.visibility
+                    : Icons.visibility_off,
+                color: Colors.white54,
               ),
-              hintText: "Password",
-              hintStyle:
-              const TextStyle(color: Colors.white38),
-              border: InputBorder.none,
+              onPressed: () =>
+                  setState(() => showPassword = !showPassword),
+            ),
+            hintText: "Password",
+            hintStyle:
+            const TextStyle(color: Colors.white38),
+            filled: true,
+            fillColor: const Color(0xFF111827),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF1F2937)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF1F2937)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF7C83FF)),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.redAccent),
             ),
           ),
         ),
