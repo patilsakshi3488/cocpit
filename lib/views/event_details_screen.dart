@@ -3,10 +3,43 @@ import '../models/event_model.dart';
 import 'event_register_sheet.dart';
 import 'my_event_analytics_screen.dart';
 
-class EventDetailsScreen extends StatelessWidget {
+class EventDetailsScreen extends StatefulWidget {
   final EventModel event;
+  final bool isRegistered;
+  final bool isSaved;
+  final Function(bool) onSaveToggle;
+  final VoidCallback onRegister;
+  final VoidCallback onCancelRegistration;
 
-  const EventDetailsScreen({super.key, required this.event});
+  const EventDetailsScreen({
+    super.key,
+    required this.event,
+    this.isRegistered = false,
+    this.isSaved = false,
+    required this.onSaveToggle,
+    required this.onRegister,
+    required this.onCancelRegistration,
+  });
+
+  @override
+  State<EventDetailsScreen> createState() => _EventDetailsScreenState();
+}
+
+class _EventDetailsScreenState extends State<EventDetailsScreen> {
+  late bool _isSaved;
+
+  @override
+  void initState() {
+    super.initState();
+    _isSaved = widget.isSaved;
+  }
+
+  void _toggleSave() {
+    setState(() {
+      _isSaved = !_isSaved;
+    });
+    widget.onSaveToggle(_isSaved);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,382 +47,306 @@ class EventDetailsScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF0B1220),
       body: Stack(
         children: [
-          _heroImage(context),
-          _content(context),
-          _topBar(context),
-        ],
-      ),
-    );
-  }
-
-  // ================= HERO IMAGE =================
-  Widget _heroImage(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.42,
-      width: double.infinity,
-      child: Image.asset(
-        event.image,
-        fit: BoxFit.cover,
-      ),
-    );
-  }
-
-  // ================= TOP BAR =================
-  Widget _topBar(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _iconButton(
-              icon: Icons.arrow_back,
-              label: 'Back',
-              onTap: () => Navigator.pop(context),
-            ),
-            _iconButton(
-              icon: Icons.bookmark_border,
-              label: 'Save Event',
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _iconButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.white12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 18),
-            const SizedBox(width: 6),
-            Text(label,
-                style: const TextStyle(color: Colors.white, fontSize: 14)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ================= CONTENT =================
-  Widget _content(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.64,
-      minChildSize: 0.64,
-      maxChildSize: 0.95,
-      builder: (_, controller) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF0B1220),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: SingleChildScrollView(
-            controller: controller,
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
+          CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 400,
+                pinned: true,
+                backgroundColor: const Color(0xFF0B1220),
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black.withAlpha(150),
+                    child: const BackButton(color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 18),
-
-                _sectionTitle('About this event'),
-                Text(
-                  event.description,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    height: 1.6,
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: _toggleSave,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: _isSaved ? const Color(0xFF6366F1).withAlpha(40) : Colors.black.withAlpha(150),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: _isSaved ? const Color(0xFF6366F1) : Colors.white24),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                              size: 18,
+                              color: _isSaved ? const Color(0xFF6366F1) : Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _isSaved ? 'Saved' : 'Save Event',
+                              style: TextStyle(
+                                color: _isSaved ? const Color(0xFF6366F1) : Colors.white,
+                                fontWeight: _isSaved ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(widget.event.image, fit: BoxFit.cover),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black.withAlpha(200)],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 24,
+                        left: 20,
+                        right: 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.event.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (widget.isRegistered)
+                              Container(
+                                margin: const EdgeInsets.only(top: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'Registered',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 22),
-                _infoRow(
-                  Icons.calendar_today,
-                  'Date and Time',
-                  '${event.startDate} · ${event.startTime}',
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'About this event',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        widget.event.description,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _infoRow(Icons.calendar_today, 'Date and Time', '${widget.event.startDate} · ${widget.event.startTime}'),
+                      _infoRow(Icons.location_on_outlined, 'Location', widget.event.location),
+                      _infoRow(Icons.people_outline, 'Attendees', '${widget.event.totalRegistrations} going'),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF111827),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Organizers',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _organizerItem(Icons.person_outline, 'The Company Inc.'),
+                            _organizerItem(Icons.email_outlined, 'contact@thecompany.com'),
+                            _organizerItem(Icons.phone_outlined, '+1 234 567 890'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 140),
+                    ],
+                  ),
                 ),
-                _infoRow(
-                  Icons.location_on,
-                  'Location',
-                  event.location,
-                ),
-                _infoRow(
-                  Icons.people,
-                  'Attendees',
-                  '${event.totalRegistrations} going',
-                ),
-
-                const SizedBox(height: 24),
-                _organizerCard(),
-
-                const SizedBox(height: 28),
-                _actionButton(context),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ================= SECTIONS =================
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF6366F1), size: 22),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 2),
-              Text(value,
-                  style: const TextStyle(color: Colors.white70)),
+              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  // ================= ORGANIZER =================
-  Widget _organizerCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111827),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Organizers',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Positioned(
+            bottom: 24,
+            left: 24,
+            right: 24,
+            child: _actionButtons(context),
           ),
-          SizedBox(height: 14),
-          _OrganizerRow(Icons.person, 'The Company Inc.'),
-          _OrganizerRow(Icons.email, 'contact@thecompany.com'),
-          _OrganizerRow(Icons.phone, '+1 234 567 890'),
         ],
       ),
     );
   }
 
-  // ================= BUTTON =================
-  Widget _actionButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          if (event.createdByMe) {
+  Widget _actionButtons(BuildContext context) {
+    if (widget.event.createdByMe) {
+      return SizedBox(
+        width: double.infinity,
+        height: 60,
+        child: ElevatedButton(
+          onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => MyEventAnalyticsScreen(event: event),
+              MaterialPageRoute(builder: (_) => MyEventAnalyticsScreen(event: widget.event)),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6366F1),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+          child: const Text(
+            'View Analytics',
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+
+    if (widget.isRegistered) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Mock Ticket Download')),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-            );
-          } else {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => EventRegisterSheet(event: event),
-            );
+              child: const Text(
+                'Download Ticket',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: OutlinedButton(
+              onPressed: widget.onCancelRegistration,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white24),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text(
+                'Cancel Registration',
+                style: TextStyle(color: Colors.redAccent, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        onPressed: () async {
+          final res = await showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => EventRegisterSheet(event: widget.event),
+          );
+          if (res == true) {
+            widget.onRegister();
           }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6366F1),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: Text(
-          event.createdByMe ? 'View Analytics' : 'Register for this event',
-          style: const TextStyle(fontSize: 16),
+        child: const Text(
+          'Register for this event',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
-}
 
-// ================= ORGANIZER ROW =================
-class _OrganizerRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _OrganizerRow(this.icon, this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white54, size: 20),
-          const SizedBox(width: 12),
-          Text(text, style: const TextStyle(color: Colors.white)),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*import 'package:flutter/material.dart';
-import '../models/event_model.dart';
-import 'event_register_sheet.dart';
-
-class EventDetailsScreen extends StatelessWidget {
-  final EventModel event;
-
-  const EventDetailsScreen({super.key, required this.event});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Image.asset(
-                event.image,
-                height: 260,
-                width: double.infinity,
-                fit: BoxFit.cover,
+  Widget _infoRow(IconData icon, String title, String sub) => Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1F2937),
+                borderRadius: BorderRadius.circular(12),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(event.title,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    Text(event.description,
-                        style:
-                        const TextStyle(color: Colors.white70, height: 1.6)),
-                    const SizedBox(height: 20),
-
-                    _info(Icons.calendar_today, event.date),
-                    _info(Icons.location_on, event.location),
-                    _info(Icons.people, event.attendees),
-
-                    const SizedBox(height: 30),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6366F1),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                        ),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            barrierColor: Colors.black87,
-                            builder: (_) =>
-                                EventRegisterSheet(event: event),
-                          );
-                        },
-                        child: const Text(
-                          'Register for this event',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    )
-                  ],
+              child: Icon(icon, color: const Color(0xFF6366F1), size: 24),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              )
-            ],
-          ),
+                const SizedBox(height: 4),
+                Text(
+                  sub,
+                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                ),
+              ],
+            ),
+          ],
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _info(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white54, size: 18),
-          const SizedBox(width: 10),
-          Text(text,
-              style: const TextStyle(color: Colors.white70, fontSize: 14)),
-        ],
-      ),
-    );
-  }
-}*/
+  Widget _organizerItem(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white54, size: 20),
+            const SizedBox(width: 12),
+            Text(text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+      );
+}
