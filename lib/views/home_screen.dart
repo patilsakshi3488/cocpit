@@ -5,6 +5,7 @@ import 'chat_screen.dart';
 import 'notification_screen.dart';
 import 'bottom_navigation.dart';
 import 'create_career_moment_screen.dart';
+import 'career_moment_viewer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,25 +25,62 @@ class _HomeScreenState extends State<HomeScreen> {
     {
       'name': 'You',
       'isMine': true,
-      'stories': [],
+      'stories': [
+        {'image': 'lib/images/profile.png', 'text': 'Just sharing my latest update with my close friends!', 'time': '1m ago'},
+      ],
+      'profile': 'lib/images/profile.png',
       'image': 'lib/images/profile.png',
     },
     {
-      'name': 'James Wilson',
+      'name': 'Mike Torres',
       'isMine': false,
       'image': 'lib/images/story1.png',
       'profile': 'lib/images/profile2.jpg',
       'stories': [
-        {'image': 'lib/images/story1.png', 'text': 'Workshop', 'likes': 12, 'views': 54},
+        {
+          'image': 'lib/images/story1.png',
+          'text': 'Excited to share a sneak peek of our latest product feature! This has been months in the making and the team has done an incredible job. Can’t wait to hear your thoughts!',
+          'time': '6h ago'
+        },
+      ],
+    },
+    {
+      'name': 'David Kim',
+      'isMine': false,
+      'image': 'lib/images/story4.png',
+      'profile': 'lib/images/profile3.jpg',
+      'stories': [
+        {
+          'image': 'lib/images/story4.png',
+          'text': 'Sharing some insights from our latest data analysis project. The patterns we discovered are fascinating! Always amazed by what the data reveals when you look closely enough.',
+          'time': '8h ago'
+        },
       ],
     },
     {
       'name': 'Sarah Chen',
       'isMine': false,
-      'image': 'lib/images/story4.png',
+      'image': 'lib/images/post1.jpg',
       'profile': 'lib/images/profile3.jpg',
       'stories': [
-        {'image': 'lib/images/story4.png', 'text': 'Project', 'likes': 44, 'views': 120},
+        {
+          'image': 'lib/images/post1.jpg',
+          'text': 'Just launched our new design system! Working with an amazing team to create consistent, accessible experiences across all our products.',
+          'time': '2h ago'
+        },
+      ],
+    },
+    {
+      'name': 'John Smith',
+      'isMine': false,
+      'image': 'lib/images/post2.jpg',
+      'profile': 'lib/images/profile2.jpg',
+      'stories': [
+        {
+          'image': 'lib/images/post2.jpg',
+          'text': 'Great discussions at today’s architecture review 🚀',
+          'time': '5h ago'
+        },
       ],
     },
   ];
@@ -58,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'profile': 'lib/images/profile3.jpg',
       'likes': 234,
       'isLiked': false,
+      'isPrivate': false,
       'comments_count': 47,
       'shares': 12,
       'comments': [],
@@ -72,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'profile': 'lib/images/profile4.jpg',
       'likes': 1200,
       'isLiked': false,
+      'isPrivate': false,
       'comments_count': 15,
       'shares': 8,
       'comments': [],
@@ -90,12 +130,28 @@ class _HomeScreenState extends State<HomeScreen> {
       'profile': 'lib/images/profile4.jpg',
       'likes': 850,
       'isLiked': false,
+      'isPrivate': false,
       'comments_count': 12,
       'shares': 3,
       'comments': [],
     },
     {
       'id': '4',
+      'name': 'Sally Liang',
+      'title': 'Senior Financial Analyst at Johnson & Johnson',
+      'time': '1w ago',
+      'text': "Honored to be recognized as Top Contributor of the Month! 🏆 Thanks to my amazing team.",
+      'image': null,
+      'profile': 'lib/images/profile4.jpg',
+      'likes': 2100,
+      'isLiked': false,
+      'isPrivate': true,
+      'comments_count': 45,
+      'shares': 12,
+      'comments': [],
+    },
+    {
+      'id': '5',
       'name': 'John Smith',
       'title': 'Senior Software Engineer at Meta',
       'time': '5h ago',
@@ -104,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'profile': 'lib/images/profile2.jpg',
       'likes': 189,
       'isLiked': false,
+      'isPrivate': false,
       'comments_count': 23,
       'shares': 8,
       'comments': [],
@@ -132,6 +189,14 @@ class _HomeScreenState extends State<HomeScreen> {
       'profile': 'lib/images/profile4.jpg',
       'isVerified': true,
     },
+  ];
+
+  final List<Map<String, dynamic>> shareToUsers = [
+    {'name': 'Michael Chen', 'role': 'Recruiter', 'profile': 'lib/images/profile2.jpg', 'color': Colors.lightBlue},
+    {'name': 'Emily Rodriguez', 'role': 'Hiring Manager', 'profile': 'lib/images/profile4.jpg', 'color': Colors.pinkAccent},
+    {'name': 'David Park', 'role': 'Connection', 'profile': 'lib/images/profile3.jpg', 'color': Colors.deepPurpleAccent},
+    {'name': 'Jessica Williams', 'role': 'Talent Acquisition', 'profile': 'lib/images/profile4.jpg', 'color': Colors.greenAccent},
+    {'name': 'Alex Thompson', 'role': 'Designer', 'profile': 'lib/images/profile2.jpg', 'color': Colors.orangeAccent},
   ];
 
   @override
@@ -244,7 +309,15 @@ class _HomeScreenState extends State<HomeScreen> {
               if (m['isMine']) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCareerMomentScreen()));
               } else {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => CareerMomentViewer(name: m['name'], stories: m['stories'])));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CareerMomentViewer(
+                      users: careerMoments,
+                      initialUserIndex: index,
+                    ),
+                  ),
+                );
               }
             },
             child: Container(
@@ -349,13 +422,66 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(post['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                       Text(post['title'], style: const TextStyle(color: Colors.white54, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text(post['time'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                      Row(
+                        children: [
+                          Text(post['time'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                          if (post['isPrivate'] == true) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.visibility_off_outlined, color: Colors.white38, size: 12),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.more_horiz, color: Colors.white54),
-                  onPressed: () => _showPostOptions(context, post),
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    popupMenuTheme: PopupMenuThemeData(
+                      color: const Color(0xFF1F2937),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz, color: Colors.white54),
+                    padding: EdgeInsets.zero,
+                    onSelected: (value) {
+                      if (value == 'private') {
+                        setState(() {
+                          post['isPrivate'] = !(post['isPrivate'] ?? false);
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(post['isPrivate'] ? "Post is now private" : "Post is now public")),
+                        );
+                      } else if (value == 'delete') {
+                        setState(() {
+                          _posts.removeWhere((p) => p['id'] == post['id']);
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post deleted")));
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'private',
+                        child: Row(
+                          children: [
+                            Icon(post['isPrivate'] == true ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white, size: 20),
+                            const SizedBox(width: 12),
+                            Text(post['isPrivate'] == true ? "Make Public" : "Make Private", style: const TextStyle(color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            const SizedBox(width: 12),
+                            Text("Delete", style: TextStyle(color: Colors.redAccent)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -387,477 +513,261 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 const Divider(color: Colors.white10, height: 1),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _actionButton(Icons.favorite_border, "Like", post['isLiked'], () {
-                      setState(() {
-                        post['isLiked'] = !post['isLiked'];
-                        post['likes'] += post['isLiked'] ? 1 : -1;
-                      });
-                    }),
-                    _actionButton(Icons.chat_bubble_outline, "Comment", false, () {
-                      _showCommentSheet(context, post);
-                    }),
-                    _actionButton(Icons.share_outlined, "Share", false, () {}),
+                    _actionButton(Icons.favorite_border, "Like", () {}),
+                    _actionButton(Icons.chat_bubble_outline, "Comment", () {}),
+                    _actionButton(Icons.share_outlined, "Share", () => _showShareSheet(context)),
                   ],
                 ),
               ],
             ),
           ),
-          const Divider(color: Colors.white10, thickness: 8),
+          const Divider(color: Colors.white10, height: 8, thickness: 8),
         ],
       ),
     );
   }
 
-  Widget _suggestedForYouSection() {
-    return Container(
-      color: const Color(0xFF1F2937).withOpacity(0.3),
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Suggested for you", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                TextButton(onPressed: () {}, child: const Text("See all", style: TextStyle(color: Color(0xFF7C83FF)))),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 140,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: suggestedUsers.length,
-              itemBuilder: (context, index) {
-                final user = suggestedUsers[index];
-                return Container(
-                  width: 260,
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1F2937),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Stack(
-                    children: [
-                      Row(
-                        children: [
-                          Stack(
-                            children: [
-                              CircleAvatar(radius: 30, backgroundImage: AssetImage(user['profile'])),
-                              if (user['isVerified'])
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: const BoxDecoration(color: Color(0xFF4F70F0), shape: BoxShape.circle),
-                                    child: const Icon(Icons.check, color: Colors.white, size: 12),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                Text(user['role'], style: const TextStyle(color: Colors.white54, fontSize: 13)),
-                                const SizedBox(height: 8),
-                                Text("${user['followers']} followers", style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4F70F0),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.add, size: 16),
-                                SizedBox(width: 4),
-                                Text("Follow", style: TextStyle(fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Icon(Icons.close, color: Colors.white38, size: 18),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 12),
-            child: InkWell(
-              onTap: () {},
-              child: const Text("View more suggestions →", style: TextStyle(color: Colors.white54, fontSize: 14)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPostOptions(BuildContext context, Map<String, dynamic> post) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1F2937),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 24),
-            ListTile(
-              leading: const Icon(Icons.lock_outline, color: Colors.white),
-              title: const Text("Make Private", style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post is now private")));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              title: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
-              onTap: () {
-                setState(() {
-                  _posts.removeWhere((p) => p['id'] == post['id']);
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post deleted")));
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _actionButton(IconData icon, String label, bool isActive, VoidCallback onTap) {
+  Widget _actionButton(IconData icon, String text, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Row(
-          children: [
-            Icon(isActive ? Icons.favorite : icon, color: isActive ? Colors.pinkAccent : Colors.white54, size: 20),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: isActive ? Colors.pinkAccent : Colors.white54, fontSize: 14, fontWeight: FontWeight.bold)),
-          ],
-        ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white54, size: 20),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+        ],
       ),
     );
   }
 
-  void _showCommentSheet(BuildContext context, Map<String, dynamic> post) {
+  void _showShareSheet(BuildContext context) {
+    int selectedIndex = 0;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1F2937),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => _CommentSheetContent(
-        initialComments: post['comments'] as List,
-        onCommentAdded: (c) {
-          setState(() {
-            post['comments'].add(c);
-            post['comments_count']++;
-          });
-        },
-      ),
-    );
-  }
-}
-
-class _CommentSheetContent extends StatefulWidget {
-  final List initialComments;
-  final Function(Map<String, dynamic>)? onCommentAdded;
-
-  const _CommentSheetContent({required this.initialComments, this.onCommentAdded});
-
-  @override
-  State<_CommentSheetContent> createState() => _CommentSheetContentState();
-}
-
-class _CommentSheetContentState extends State<_CommentSheetContent> {
-  late List comments;
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    comments = List.from(widget.initialComments);
-  }
-
-  void _postComment() {
-    if (_controller.text.trim().isNotEmpty) {
-      final newComment = {
-        'name': 'You',
-        'time': 'Just now',
-        'text': _controller.text.trim(),
-        'likes': 0,
-        'isLiked': false,
-      };
-      setState(() {
-        comments.add(newComment);
-      });
-      widget.onCommentAdded?.call(newComment);
-      _controller.clear();
-      FocusScope.of(context).unfocus();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 20),
-              const Text("Comments", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 10),
-              const Divider(color: Colors.white12),
-              Flexible(
-                child: comments.isEmpty
-                    ? const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 50), child: Text("No comments yet.", style: TextStyle(color: Colors.white38))))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shrinkWrap: true,
-                        itemCount: comments.length,
-                        itemBuilder: (context, index) => _CommentItem(
-                          comment: comments[index] as Map<String, dynamic>,
-                          onLikeChanged: (isLiked) {
-                            setState(() {
-                              comments[index]['isLiked'] = isLiked;
-                              comments[index]['likes'] += isLiked ? 1 : -1;
-                            });
-                          },
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F172A),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      "Share to",
+                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(color: Colors.white10, height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const TextField(
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "Search",
+                          hintStyle: TextStyle(color: Colors.white38),
+                          icon: Icon(Icons.search, color: Colors.white38, size: 20),
+                          border: InputBorder.none,
                         ),
                       ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const CircleAvatar(radius: 18, backgroundImage: AssetImage('lib/images/profile.png')),
-                  const SizedBox(width: 12),
+                    ),
+                  ),
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(color: const Color(0xFF111827), borderRadius: BorderRadius.circular(24)),
-                      child: TextField(
-                        controller: _controller,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: "Add a comment...",
-                          hintStyle: const TextStyle(color: Colors.white38),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          suffixIcon: TextButton(
-                            onPressed: _postComment,
-                            child: const Text("Post", style: TextStyle(color: Color(0xFF7C83FF), fontWeight: FontWeight.bold)),
+                    child: ListView.builder(
+                      itemCount: shareToUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = shareToUsers[index];
+                        final isSelected = selectedIndex == index;
+                        return InkWell(
+                          onTap: () => setSheetState(() => selectedIndex = index),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.white.withOpacity(0.05) : Colors.transparent,
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: user['color'],
+                                  child: Text(
+                                    user['name'][0],
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                      Text(user['role'], style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: isSelected ? const Color(0xFF6366F1) : Colors.white24, width: 2),
+                                    color: isSelected ? const Color(0xFF6366F1) : Colors.transparent,
+                                  ),
+                                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: Colors.white10)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const TextField(
+                            style: TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: "Write a message...",
+                              hintStyle: TextStyle(color: Colors.white38),
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Shared successfully"),
+                                backgroundColor: Color(0xFF6366F1),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.send, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text("Send", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
-}
 
-class _CommentItem extends StatelessWidget {
-  final Map<String, dynamic> comment;
-  final Function(bool)? onLikeChanged;
-
-  const _CommentItem({required this.comment, this.onLikeChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    bool isLiked = comment['isLiked'] ?? false;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CircleAvatar(radius: 18, backgroundImage: AssetImage('lib/images/profile2.jpg')),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: const Color(0xFF111827).withOpacity(0.5), borderRadius: BorderRadius.circular(12)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(comment['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                          Text(comment['time'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(comment['text'], style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4)),
-                    ],
-                  ),
+  Widget _suggestedForYouSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text("Suggested for you", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        SizedBox(
+          height: 240,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: suggestedUsers.length,
+            itemBuilder: (context, index) {
+              final user = suggestedUsers[index];
+              return Container(
+                width: 180,
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F2937),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 6),
-                Row(
+                child: Column(
                   children: [
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () => onLikeChanged?.call(!isLiked),
-                      child: Text("Like", style: TextStyle(color: isLiked ? Colors.pinkAccent : Colors.white54, fontSize: 12, fontWeight: isLiked ? FontWeight.bold : FontWeight.w500)),
+                    Stack(
+                      children: [
+                        CircleAvatar(radius: 40, backgroundImage: AssetImage(user['profile'])),
+                        if (user['isVerified'])
+                          const Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: CircleAvatar(
+                              radius: 10,
+                              backgroundColor: Color(0xFF4F70F0),
+                              child: Icon(Icons.check, color: Colors.white, size: 12),
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    const Text("Reply", style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500)),
-                    const SizedBox(width: 16),
-                    Text("${comment['likes']} likes", style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                    const SizedBox(height: 12),
+                    Text(user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(user['role'], style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text("${user['followers']} followers", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4F70F0),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(double.infinity, 32),
+                      ),
+                      child: const Text("Follow", style: TextStyle(color: Colors.white, fontSize: 13)),
+                    ),
                   ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class CareerMomentViewer extends StatefulWidget {
-  final String name;
-  final List stories;
-
-  const CareerMomentViewer({super.key, required this.name, required this.stories});
-
-  @override
-  State<CareerMomentViewer> createState() => _CareerMomentViewerState();
-}
-
-class _CareerMomentViewerState extends State<CareerMomentViewer> {
-  int currentIndex = 0;
-  double progress = 0;
-  Timer? timer;
-  late PageController _pageController;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.stories.isEmpty) {
-      Future.microtask(() => Navigator.pop(context));
-      return;
-    }
-    _pageController = PageController();
-    _startTimer();
-  }
-
-  void _startTimer() {
-    timer?.cancel();
-    progress = 0;
-    timer = Timer.periodic(const Duration(milliseconds: 50), (t) {
-      setState(() => progress += 0.01);
-      if (progress >= 1) _nextStory();
-    });
-  }
-
-  void _nextStory() {
-    if (currentIndex < widget.stories.length - 1) {
-      setState(() => currentIndex++);
-      _pageController.animateToPage(currentIndex, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-      _startTimer();
-    } else {
-      Navigator.pop(context);
-    }
-  }
-
-  void _prevStory() {
-    if (currentIndex > 0) {
-      setState(() => currentIndex--);
-      _pageController.animateToPage(currentIndex, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-      _startTimer();
-    }
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTapUp: (d) => d.localPosition.dx < MediaQuery.of(context).size.width / 2 ? _prevStory() : _nextStory(),
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: widget.stories.length,
-              itemBuilder: (_, i) => Image.asset(widget.stories[i]['image'], fit: BoxFit.cover),
-            ),
-            Positioned(
-              top: 40,
-              left: 10,
-              right: 10,
-              child: Row(
-                children: List.generate(widget.stories.length, (i) => Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: i < currentIndex ? Colors.white : i == currentIndex ? Colors.white.withOpacity(progress.clamp(0, 1)) : Colors.white24,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                )),
-              ),
-            ),
-            Positioned(top: 50, left: 16, child: Text(widget.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-            Positioned(top: 40, right: 10, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context))),
-          ],
         ),
-      ),
+        const Divider(color: Colors.white10, height: 8, thickness: 8),
+      ],
     );
   }
 }

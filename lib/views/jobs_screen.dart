@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'chat_screen.dart';
-import 'notification_screen.dart';
 import 'bottom_navigation.dart';
 import 'my_jobs_screen.dart';
-import 'apply_job_screen.dart';
 import 'offers_screen.dart';
 
 class JobsScreen extends StatefulWidget {
@@ -14,66 +11,99 @@ class JobsScreen extends StatefulWidget {
 }
 
 class _JobsScreenState extends State<JobsScreen> {
-  int bottomIndex = 1;
-  int mainTab = 0;
-  // SEARCH STATE
-  bool expandSearch = false;
-  String keyword = '';
+  int mainTab = 0; // 0: View Jobs, 1: My Jobs, 2: Offers
+  int subTab = 0; // 0: In Progress, 1: Applied, 2: In Past, 3: Saved
 
-
-  /* ================= THEME ================= */
   final Color bg = const Color(0xFF0B1220);
   final Color card = const Color(0xFF111827);
-  final Color border = const Color(0xFF1F2937);
+  final Color primary = const Color(0xFF6366F1);
 
-  final Gradient gradient =
-  const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]);
-
-  /* ================= FILTER STATE ================= */
-  bool showFilter = false;
-
-  bool fullTime = false;
-  bool partTime = false;
-  bool contract = false;
-  bool remote = false;
-  bool internship = false;
-
-  String location = '';
-  String experience = 'All Levels';
-  String salary = 'Any';
-  String datePosted = 'Any Time';
-
-  /* ================= JOB DATA ================= */
-  final List<Map<String, dynamic>> jobs = [
+  final List<Map<String, dynamic>> viewJobs = [
     {
+      'id': '1',
       'title': 'Senior Financial Analyst',
       'company': 'JPMorgan Chase',
-      'salary': '\$125k - \$155k',
+      'initial': 'J',
+      'salary': r'$125k - $155k',
       'location': 'New York, NY',
       'type': 'Full-time',
-      'experience': 'Senior Level',
       'time': '2 days ago',
-      'applicants': '25 applicants',
+      'applicants': '25 applicants applied',
+      'match': '82%',
+      'response': 'Recruiter usually responds in 2 days',
+      'isHiring': false,
     },
     {
+      'id': '2',
       'title': 'Business Analyst',
       'company': 'McKinsey & Company',
-      'salary': '\$110k - \$140k',
+      'initial': 'M',
+      'salary': r'$110k - $140k',
       'location': 'Boston, MA',
       'type': 'Full-time',
-      'experience': 'Mid Level',
       'time': '3 days ago',
-      'applicants': '18 applicants',
+      'applicants': '18 applicants applied',
+      'match': '87%',
+      'response': 'Recruiter usually responds in 4 days',
+      'isHiring': true,
     },
+  ];
+
+  final List<Map<String, dynamic>> myJobsInProgress = [
     {
-      'title': 'Product Manager',
-      'company': 'Google',
-      'salary': '\$120k - \$180k',
-      'location': 'San Francisco, CA',
-      'type': 'Remote',
-      'experience': 'Senior Level',
-      'time': '1 day ago',
-      'applicants': '40 applicants',
+      'id': 'p1',
+      'title': 'Product Designer',
+      'company': 'Adobe',
+      'initial': 'A',
+      'salary': r'$120k - $140k',
+      'location': 'Remote',
+      'type': 'Full-time',
+      'time': 'Interview scheduled',
+      'applicants': '8 applicants applied',
+      'match': '87%',
+      'response': 'Recruiter usually responds in 2 days',
+      'status': 'In Progress',
+      'statusColor': Colors.orangeAccent,
+      'timelineStep': 2, // 0: Applied, 1: Under Review, 2: Interview, 3: Offer
+    },
+  ];
+
+  final List<Map<String, dynamic>> myJobsApplied = [
+    {
+      'id': 'a1',
+      'title': 'Senior Product Analyst',
+      'company': 'Netflix',
+      'initial': 'N',
+      'salary': r'$130k - $150k',
+      'location': 'New York, NY',
+      'type': 'Full-time',
+      'time': 'Applied 2 days ago',
+      'applicants': '12 applicants applied',
+      'match': '84%',
+      'response': 'Recruiter usually responds in 1 day',
+      'status': 'Applied',
+      'statusColor': Colors.blueAccent,
+      'isHiring': true,
+      'timelineStep': 0,
+    },
+  ];
+
+  final List<Map<String, dynamic>> myJobsInPast = [
+    {
+      'id': 'pa1',
+      'title': 'UX Researcher',
+      'company': 'Spotify',
+      'initial': 'S',
+      'salary': r'$100k - $130k',
+      'location': 'Remote',
+      'type': 'Full-time',
+      'time': 'Closed 1 week ago',
+      'applicants': '60 applicants applied',
+      'match': '93%',
+      'response': 'Recruiter usually responds in 4 days',
+      'status': 'Closed',
+      'statusColor': Colors.grey,
+      'isHiring': true,
     },
   ];
 
@@ -81,215 +111,129 @@ class _JobsScreenState extends State<JobsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: _appBar(),
-      bottomNavigationBar: AppBottomNavigation(currentIndex: bottomIndex),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              _search(),
-              _mainTabs(),
-              _metaRow(),
-              Expanded(child: _jobList()),
-            ],
-          ),
-          if (showFilter) _filterOverlay(),
-        ],
-      ),
-    );
-  }
-
-  /* ================= APP BAR ================= */
-
-  AppBar _appBar() {
-    return AppBar(
-      backgroundColor: bg,
-      elevation: 0,
-      title: const Text('Jobs', style: TextStyle(color: Colors.white)),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none, color: Colors.white),
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NotificationScreen()),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.chat_outlined, color: Colors.white),
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChatScreen()),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /* ================= SEARCH ================= */
-
-  Widget _search() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
-      child: expandSearch ? _expandedSearch() : _collapsedSearch(),
-    );
-  }
-  Widget _collapsedSearch() {
-    return Row(
-      children: [
-        const Icon(Icons.search, color: Colors.white54),
-        const SizedBox(width: 10),
-        const Expanded(
-          child: Text(
-            'Search jobs, companies...',
-            style: TextStyle(color: Colors.white54),
-          ),
-        ),
-        GestureDetector(
-          onTap: () => setState(() => expandSearch = true),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'Search',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  Widget _expandedSearch() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Keywords', style: TextStyle(color: Colors.white70)),
-        const SizedBox(height: 6),
-        _searchInput(
-          hint: 'Job title or company',
-          onChanged: (v) => keyword = v,
-        ),
-        const SizedBox(height: 12),
-        const Text('Location', style: TextStyle(color: Colors.white70)),
-        const SizedBox(height: 6),
-        _searchInput(
-          hint: 'Type city...',
-          icon: Icons.location_on,
-          onChanged: (v) => location = v,
-        ),
-        const SizedBox(height: 16),
-        Align(
-          alignment: Alignment.centerRight,
-          child: GestureDetector(
-            onTap: () => setState(() => expandSearch = false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: const Text(
-                'Search Jobs',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  Widget _searchInput({
-    required String hint,
-    IconData? icon,
-    required ValueChanged<String> onChanged,
-  }) {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: TextField(
-        onChanged: onChanged,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white54),
-          border: InputBorder.none,
-          prefixIcon:
-          icon != null ? Icon(icon, color: Colors.white54) : null,
+      bottomNavigationBar: const AppBottomNavigation(currentIndex: 1),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _header(),
+            _searchSection(),
+            _tabs(),
+            _metaRow(),
+            Expanded(child: _contentArea()),
+          ],
         ),
       ),
     );
   }
 
+  Widget _header() {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+      child: Text(
+        "Jobs",
+        style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
 
-  /* ================= TABS ================= */
-
-  Widget _mainTabs() {
+  Widget _searchSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          _tab('View Jobs', 0),
-          _tab('My Jobs', 1),
-          _tab('Offers', 2, badge: '2'),
+          Expanded(
+            child: Container(
+              height: 52,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B).withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.search, color: Colors.white38, size: 24),
+                  SizedBox(width: 12),
+                  Text("Search jobs...", style: TextStyle(color: Colors.white38, fontSize: 16)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            height: 52, width: 52,
+            decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          ),
         ],
       ),
     );
   }
 
-  Widget _tab(String text, int index, {String? badge}) {
-    final active = mainTab == index;
+  Widget _tabs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _tabPill("View Jobs", 0),
+                _tabPill("My Jobs", 1),
+                _tabPill("Offers", 2, badge: "2"),
+              ],
+            ),
+          ),
+          if (mainTab == 1) ...[
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _subTabPill("In Progress", 0),
+                  _subTabPill("Applied", 1),
+                  _subTabPill("In Past", 2),
+                  _subTabPill("Saved", 3),
+                ],
+              ),
+            ),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _tabPill(String text, int index, {String? badge}) {
+    bool active = mainTab == index;
     return GestureDetector(
       onTap: () {
-        if (index == 1) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const MyJobsScreen()),
-          );
-          return;
-        }
         if (index == 2) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const OffersScreen()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
           return;
         }
         setState(() => mainTab = index);
       },
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          gradient: active ? gradient : null,
-          color: active ? null : card,
-          borderRadius: BorderRadius.circular(22),
-          border: active ? null : Border.all(color: border),
+          color: active ? null : const Color(0xFF1E293B).withOpacity(0.5),
+          gradient: active ? const LinearGradient(colors: [Color(0xFF7C83FF), Color(0xFFEC4899)]) : null,
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(text, style: const TextStyle(color: Colors.white)),
+            Text(text, style: TextStyle(color: active ? Colors.white : Colors.white54, fontWeight: FontWeight.bold, fontSize: 15)),
             if (badge != null) ...[
-              const SizedBox(width: 6),
-              CircleAvatar(
-                radius: 9,
-                backgroundColor: Colors.pink,
-                child: Text(badge,
-                    style: const TextStyle(fontSize: 10, color: Colors.white)),
-              )
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(color: Color(0xFFEC4899), shape: BoxShape.circle),
+                child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
             ]
           ],
         ),
@@ -297,32 +241,52 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  /* ================= META ROW ================= */
+  Widget _subTabPill(String text, int index) {
+    bool active = subTab == index;
+    return GestureDetector(
+      onTap: () => setState(() => subTab = index),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? null : const Color(0xFF1E293B).withOpacity(0.5),
+          gradient: active ? const LinearGradient(colors: [Color(0xFF7C83FF), Color(0xFFEC4899)]) : null,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(text, style: TextStyle(color: active ? Colors.white : Colors.white54, fontSize: 14, fontWeight: FontWeight.w500)),
+      ),
+    );
+  }
 
   Widget _metaRow() {
+    int count = 0;
+    if (mainTab == 0) count = viewJobs.length;
+    else if (mainTab == 1) {
+      if (subTab == 0) count = myJobsInProgress.length;
+      else if (subTab == 1) count = myJobsApplied.length;
+      else if (subTab == 2) count = myJobsInPast.length;
+      else count = 0;
+    }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('${_filteredJobs().length} jobs found',
-              style: const TextStyle(color: Colors.white70)),
+          Text("$count jobs found", style: const TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w400)),
           GestureDetector(
-            onTap: () => setState(() => showFilter = true),
+            onTap: () => _showFilterModal(context),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: card,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: border),
+                color: const Color(0xFF1E293B).withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.tune, size: 16, color: Colors.white70),
-                  SizedBox(width: 6),
-                  Text('Filters',
-                      style:
-                      TextStyle(fontSize: 12, color: Colors.white70)),
+                  Icon(Icons.filter_list, size: 20, color: Colors.white70),
+                  SizedBox(width: 8),
+                  Text("Filters", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -332,608 +296,438 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  /* ================= FILTER LOGIC ================= */
-
-  List<Map<String, dynamic>> _filteredJobs() {
-    return jobs.where((job) {
-      if (location.isNotEmpty &&
-          !job['location']
-              .toLowerCase()
-              .contains(location.toLowerCase())) return false;
-
-      if (experience != 'All Levels' &&
-          job['experience'] != experience) return false;
-
-      if ((fullTime || partTime || contract || remote || internship) &&
-          ![
-            if (fullTime) 'Full-time',
-            if (partTime) 'Part-time',
-            if (contract) 'Contract',
-            if (remote) 'Remote',
-            if (internship) 'Internship',
-          ].contains(job['type'])) return false;
-
-      return true;
-    }).toList();
+  Widget _contentArea() {
+    if (mainTab == 0) return _jobList(viewJobs);
+    if (mainTab == 1) {
+      if (subTab == 0) return _jobList(myJobsInProgress);
+      if (subTab == 1) return _jobList(myJobsApplied);
+      if (subTab == 2) return _jobList(myJobsInPast);
+      if (subTab == 3) return _emptyState();
+    }
+    return Container();
   }
 
-  /* ================= JOB LIST ================= */
+  Widget _jobList(List<Map<String, dynamic>> list) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: list.length,
+      itemBuilder: (context, index) => _jobCard(list[index]),
+    );
+  }
 
-  Widget _jobList() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: _filteredJobs().map(_jobCard).toList(),
+  Widget _emptyState() {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 20),
+            const Text(
+              "No jobs found matching your criteria.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {},
+              child: const Text("Clear filters", style: TextStyle(color: Color(0xFF6366F1), fontSize: 16)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _jobCard(Map<String, dynamic> job) {
+    bool isMyJob = mainTab == 1;
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(job['title'],
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(job['company'],
-                    style: const TextStyle(color: Colors.white70)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _meta(job['location']),
-                    _dot(),
-                    _meta(job['type']),
-                    _dot(),
-                    _meta(job['time']),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(job['salary'],
-                        style:
-                        const TextStyle(color: Colors.indigoAccent)),
-                    const SizedBox(width: 12),
-                    Text(job['applicants'],
-                        style:
-                        const TextStyle(color: Colors.white54)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ApplyJobScreen(job: job),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48, height: 48,
+                alignment: Alignment.center,
+                child: Text(job['initial'], style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(job['title'], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    if (isMyJob && job.containsKey('status')) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(color: (job['statusColor'] as Color).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                        child: Text(job['status'], style: TextStyle(color: job['statusColor'], fontSize: 13, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    Row(
+                      children: [
+                        Text(job['company'], style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.circle, size: 4, color: Colors.white38),
+                        const SizedBox(width: 8),
+                        Text(job['location'], style: const TextStyle(color: Colors.white38, fontSize: 15)),
+                        if (job['isHiring'] == true) ...[
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                            child: const Text("Hiring", style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                          )
+                        ]
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.bookmark_border, color: Colors.white70, size: 24),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _infoRow(job),
+          const SizedBox(height: 12),
+          _matchPill(job['match']),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Divider(color: Colors.white10, height: 1)),
+          _footerInfo(job),
+          const SizedBox(height: 24),
+          _actionButtons(job),
+          if (isMyJob && job.containsKey('timelineStep')) ...[
+            const Padding(padding: EdgeInsets.only(top: 24, bottom: 16), child: Text("Application Timeline", style: TextStyle(color: Colors.white70, fontSize: 14))),
+            _timeline(job['timelineStep']),
+          ]
+        ],
+      ),
+    );
+  }
 
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 18, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: BorderRadius.circular(18),
+  Widget _infoRow(Map<String, dynamic> job) {
+    return Wrap(
+      spacing: 8, runSpacing: 8,
+      children: [
+        _pill(Icons.work_outline, job['type']),
+        _pill(Icons.attach_money, job['salary']),
+        _pill(Icons.access_time, job['time']),
+      ],
+    );
+  }
+
+  Widget _pill(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(color: const Color(0xFF1E293B).withOpacity(0.4), borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white38, size: 18),
+          const SizedBox(width: 8),
+          Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _matchPill(String match) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.bolt, color: Color(0xFFA855F7), size: 18),
+          const SizedBox(width: 6),
+          Text("$match Match", style: const TextStyle(color: Color(0xFFA855F7), fontWeight: FontWeight.bold, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerInfo(Map<String, dynamic> job) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.circle, color: Colors.greenAccent, size: 8),
+            const SizedBox(width: 10),
+            Text(job['response'], style: const TextStyle(color: Colors.white60, fontSize: 14)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(job['applicants'], style: const TextStyle(color: Colors.white38, fontSize: 14)),
+      ],
+    );
+  }
+
+  Widget _actionButtons(Map<String, dynamic> job) {
+    if (mainTab == 1 && subTab == 1) {
+      return Row(
+        children: [
+          Expanded(child: _detailsBtn()),
+          const SizedBox(width: 16),
+          _appliedStatusBtn(),
+        ],
+      );
+    }
+    if (mainTab == 1 && (subTab == 0 || subTab == 2)) {
+      return _detailsBtn(fullWidth: true);
+    }
+    return Row(
+      children: [
+        Expanded(child: _detailsBtn()),
+        const SizedBox(width: 16),
+        Expanded(child: _quickApplyBtn(job['title'])),
+      ],
+    );
+  }
+
+  Widget _detailsBtn({bool fullWidth = false}) {
+    var btn = OutlinedButton(
+      onPressed: () {},
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        side: const BorderSide(color: Colors.white10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      child: const Text("Details", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+    );
+    return fullWidth ? SizedBox(width: double.infinity, child: btn) : btn;
+  }
+
+  Widget _appliedStatusBtn() {
+    return Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 20),
+          const SizedBox(width: 8),
+          const Text("Applied", style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  Widget _quickApplyBtn(String title) {
+    return ElevatedButton(
+      onPressed: () => _showApplyModal(context, title),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        elevation: 0,
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bolt, color: Colors.white, size: 20),
+          const SizedBox(width: 6),
+          const Text("Quick Apply", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  Widget _timeline(int step) {
+    final stages = ["Applied", "Under Review", "Interview", "Offer"];
+    return Column(
+      children: [
+        Row(
+          children: List.generate(4, (i) {
+            bool done = i <= step;
+            return Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 12, height: 12,
+                    decoration: BoxDecoration(color: done ? primary : Colors.white24, shape: BoxShape.circle),
+                  ),
+                  if (i < 3) Expanded(child: Container(height: 2, color: i < step ? primary : Colors.white24)),
+                ],
               ),
-              child:
-              const Text('Apply', style: TextStyle(color: Colors.white)),
-            ),
+            );
+          }),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(4, (i) {
+            bool active = i == step;
+            return Text(stages[i], style: TextStyle(color: active ? primary : Colors.white38, fontSize: 11, fontWeight: active ? FontWeight.bold : FontWeight.normal));
+          }),
+        ),
+      ],
+    );
+  }
+
+  void _showFilterModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const _FilterModal(),
+    );
+  }
+
+  void _showApplyModal(BuildContext context, String title) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ApplyModal(jobTitle: title),
+    );
+  }
+}
+
+class _FilterModal extends StatefulWidget {
+  const _FilterModal();
+  @override
+  State<_FilterModal> createState() => _FilterModalState();
+}
+
+class _FilterModalState extends State<_FilterModal> {
+  bool easyApply = false;
+  bool activelyHiring = false;
+  String experienceLevel = "All Levels";
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Filters", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              TextButton(onPressed: () {}, child: const Text("Clear all", style: TextStyle(color: Color(0xFF7C83FF)))),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _switchOption("Easy Apply", easyApply, (v) => setState(() => easyApply = v)),
+          _switchOption("Actively Hiring", activelyHiring, (v) => setState(() => activelyHiring = v)),
+          const Divider(color: Colors.white10, height: 40),
+          const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Location", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)), Icon(Icons.keyboard_arrow_up, color: Colors.white70)]),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
+            child: const TextField(style: TextStyle(color: Colors.white), decoration: InputDecoration(hintText: "Add city...", hintStyle: TextStyle(color: Colors.white38), border: InputBorder.none)),
+          ),
+          const SizedBox(height: 32),
+          const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Experience Level", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)), Icon(Icons.keyboard_arrow_up, color: Colors.white70)]),
+          const SizedBox(height: 16),
+          _radioOption("All Levels"), _radioOption("Entry Level"), _radioOption("Mid Level"),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
+            child: const Text("Show Results", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  Widget _meta(String t) =>
-      Text(t, style: const TextStyle(color: Colors.white54, fontSize: 12));
+  Widget _switchOption(String title, bool val, Function(bool) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+          Switch(value: val, onChanged: onChanged, activeColor: const Color(0xFF6366F1), inactiveThumbColor: Colors.white, inactiveTrackColor: Colors.white10),
+        ],
+      ),
+    );
+  }
 
-  Widget _dot() => const Padding(
-    padding: EdgeInsets.symmetric(horizontal: 6),
-    child: Icon(Icons.circle, size: 4, color: Colors.white38),
-  );
-
-  /* ================= SLIDE FILTER OVERLAY ================= */
-
-  Widget _filterOverlay() {
+  Widget _radioOption(String value) {
+    bool active = experienceLevel == value;
     return GestureDetector(
-      onTap: () => setState(() => showFilter = false),
-      child: Container(
-        color: Colors.black54,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: MediaQuery.of(context).size.width * 0.85,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius:
-              const BorderRadius.horizontal(right: Radius.circular(26)),
+      onTap: () => setState(() => experienceLevel = value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 22, height: 22,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: active ? const Color(0xFF6366F1) : Colors.white24, width: 2), color: active ? const Color(0xFF6366F1) : Colors.transparent),
+              child: active ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Filters',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold)),
-
-                  const SizedBox(height: 24),
-                  const Text('Job Type',
-                      style: TextStyle(color: Colors.white70)),
-                  _check('Full-time', fullTime,
-                          (v) => setState(() => fullTime = v)),
-                  _check('Part-time', partTime,
-                          (v) => setState(() => partTime = v)),
-                  _check('Contract', contract,
-                          (v) => setState(() => contract = v)),
-                  _check('Remote', remote,
-                          (v) => setState(() => remote = v)),
-                  _check('Internship', internship,
-                          (v) => setState(() => internship = v)),
-
-                  const SizedBox(height: 20),
-                  const Text('Location',
-                      style: TextStyle(color: Colors.white70)),
-                  _locationInput(),
-
-                  const SizedBox(height: 20),
-                  const Text('Experience Level',
-                      style: TextStyle(color: Colors.white70)),
-                  _dropdown(experience, [
-                    'All Levels',
-                    'Entry Level',
-                    'Mid Level',
-                    'Senior Level',
-                    'Lead/Manager',
-                  ], (v) => setState(() => experience = v)),
-
-                  const SizedBox(height: 20),
-                  const Text('Salary Range',
-                      style: TextStyle(color: Colors.white70)),
-                  _dropdown(salary, [
-                    'Any',
-                    '\$80k - \$100k',
-                    '\$100k - \$130k',
-                    '\$130k - \$160k',
-                    '\$160k+',
-                  ], (v) => setState(() => salary = v)),
-
-                  const SizedBox(height: 20),
-                  const Text('Date Posted',
-                      style: TextStyle(color: Colors.white70)),
-                  _dropdown(datePosted, [
-                    'Any Time',
-                    'Past 24 hours',
-                    'Past week',
-                    'Past month',
-                  ], (v) => setState(() => datePosted = v)),
-
-                  const SizedBox(height: 30),
-                  GestureDetector(
-                    onTap: () => setState(() => showFilter = false),
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: gradient,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text('Apply Filters',
-                          style: TextStyle(
-                              color: Colors.white, fontSize: 16)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+            const SizedBox(width: 16),
+            Text(value, style: TextStyle(color: active ? Colors.white : Colors.white70, fontSize: 16)),
+          ],
         ),
       ),
     );
   }
+}
 
-  Widget _check(String text, bool value, ValueChanged<bool> onChanged) {
-    return CheckboxListTile(
-      value: value,
-      onChanged: (v) => onChanged(v!),
-      title: Text(text, style: const TextStyle(color: Colors.white)),
-      activeColor: Colors.indigo,
-      contentPadding: EdgeInsets.zero,
-      controlAffinity: ListTileControlAffinity.leading,
-    );
-  }
+class _ApplyModal extends StatelessWidget {
+  final String jobTitle;
+  const _ApplyModal({required this.jobTitle});
 
-  Widget _locationInput() {
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      height: 44,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: TextField(
-        style: const TextStyle(color: Colors.white),
-        decoration: const InputDecoration(
-          hintText: 'Type city...',
-          hintStyle: TextStyle(color: Colors.white54),
-          border: InputBorder.none,
-        ),
-        onChanged: (v) => setState(() => location = v),
-      ),
-    );
-  }
-
-  Widget _dropdown(
-      String value, List<String> items, ValueChanged<String> onChanged) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: bg,
-          style: const TextStyle(color: Colors.white),
-          icon: const Icon(Icons.keyboard_arrow_down,
-              color: Colors.white54),
-          items: items
-              .map((e) =>
-              DropdownMenuItem(value: e, child: Text(e)))
-              .toList(),
-          onChanged: (v) => onChanged(v!),
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//filter logic
-/*
-List<Map<String, dynamic>> _filteredJobs() {
-  return jobs.where((job) {
-    if (location.isNotEmpty &&
-        !job['location']
-            .toLowerCase()
-            .contains(location.toLowerCase())) return false;
-
-    if (experience != 'All Levels' &&
-        job['experience'] != experience) return false;
-
-    if ((fullTime || partTime || contract || remote || internship) &&
-        ![
-          if (fullTime) 'Full-time',
-          if (partTime) 'Part-time',
-          if (contract) 'Contract',
-          if (remote) 'Remote',
-          if (internship) 'Internship',
-        ].contains(job['type'])) return false;
-
-    return true;
-  }).toList();
-}
-
-/* ================= JOB LIST ================= */
-
-Widget _jobList() {
-  return ListView(
-    padding: const EdgeInsets.all(16),
-    children: _filteredJobs().map(_jobCard).toList(),
-  );
-}
-
-Widget _jobCard(Map<String, dynamic> job) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 18),
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: card,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: border),
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: const BoxDecoration(color: Color(0xFF0B1220), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Apply to $jobTitle", style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 24),
+          const Text("Full Name", style: TextStyle(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 8),
+          _field("Your Name"),
+          const SizedBox(height: 20),
+          Row(
             children: [
-              Text(job['title'],
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 4),
-              Text(job['company'],
-                  style: const TextStyle(color: Colors.white70)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _meta(job['location']),
-                  _dot(),
-                  _meta(job['type']),
-                  _dot(),
-                  _meta(job['time']),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(job['salary'],
-                      style:
-                      const TextStyle(color: Colors.indigoAccent)),
-                  const SizedBox(width: 12),
-                  Text(job['applicants'],
-                      style:
-                      const TextStyle(color: Colors.white54)),
-                ],
-              ),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("Email", style: TextStyle(color: Colors.white70, fontSize: 14)), const SizedBox(height: 8), _field("Email")])),
+              const SizedBox(width: 16),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("Phone", style: TextStyle(color: Colors.white70, fontSize: 14)), const SizedBox(height: 8), _field("Phone")])),
             ],
           ),
-        ),
-        GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ApplyJobScreen()),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            child: const Text("Submit Application", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child:
-            const Text('Apply', style: TextStyle(color: Colors.white)),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _meta(String t) =>
-    Text(t, style: const TextStyle(color: Colors.white54, fontSize: 12));
-
-Widget _dot() => const Padding(
-  padding: EdgeInsets.symmetric(horizontal: 6),
-  child: Icon(Icons.circle, size: 4, color: Colors.white38),
-);
-
-/* ================= SLIDE FILTER OVERLAY ================= */
-
-Widget _filterOverlay() {
-  return GestureDetector(
-    onTap: () => setState(() => showFilter = false),
-    child: Container(
-      color: Colors.black54,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: MediaQuery.of(context).size.width * 0.85,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
-            borderRadius:
-            const BorderRadius.horizontal(right: Radius.circular(26)),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Filters',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold)),
-
-                const SizedBox(height: 24),
-                const Text('Job Type',
-                    style: TextStyle(color: Colors.white70)),
-                _check('Full-time', fullTime,
-                        (v) => setState(() => fullTime = v)),
-                _check('Part-time', partTime,
-                        (v) => setState(() => partTime = v)),
-                _check('Contract', contract,
-                        (v) => setState(() => contract = v)),
-                _check('Remote', remote,
-                        (v) => setState(() => remote = v)),
-                _check('Internship', internship,
-                        (v) => setState(() => internship = v)),
-
-                const SizedBox(height: 20),
-                const Text('Location',
-                    style: TextStyle(color: Colors.white70)),
-                _locationInput(),
-
-                const SizedBox(height: 20),
-                const Text('Experience Level',
-                    style: TextStyle(color: Colors.white70)),
-                _dropdown(experience, [
-                  'All Levels',
-                  'Entry Level',
-                  'Mid Level',
-                  'Senior Level',
-                  'Lead/Manager',
-                ], (v) => setState(() => experience = v)),
-
-                const SizedBox(height: 20),
-                const Text('Salary Range',
-                    style: TextStyle(color: Colors.white70)),
-                _dropdown(salary, [
-                  'Any',
-                  '\$80k - \$100k',
-                  '\$100k - \$130k',
-                  '\$130k - \$160k',
-                  '\$160k+',
-                ], (v) => setState(() => salary = v)),
-
-                const SizedBox(height: 20),
-                const Text('Date Posted',
-                    style: TextStyle(color: Colors.white70)),
-                _dropdown(datePosted, [
-                  'Any Time',
-                  'Past 24 hours',
-                  'Past week',
-                  'Past month',
-                ], (v) => setState(() => datePosted = v)),
-
-                const SizedBox(height: 30),
-                GestureDetector(
-                  onTap: () => setState(() => showFilter = false),
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: gradient,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text('Apply Filters',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: 16)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+          const SizedBox(height: 12),
+        ],
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _check(String text, bool value, ValueChanged<bool> onChanged) {
-  return CheckboxListTile(
-    value: value,
-    onChanged: (v) => onChanged(v!),
-    title: Text(text, style: const TextStyle(color: Colors.white)),
-    activeColor: Colors.indigo,
-    contentPadding: EdgeInsets.zero,
-    controlAffinity: ListTileControlAffinity.leading,
-  );
+  Widget _field(String hint) {
+    return TextField(style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.white24), filled: true, fillColor: const Color(0xFF1F2937), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)));
+  }
 }
-
-Widget _locationInput() {
-  return Container(
-    height: 44,
-    margin: const EdgeInsets.only(top: 8),
-    padding: const EdgeInsets.symmetric(horizontal: 12),
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: border),
-    ),
-    child: TextField(
-      style: const TextStyle(color: Colors.white),
-      decoration: const InputDecoration(
-        hintText: 'Type city...',
-        hintStyle: TextStyle(color: Colors.white54),
-        border: InputBorder.none,
-      ),
-      onChanged: (v) => setState(() => location = v),
-    ),
-  );
-}
-
-Widget _dropdown(
-    String value, List<String> items, ValueChanged<String> onChanged) {
-  return Container(
-    margin: const EdgeInsets.only(top: 8),
-    padding: const EdgeInsets.symmetric(horizontal: 12),
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: border),
-    ),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: value,
-        isExpanded: true,
-        dropdownColor: bg,
-        style: const TextStyle(color: Colors.white),
-        icon: const Icon(Icons.keyboard_arrow_down,
-            color: Colors.white54),
-        items: items
-            .map((e) =>
-            DropdownMenuItem(value: e, child: Text(e)))
-            .toList(),
-        onChanged: (v) => onChanged(v!),
-      ),
-    ),
-  );
-}
-}*/

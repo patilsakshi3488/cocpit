@@ -2,261 +2,185 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class CareerMomentViewer extends StatefulWidget {
-  final int initialIndex;
+  final List<Map<String, dynamic>> users;
+  final int initialUserIndex;
 
   const CareerMomentViewer({
     super.key,
-    this.initialIndex = 0,
+    required this.users,
+    required this.initialUserIndex,
   });
 
   @override
   State<CareerMomentViewer> createState() => _CareerMomentViewerState();
 }
 
-class _CareerMomentViewerState extends State<CareerMomentViewer> {
-  final PageController _pageController = PageController();
-  late int _currentIndex;
-  Timer? _timer;
-
-  // ⏱ Story duration
-  static const Duration storyDuration = Duration(seconds: 5);
-  double _progress = 0.0;
-
-  // 🔥 Demo stories (replace with Firestore later)
-  final List<Map<String, dynamic>> stories = [
-    {
-      'name': 'You',
-      'text': 'Got placed at Google 🎉',
-      'image': 'lib/images/profile.jpg',
-    },
-    {
-      'name': 'John Smith',
-      'text': 'Flutter workshop today 🚀',
-      'image': 'lib/images/profile.jpg',
-    },
-    {
-      'name': 'Sarah Johnson',
-      'text': 'Promoted to Product Lead 💼',
-      'image': 'lib/images/profile.jpg',
-    },
-    {
-      'name': 'Alex',
-      'text': 'Started new role at Amazon',
-      'image': 'lib/images/profile.jpg',
-    },
-    {
-      'name': 'Emily',
-      'text': 'Tech conference vibes 🎤',
-      'image': 'lib/images/profile.jpg',
-    },
-    {
-      'name': 'Rahul',
-      'text': 'Late night coding 😴💻',
-      'image': 'lib/images/profile.jpg',
-    },
-    {
-      'name': 'Neha',
-      'text': 'Building my startup 🚀',
-      'image': 'lib/images/profile.jpg',
-    },
-  ];
+class _CareerMomentViewerState extends State<CareerMomentViewer> with SingleTickerProviderStateMixin {
+  late PageController _pageController;
+  late AnimationController _animController;
+  late List<_StoryItem> _flatStories;
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
-    _pageController.jumpToPage(_currentIndex);
-    _startTimer();
-  }
+    _flatStories = [];
+    int initialPage = 0;
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  // ---------------- TIMER ----------------
-
-  void _startTimer() {
-    _timer?.cancel();
-    _progress = 0;
-
-    _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      setState(() {
-        _progress += 0.01;
-      });
-
-      if (_progress >= 1) {
-        _nextStory();
+    // Flattening stories to support seamless horizontal navigation
+    for (int i = 0; i < widget.users.length; i++) {
+      final user = widget.users[i];
+      final stories = user['stories'] as List;
+      if (i == widget.initialUserIndex) initialPage = _flatStories.length;
+      
+      for (int j = 0; j < stories.length; j++) {
+        _flatStories.add(_StoryItem(
+          userIndex: i,
+          storyIndex: j,
+          user: user,
+          story: stories[j],
+        ));
       }
+    }
+
+    _currentIndex = initialPage;
+    _pageController = PageController(initialPage: _currentIndex);
+    _animController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
+
+    _animController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _nextStory();
     });
+
+    _startStory();
+  }
+
+  void _startStory() {
+    _animController.stop();
+    _animController.reset();
+    _animController.forward();
   }
 
   void _nextStory() {
-    if (_currentIndex < stories.length - 1) {
-      _currentIndex++;
-      _pageController.animateToPage(
-        _currentIndex,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      _startTimer();
+    if (_currentIndex < _flatStories.length - 1) {
+      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
-      Navigator.pop(context); // ✅ auto close
+      Navigator.pop(context);
     }
   }
 
   void _prevStory() {
     if (_currentIndex > 0) {
-      _currentIndex--;
-      _pageController.animateToPage(
-        _currentIndex,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      _startTimer();
+      _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
-  // ---------------- UI ----------------
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_flatStories.isEmpty) return const Scaffold(backgroundColor: Colors.black);
+    
+    final current = _flatStories[_currentIndex];
+    final userStories = current.user['stories'] as List;
+
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
+      body: GestureDetector(
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity! > 500) Navigator.pop(context);
+        },
         child: Stack(
           children: [
-            // 📖 STORIES
-            GestureDetector(
-              onTapUp: (details) {
-                final width = MediaQuery.of(context).size.width;
-                if (details.globalPosition.dx < width / 2) {
-                  _prevStory();
-                } else {
-                  _nextStory();
-                }
+            // Story Content PageView
+            PageView.builder(
+              controller: _pageController,
+              itemCount: _flatStories.length,
+              onPageChanged: (idx) {
+                setState(() => _currentIndex = idx);
+                _startStory();
               },
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  _currentIndex = index;
-                  _startTimer();
-                },
-                itemCount: stories.length,
-                itemBuilder: (context, index) {
-                  final story = stories[index];
-                  return _storyPage(story);
-                },
-              ),
+              itemBuilder: (context, idx) {
+                return Image.asset(_flatStories[idx].story['image'], fit: BoxFit.cover);
+              },
             ),
-
-            // 📊 PROGRESS BAR
+            
+            // Progress Indicators (Segmented)
             Positioned(
-              top: 10,
-              left: 10,
-              right: 10,
+              top: 50, left: 10, right: 10,
               child: Row(
-                children: List.generate(
-                  stories.length,
-                      (index) => Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: index < _currentIndex
-                            ? Colors.white
-                            : index == _currentIndex
-                            ? Colors.white.withOpacity(_progress)
-                            : Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
+                children: List.generate(userStories.length, (idx) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: AnimatedBuilder(
+                        animation: _animController,
+                        builder: (context, _) {
+                          double val = 0.0;
+                          if (idx < current.storyIndex) val = 1.0;
+                          else if (idx == current.storyIndex) val = _animController.value;
+                          return LinearProgressIndicator(
+                            value: val,
+                            backgroundColor: Colors.white24,
+                            valueColor: const AlwaysStoppedAnimation(Colors.white),
+                            minHeight: 2,
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
               ),
             ),
 
-            // ❌ CLOSE BUTTON
+            // Story Header
             Positioned(
-              top: 12,
-              right: 12,
-              child: IconButton(
-                icon: const Icon(Icons.close,
-                    color: Colors.white, size: 28),
-                onPressed: () => Navigator.pop(context),
+              top: 70, left: 20, right: 10,
+              child: Row(
+                children: [
+                  CircleAvatar(radius: 18, backgroundImage: AssetImage(current.user['profile'] ?? '')),
+                  const SizedBox(width: 12),
+                  Text(current.user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Text(current.story['time'] ?? '', style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                  const Spacer(),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                ],
               ),
+            ),
+
+            // Story Text Overlay
+            Positioned(
+              bottom: 100, left: 20, right: 20,
+              child: Text(
+                current.story['text'], 
+                style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.4), 
+                textAlign: TextAlign.center
+              ),
+            ),
+
+            // Left/Right Tap Zones
+            Row(
+              children: [
+                Expanded(child: GestureDetector(onTap: _prevStory, behavior: HitTestBehavior.translucent, child: const SizedBox.expand())),
+                Expanded(child: GestureDetector(onTap: _nextStory, behavior: HitTestBehavior.translucent, child: const SizedBox.expand())),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  // ---------------- STORY PAGE ----------------
-
-  Widget _storyPage(Map<String, dynamic> story) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.asset(
-          story['image'],
-          fit: BoxFit.cover,
-        ),
-
-        // 🌑 OVERLAY
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black54,
-                Colors.transparent,
-                Colors.black87,
-              ],
-            ),
-          ),
-        ),
-
-        // 🧾 TEXT
-        Positioned(
-          bottom: 80,
-          left: 20,
-          right: 20,
-          child: Text(
-            story['text'],
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-
-        // 👤 NAME
-        Positioned(
-          top: 40,
-          left: 16,
-          child: Row(
-            children: [
-              const CircleAvatar(
-                radius: 18,
-                backgroundImage:
-                AssetImage('lib/images/profile.jpg'),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                story['name'],
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+class _StoryItem {
+  final int userIndex;
+  final int storyIndex;
+  final Map<String, dynamic> user;
+  final Map<String, dynamic> story;
+  _StoryItem({required this.userIndex, required this.storyIndex, required this.user, required this.story});
 }
