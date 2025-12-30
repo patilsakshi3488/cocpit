@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -7,7 +6,6 @@ class ForgotPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final emailCtrl = TextEditingController();
-    final FirebaseAuth auth = FirebaseAuth.instance;
 
     Future<void> sendResetLink() async {
       if (emailCtrl.text.trim().isEmpty) {
@@ -17,27 +15,15 @@ class ForgotPasswordScreen extends StatelessWidget {
         return;
       }
 
-      try {
-        await auth.sendPasswordResetEmail(
-          email: emailCtrl.text.trim(),
-        );
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Password reset email sent. Please check your inbox.",
-            ),
+      // Placeholder for Node.js reset password API call
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "If an account exists with this email, a reset link will be sent.",
           ),
-        );
-
-        Navigator.pop(context);
-      } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? "Failed to send reset email"),
-          ),
-        );
-      }
+        ),
+      );
+      Navigator.pop(context);
     }
 
     return Scaffold(

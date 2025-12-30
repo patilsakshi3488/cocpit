@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
-import '../services/user_service.dart';
 import '../services/validator.dart';
+import '../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'home_screen.dart';
@@ -24,7 +22,7 @@ class _SignInScreenState extends State<SignInScreen> {
   bool showPassword = false;
   bool isLoading = false;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
 
   final LinearGradient appGradient = const LinearGradient(
     colors: [Color(0xFF7C83FF), Color(0xFFEC4899)],
@@ -37,80 +35,30 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
-  // ---------------- EMAIL / PASSWORD ----------------
+  // ---------------- TEMP SIGN IN (MOCK) ----------------
   Future<void> _signInWithEmail() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => isLoading = true);
     FocusScope.of(context).unfocus();
-
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: emailCtrl.text.trim(),
-        password: passCtrl.text.trim(),
-      );
-
-      await UserService.createUserIfNotExists();
-      _goToHome();
-    } on FirebaseAuthException catch (e) {
-      _showSnack(e.message ?? "Login failed");
-    } finally {
-      if (mounted) setState(() => isLoading = false);
-    }
-  }
-
-  // ---------------- GOOGLE SIGN IN ----------------
-  Future<void> _signInWithGoogle() async {
     setState(() => isLoading = true);
-    try {
-      final GoogleSignInAccount? googleUser =
-      await GoogleSignIn().signIn();
 
-      if (googleUser == null) {
-        setState(() => isLoading = false);
-        return;
-      }
-
-      final GoogleSignInAuthentication googleAuth =
-      await googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await _auth.signInWithCredential(credential);
-      await UserService.createUserIfNotExists();
-
-      _goToHome();
-    } catch (_) {
-      _showSnack("Google sign-in failed");
-      setState(() => isLoading = false);
-    }
-  }
-
-  // ---------------- GITHUB SIGN IN ----------------
-  Future<void> _signInWithGitHub() async {
-    setState(() => isLoading = true);
-    try {
-      GithubAuthProvider githubProvider = GithubAuthProvider();
-      await _auth.signInWithProvider(githubProvider);
-
-      await UserService.createUserIfNotExists();
-      _goToHome();
-    } catch (_) {
-      _showSnack("GitHub sign-in failed");
-      setState(() => isLoading = false);
-    }
-  }
-
-  // ---------------- NAVIGATION ----------------
-  void _goToHome() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (route) => false,
+    final success = await _authService.login(
+      email: emailCtrl.text.trim(),
+      password: passCtrl.text.trim(),
     );
+
+    if (!mounted) return;
+    setState(() => isLoading = false);
+
+    if (success) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+            (route) => false,
+      );
+    } else {
+      _showSnack("Login failed");
+    }
   }
 
   void _showSnack(String msg) {
@@ -179,7 +127,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       Checkbox(
                         value: keepLoggedIn,
                         activeColor: const Color(0xFFEC4899),
-                        onChanged: isLoading ? null : (v) =>
+                        onChanged: isLoading
+                            ? null
+                            : (v) =>
                             setState(() => keepLoggedIn = v!),
                       ),
                       const Text(
@@ -188,7 +138,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       const Spacer(),
                       TextButton(
-                        onPressed: isLoading ? null : () {
+                        onPressed: isLoading
+                            ? null
+                            : () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -199,7 +151,8 @@ class _SignInScreenState extends State<SignInScreen> {
                         },
                         child: const Text(
                           "Forgot password?",
-                          style: TextStyle(color: Color(0xFF7C83FF)),
+                          style:
+                          TextStyle(color: Color(0xFF7C83FF)),
                         ),
                       )
                     ],
@@ -207,7 +160,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                   const SizedBox(height: 18),
 
-                  // 🔥 Gradient Sign In Button
+                  // 🔥 Sign In Button
                   SizedBox(
                     width: double.infinity,
                     height: 46,
@@ -223,20 +176,20 @@ class _SignInScreenState extends State<SignInScreen> {
                         child: Center(
                           child: isLoading
                               ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                               : const Text(
-                                  "Sign in",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            "Sign in",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -246,31 +199,36 @@ class _SignInScreenState extends State<SignInScreen> {
 
                   Row(
                     children: const [
-                      Expanded(child: Divider(color: Colors.white12)),
+                      Expanded(
+                          child:
+                          Divider(color: Colors.white12)),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        padding:
+                        EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
                           "OR",
-                          style: TextStyle(color: Colors.white54),
+                          style:
+                          TextStyle(color: Colors.white54),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.white12)),
+                      Expanded(
+                          child:
+                          Divider(color: Colors.white12)),
                     ],
                   ),
 
                   const SizedBox(height: 18),
 
-                  // 🔗 Social Buttons (Side-by-side)
                   Row(
                     children: [
                       Expanded(
                         child: _socialBtn(
-                            "GitHub", Icons.code, isLoading ? () {} : _signInWithGitHub),
+                            "GitHub", Icons.code, () {}),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _socialBtn(
-                            "Google", Icons.g_mobiledata, isLoading ? () {} : _signInWithGoogle),
+                        child: _socialBtn("Google",
+                            Icons.g_mobiledata, () {}),
                       ),
                     ],
                   ),
@@ -283,14 +241,18 @@ class _SignInScreenState extends State<SignInScreen> {
                       children: [
                         const Text(
                           "Don't have an account? ",
-                          style: TextStyle(color: Colors.white70),
+                          style:
+                          TextStyle(color: Colors.white70),
                         ),
                         GestureDetector(
-                          onTap: isLoading ? null : () {
+                          onTap: isLoading
+                              ? null
+                              : () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const SignupScreen(),
+                                builder: (_) =>
+                                const SignupScreen(),
                               ),
                             );
                           },
@@ -317,7 +279,6 @@ class _SignInScreenState extends State<SignInScreen> {
   // ---------------- HEADER ----------------
   Widget _logoHeader() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: const [
         Center(
           child: CircleAvatar(
@@ -327,22 +288,18 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         ),
         SizedBox(height: 10),
-        Center(
-          child: Text(
-            "Cocpit",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+        Text(
+          "Cocpit",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(height: 4),
-        Center(
-          child: Text(
-            "Connect. Grow. Get Hired.",
-            style: TextStyle(color: Colors.white54),
-          ),
+        Text(
+          "Connect. Grow. Get Hired.",
+          style: TextStyle(color: Colors.white54),
         ),
       ],
     );
@@ -360,7 +317,8 @@ class _SignInScreenState extends State<SignInScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70)),
+        Text(label,
+            style: const TextStyle(color: Colors.white70)),
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
@@ -370,24 +328,12 @@ class _SignInScreenState extends State<SignInScreen> {
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.white54),
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white38),
+            hintStyle:
+            const TextStyle(color: Colors.white38),
             filled: true,
             fillColor: const Color(0xFF111827),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF1F2937)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF1F2937)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF7C83FF)),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.redAccent),
             ),
           ),
         ),
@@ -429,19 +375,6 @@ class _SignInScreenState extends State<SignInScreen> {
             fillColor: const Color(0xFF111827),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF1F2937)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF1F2937)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF7C83FF)),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.redAccent),
             ),
           ),
         ),
@@ -459,7 +392,6 @@ class _SignInScreenState extends State<SignInScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF111827),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1F2937)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -467,7 +399,8 @@ class _SignInScreenState extends State<SignInScreen> {
             Icon(icon, color: Colors.white),
             const SizedBox(width: 6),
             Text(text,
-                style: const TextStyle(color: Colors.white)),
+                style:
+                const TextStyle(color: Colors.white)),
           ],
         ),
       ),

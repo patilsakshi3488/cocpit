@@ -1,46 +1,36 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:async';
+import 'secure_storage.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  /// TEMP LOGIN (MOCK)
+  Future<bool> login({
+    required String email,
+    required String password,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1)); // simulate network
 
-  Future<User?> signInEmail(String email, String password) async {
-    final res = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return res.user;
+    // save dummy token
+    await SecureStorage.saveToken("TEMP_TOKEN");
+
+    return true; // always success
   }
 
-  Future<User?> signUpEmail(String email, String password) async {
-    final res = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return res.user;
+  /// TEMP SIGNUP (MOCK)
+  Future<bool> signup({
+    required String fullName,
+    required String email,
+    required String password,
+    required String accountType,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    await SecureStorage.saveToken("TEMP_TOKEN");
+
+    return true;
   }
 
-  Future<User?> signInGoogle() async {
-    final googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return null;
-
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final res = await _auth.signInWithCredential(credential);
-    return res.user;
-  }
-
-  Future<User?> signInGitHub() async {
-    final provider = GithubAuthProvider();
-    final res = await _auth.signInWithProvider(provider);
-    return res.user;
-  }
-
-  Future<void> resetPassword(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
+  /// LOGOUT
+  Future<void> logout() async {
+    await SecureStorage.deleteToken();
   }
 }

@@ -1,209 +1,185 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import 'fullscreen_image.dart';
-import 'settings_screen.dart';
-import 'edit_profile_screen.dart';
 import 'bottom_navigation.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class EditProfileScreen extends StatefulWidget {
+  final Map<String, String> initialData;
 
-  static const String coverImage = 'lib/images/cover.jpg';
-  static const String profileImage = 'lib/images/profile.jpg';
+  const EditProfileScreen({super.key, required this.initialData});
 
-  void _photoOptions(BuildContext context, String type) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF111827),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _sheetItem(Icons.photo_camera, 'Add $type Photo'),
-          _sheetItem(Icons.edit, 'Edit $type Photo'),
-          _sheetItem(Icons.delete, 'Remove $type Photo', danger: true),
-          const SizedBox(height: 12),
-        ],
-      ),
-    );
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController _nameController;
+  late TextEditingController _headlineController;
+  late TextEditingController _jobTitleController;
+  late TextEditingController _companyController;
+  late TextEditingController _schoolController;
+  late TextEditingController _degreeController;
+  late TextEditingController _locationController;
+  late TextEditingController _aboutController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialData['name']);
+    _headlineController = TextEditingController(text: widget.initialData['headline']);
+    _jobTitleController = TextEditingController(text: widget.initialData['jobTitle']);
+    _companyController = TextEditingController(text: widget.initialData['company']);
+    _schoolController = TextEditingController(text: widget.initialData['school']);
+    _degreeController = TextEditingController(text: widget.initialData['degree']);
+    _locationController = TextEditingController(text: widget.initialData['location']);
+    _aboutController = TextEditingController(text: widget.initialData['about']);
   }
 
-  static Widget _sheetItem(
-      IconData icon,
-      String text, {
-        bool danger = false,
-      }) {
-    return ListTile(
-      leading: Icon(icon, color: danger ? Colors.red : Colors.white),
-      title: Text(
-        text,
-        style: TextStyle(color: danger ? Colors.red : Colors.white),
-      ),
-      onTap: () {},
-    );
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _headlineController.dispose();
+    _jobTitleController.dispose();
+    _companyController.dispose();
+    _schoolController.dispose();
+    _degreeController.dispose();
+    _locationController.dispose();
+    _aboutController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      endDrawer: const _ProfileDrawer(),
-      bottomNavigationBar: const AppBottomNavigation(currentIndex: 4),
-
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Hero(
-                    tag: 'cover',
-                    child: Container(
-                      height: 190,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(coverImage),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  Positioned(
-                    right: 16,
-                    top: 16,
-                    child: Builder(
-                      builder: (context) => _roundIcon(
-                        Icons.menu,
-                            () => Scaffold.of(context).openEndDrawer(),
-                      ),
-                    ),
-                  ),
-
-                  Positioned(
-                    left: 20,
-                    bottom: -50,
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      child: const CircleAvatar(
-                        radius: 47,
-                        backgroundImage: AssetImage(profileImage),
-                      ),
-                    ),
-                  ),
-                ],
+      backgroundColor: const Color(0xFF0B1220),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0B1220),
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        toolbarHeight: 80,
+        title: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const Expanded(
+              child: Text(
+                "Edit Profile",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+                overflow: TextOverflow.ellipsis,
               ),
-
-              const SizedBox(height: 70),
-
-              Padding(
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Sally Liang',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    /// ✅ EDIT PROFILE BUTTON (WORKING)
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ProfileScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('Edit Information'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(
-                          color: Colors.white.withOpacity(0.15),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 100),
-                  ],
-                ),
               ),
-            ],
+              child: const Text("Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  Navigator.pop(context, {
+                    'name': _nameController.text,
+                    'headline': _headlineController.text,
+                    'jobTitle': _jobTitleController.text,
+                    'company': _companyController.text,
+                    'school': _schoolController.text,
+                    'degree': _degreeController.text,
+                    'location': _locationController.text,
+                    'about': _aboutController.text,
+                  });
+                }
+              },
+              icon: const Icon(Icons.save_outlined, size: 18),
+              label: const Text("Save Changes", style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: const AppBottomNavigation(currentIndex: 4),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInputLabel("Full Name"),
+                _buildTextField(_nameController, "Enter your name"),
+                _buildInputLabel("Headline"),
+                _buildTextField(_headlineController, "Enter your professional headline"),
+                _buildInputLabel("Job Title"),
+                _buildTextField(_jobTitleController, "Enter your job title"),
+                _buildInputLabel("Company Name"),
+                _buildTextField(_companyController, "Enter your company name"),
+                _buildInputLabel("Education (School)"),
+                _buildTextField(_schoolController, "Enter your school"),
+                _buildInputLabel("Degree"),
+                _buildTextField(_degreeController, "Enter your degree"),
+                _buildInputLabel("Location"),
+                _buildTextField(_locationController, "Enter your location"),
+                _buildInputLabel("About"),
+                _buildTextField(_aboutController, "Tell us about yourself", maxLines: 6),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-Widget _roundIcon(IconData icon, VoidCallback onTap) {
-  return GestureDetector(
-    onTap: onTap,
-    child: CircleAvatar(
-      backgroundColor: Colors.black.withOpacity(0.55),
-      child: Icon(icon, color: Colors.white),
-    ),
-  );
-}
+  Widget _buildInputLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 16),
+      child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500)),
+    );
+  }
 
-class _ProfileDrawer extends StatelessWidget {
-  const _ProfileDrawer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: const Color(0xFF0F172A),
-      child: Column(
-        children: [
-          const SizedBox(height: 50),
-
-          ListTile(
-            leading: const Icon(Icons.settings, color: Colors.white),
-            title: const Text('Settings',
-                style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SettingsScreen(),
-                ),
-              );
-            },
-          ),
-
-          const Spacer(),
-
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title:
-            const Text('Logout', style: TextStyle(color: Colors.red)),
-            onTap: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/',
-                    (route) => false,
-              );
-            },
-          ),
-        ],
+  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white24),
+        filled: true,
+        fillColor: const Color(0xFF0F172A),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'This field cannot be empty';
+        }
+        return null;
+      },
     );
   }
 }

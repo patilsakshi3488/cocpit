@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'chat_screen.dart';
@@ -16,6 +15,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool showTop = false;
+  final TextEditingController _searchController = TextEditingController();
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
 
   final LinearGradient gradient = const LinearGradient(
     colors: [Color(0xFF7C83FF), Color(0xFFEC4899)],
@@ -39,47 +41,21 @@ class _HomeScreenState extends State<HomeScreen> {
       'stories': [
         {
           'image': 'lib/images/story1.png',
-          'text': 'Excited to share a sneak peek of our latest product feature! This has been months in the making and the team has done an incredible job. Can’t wait to hear your thoughts!',
+          'text': 'Excited to share a sneak peek of our latest product feature!',
           'time': '6h ago'
         },
       ],
     },
     {
-      'name': 'David Kim',
+      'name': 'James Wilson',
       'isMine': false,
       'image': 'lib/images/story4.png',
       'profile': 'lib/images/profile3.jpg',
       'stories': [
         {
           'image': 'lib/images/story4.png',
-          'text': 'Sharing some insights from our latest data analysis project. The patterns we discovered are fascinating! Always amazed by what the data reveals when you look closely enough.',
+          'text': 'Sharing some insights from our latest data analysis project.',
           'time': '8h ago'
-        },
-      ],
-    },
-    {
-      'name': 'Sarah Chen',
-      'isMine': false,
-      'image': 'lib/images/post1.jpg',
-      'profile': 'lib/images/profile3.jpg',
-      'stories': [
-        {
-          'image': 'lib/images/post1.jpg',
-          'text': 'Just launched our new design system! Working with an amazing team to create consistent, accessible experiences across all our products.',
-          'time': '2h ago'
-        },
-      ],
-    },
-    {
-      'name': 'John Smith',
-      'isMine': false,
-      'image': 'lib/images/post2.jpg',
-      'profile': 'lib/images/profile2.jpg',
-      'stories': [
-        {
-          'image': 'lib/images/post2.jpg',
-          'text': 'Great discussions at today’s architecture review 🚀',
-          'time': '5h ago'
         },
       ],
     },
@@ -99,14 +75,29 @@ class _HomeScreenState extends State<HomeScreen> {
       'isPrivate': false,
       'comments_count': 47,
       'shares': 12,
-      'comments': [],
+      'comments': [
+        {
+          'name': 'Alex Johnson',
+          'time': '2h',
+          'text': 'This looks amazing! Can\'t wait to see it in action.',
+          'likes': 15,
+          'isLiked': false,
+        },
+        {
+          'name': 'Maria Garcia',
+          'time': '1h',
+          'text': 'Great work, Sarah! The component library is so clean.',
+          'likes': 8,
+          'isLiked': false,
+        }
+      ],
     },
     {
       'id': '2',
       'name': 'Sally Liang',
-      'title': 'Senior Financial Analyst at Johnson & Johnson',
+      'title': 'Senior Financial Analyst',
       'time': '1d ago',
-      'text': "Just finished a deep dive into data analysis trends for 2024. The shift towards AI-driven forecasting is fascinating! #DataAnalysis #FinTech",
+      'text': "Just finished a deep dive into data analysis trends for 2024. The shift towards AI-driven forecasting is fascinating!",
       'image': null,
       'profile': 'lib/images/profile4.jpg',
       'likes': 1200,
@@ -199,6 +190,106 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Alex Thompson', 'role': 'Designer', 'profile': 'lib/images/profile2.jpg', 'color': Colors.orangeAccent},
   ];
 
+  List<Map<String, dynamic>> get _allPeople {
+    return [
+      {'name': 'Sarah Chen', 'role': 'UX Designer at Design Studio', 'profile': 'lib/images/profile3.jpg', 'mutual': '5 mutual connections'},
+      {'name': 'Michael Chen', 'role': 'Recruiter', 'profile': 'lib/images/profile2.jpg', 'mutual': '12 mutual connections'},
+      {'name': 'Emily Rodriguez', 'role': 'Hiring Manager', 'profile': 'lib/images/profile4.jpg', 'mutual': '3 mutual connections'},
+      {'name': 'Mike Torres', 'role': 'Product Manager', 'profile': 'lib/images/profile2.jpg', 'mutual': '8 mutual connections'},
+      {'name': 'James Wilson', 'role': 'Software Engineer', 'profile': 'lib/images/profile3.jpg', 'mutual': '2 mutual connections'},
+    ];
+  }
+
+  void _updateOverlay(String query) {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    }
+
+    if (query.isEmpty) return;
+
+    final results = _allPeople.where((p) => p['name'].toString().toLowerCase().contains(query.toLowerCase())).toList();
+
+    if (results.isEmpty) return;
+
+    _overlayEntry = _createOverlayEntry(results);
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  OverlayEntry _createOverlayEntry(List<Map<String, dynamic>> results) {
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        width: 300,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 50),
+          child: Material(
+            elevation: 8,
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1F2937),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      "PEOPLE",
+                      style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                    ),
+                  ),
+                  ...results.take(3).map((person) => InkWell(
+                    onTap: () {
+                      _searchController.clear();
+                      _updateOverlay("");
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage: AssetImage(person['profile']),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(person['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                Text(person['role'], style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                Text(person['mutual'], style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _overlayEntry?.remove();
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -238,44 +329,47 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1F2937),
-              borderRadius: BorderRadius.circular(8),
-            ),
+            decoration: BoxDecoration(color: const Color(0xFF1F2937), borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.logo_dev, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1F2937),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.search, color: Colors.white54, size: 20),
-                  SizedBox(width: 10),
-                  Text("Search...", style: TextStyle(color: Colors.white54)),
-                ],
+            child: CompositedTransformTarget(
+              link: _layerLink,
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(color: const Color(0xFF1F2937), borderRadius: BorderRadius.circular(10)),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search, color: Colors.white54, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: _updateOverlay,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          hintText: "Search...",
+                          hintStyle: TextStyle(color: Colors.white54),
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.notifications_none, color: Colors.white),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationScreen()),
-            ),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ChatScreen()),
-            ),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())),
           ),
         ],
       ),
@@ -296,6 +390,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _careerMomentsBar() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double itemWidth = screenWidth > 600 ? 150 : 120;
+
     return SizedBox(
       height: 180,
       child: ListView.builder(
@@ -309,19 +406,11 @@ class _HomeScreenState extends State<HomeScreen> {
               if (m['isMine']) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCareerMomentScreen()));
               } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CareerMomentViewer(
-                      users: careerMoments,
-                      initialUserIndex: index,
-                    ),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => CareerMomentViewer(users: careerMoments, initialUserIndex: index)));
               }
             },
             child: Container(
-              width: 120,
+              width: itemWidth,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
@@ -337,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
                             child: const Icon(Icons.add, color: Colors.white, size: 30),
                           ),
                           const SizedBox(height: 12),
@@ -345,24 +434,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                  if (!m['isMine']) ...[
+                  if (!m['isMine'])
                     Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
+                      bottom: 8, left: 0, right: 0,
                       child: Column(
                         children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: const Color(0xFF7C83FF),
-                            child: CircleAvatar(radius: 16, backgroundImage: AssetImage(m['profile'])),
-                          ),
+                          CircleAvatar(radius: 18, backgroundColor: const Color(0xFF7C83FF), child: CircleAvatar(radius: 16, backgroundImage: AssetImage(m['profile']))),
                           const SizedBox(height: 4),
                           Text(m['name'], style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
-                  ],
                 ],
               ),
             ),
@@ -390,17 +472,87 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF4F70F0) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: BoxDecoration(color: selected ? const Color(0xFF4F70F0) : Colors.transparent, borderRadius: BorderRadius.circular(10)),
         child: Text(text, style: TextStyle(color: selected ? Colors.white : Colors.white54, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
+  Widget _suggestedForYouSection() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = screenWidth > 600 ? 250 : 180;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text("Suggested for you", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        SizedBox(
+          height: 240,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: suggestedUsers.length,
+            itemBuilder: (context, index) {
+              final user = suggestedUsers[index];
+              return Container(
+                width: cardWidth,
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F2937),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                ),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        CircleAvatar(radius: 40, backgroundImage: AssetImage(user['profile'])),
+                        if (user['isVerified'])
+                          const Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: CircleAvatar(
+                              radius: 10,
+                              backgroundColor: Color(0xFF4F70F0),
+                              child: Icon(Icons.check, color: Colors.white, size: 12),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(user['role'], style: const TextStyle(color: Colors.white54, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text("${user['followers']} followers", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4F70F0),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(double.infinity, 32),
+                      ),
+                      child: const Text("Follow", style: TextStyle(color: Colors.white, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const Divider(color: Colors.white10, height: 8, thickness: 8),
+      ],
+    );
+  }
+
   Widget _postView(Map<String, dynamic> post) {
     String likesText = post['likes'] >= 1000 ? "${(post['likes'] / 1000).toStringAsFixed(1)}k" : "${post['likes']}";
+    bool isLiked = post['isLiked'] ?? false;
+    bool isPrivate = post['isPrivate'] ?? false;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -411,10 +563,7 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundImage: AssetImage(post['profile'] ?? 'lib/images/profile.png'),
-                ),
+                CircleAvatar(radius: 24, backgroundImage: AssetImage(post['profile'] ?? 'lib/images/profile.png')),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -425,7 +574,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Row(
                         children: [
                           Text(post['time'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                          if (post['isPrivate'] == true) ...[
+                          if (isPrivate) ...[
                             const SizedBox(width: 4),
                             const Icon(Icons.visibility_off_outlined, color: Colors.white38, size: 12),
                           ],
@@ -492,8 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(post['text'], style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.5)),
           ),
           const SizedBox(height: 16),
-          if (post['image'] != null)
-            Image.asset(post['image'], width: double.infinity, fit: BoxFit.cover),
+          if (post['image'] != null) Image.asset(post['image'], width: double.infinity, fit: BoxFit.cover),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -517,9 +665,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _actionButton(Icons.favorite_border, "Like", () {}),
-                    _actionButton(Icons.chat_bubble_outline, "Comment", () {}),
-                    _actionButton(Icons.share_outlined, "Share", () => _showShareSheet(context)),
+                    _actionBtn(
+                      isLiked ? Icons.favorite : Icons.favorite_border, 
+                      "Like", 
+                      isLiked ? Colors.pinkAccent : Colors.white54,
+                      () {
+                        setState(() {
+                          post['isLiked'] = !isLiked;
+                          post['likes'] += isLiked ? -1 : 1;
+                        });
+                      }
+                    ),
+                    _actionBtn(Icons.chat_bubble_outline, "Comment", Colors.white54, () => _showCommentSheet(context, post)),
+                    _actionBtn(Icons.share_outlined, "Share", Colors.white54, () => _showShareSheet(context)),
                   ],
                 ),
               ],
@@ -531,16 +689,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _actionButton(IconData icon, String text, VoidCallback onTap) {
+  Widget _actionBtn(IconData icon, String text, Color color, VoidCallback onTap) {
     return InkWell(
-      onTap: onTap,
+      onTap: onTap, 
       child: Row(
         children: [
-          Icon(icon, color: Colors.white54, size: 20),
-          const SizedBox(width: 6),
-          Text(text, style: const TextStyle(color: Colors.white54, fontSize: 13)),
-        ],
-      ),
+          Icon(icon, color: color, size: 20), 
+          const SizedBox(width: 6), 
+          Text(text, style: TextStyle(color: color, fontSize: 13))
+        ]
+      )
+    );
+  }
+
+  void _showCommentSheet(BuildContext context, Map<String, dynamic> post) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CommentSheet(post: post),
     );
   }
 
@@ -603,7 +770,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.white.withOpacity(0.05) : Colors.transparent,
+                              color: isSelected ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
                             ),
                             child: Row(
                               children: [
@@ -703,71 +870,145 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+}
 
-  Widget _suggestedForYouSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text("Suggested for you", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-        ),
-        SizedBox(
-          height: 240,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: suggestedUsers.length,
-            itemBuilder: (context, index) {
-              final user = suggestedUsers[index];
-              return Container(
-                width: 180,
-                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+class _CommentSheet extends StatefulWidget {
+  final Map<String, dynamic> post;
+  const _CommentSheet({required this.post});
+
+  @override
+  State<_CommentSheet> createState() => _CommentSheetState();
+}
+
+class _CommentSheetState extends State<_CommentSheet> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: const BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            const Text("Comments", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white10, height: 1),
+            Expanded(
+              child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Stack(
-                      children: [
-                        CircleAvatar(radius: 40, backgroundImage: AssetImage(user['profile'])),
-                        if (user['isVerified'])
-                          const Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: CircleAvatar(
-                              radius: 10,
-                              backgroundColor: Color(0xFF4F70F0),
-                              child: Icon(Icons.check, color: Colors.white, size: 12),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(user['role'], style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                    const SizedBox(height: 4),
-                    Text("${user['followers']} followers", style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                    const Spacer(),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F70F0),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        minimumSize: const Size(double.infinity, 32),
+                itemCount: widget.post['comments'].length,
+                itemBuilder: (context, index) => _CommentItem(comment: widget.post['comments'][index]),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white10))),
+              child: Row(
+                children: [
+                  const CircleAvatar(radius: 18, backgroundImage: AssetImage('lib/images/profile.png')),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(24)),
+                      child: TextField(
+                        controller: _controller,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(hintText: "Add a comment...", hintStyle: TextStyle(color: Colors.white38, fontSize: 14), border: InputBorder.none),
                       ),
-                      child: const Text("Follow", style: TextStyle(color: Colors.white, fontSize: 13)),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () {
+                      if (_controller.text.isNotEmpty) {
+                        setState(() {
+                          widget.post['comments'].insert(0, {'name': 'You', 'time': 'Just now', 'text': _controller.text, 'likes': 0, 'isLiked': false});
+                          widget.post['comments_count']++;
+                        });
+                        _controller.clear();
+                      }
+                    },
+                    child: const Text("Post", style: TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CommentItem extends StatefulWidget {
+  final Map<String, dynamic> comment;
+  const _CommentItem({required this.comment});
+
+  @override
+  State<_CommentItem> createState() => _CommentItemState();
+}
+
+class _CommentItemState extends State<_CommentItem> {
+  @override
+  Widget build(BuildContext context) {
+    bool isLiked = widget.comment['isLiked'] ?? false;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const CircleAvatar(radius: 18, backgroundImage: AssetImage('lib/images/profile.png')),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(widget.comment['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(widget.comment['time'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(widget.comment['text'], style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() {
+                        widget.comment['isLiked'] = !isLiked;
+                        widget.comment['likes'] += isLiked ? -1 : 1;
+                      }),
+                      child: Text("Like", style: TextStyle(color: isLiked ? Colors.pinkAccent : Colors.white54, fontSize: 12, fontWeight: isLiked ? FontWeight.bold : FontWeight.normal)),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text("Reply", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    const SizedBox(width: 16),
+                    if (widget.comment['likes'] > 0)
+                      Text("${widget.comment['likes']} likes", style: const TextStyle(color: Colors.white38, fontSize: 12)),
                   ],
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ),
-        const Divider(color: Colors.white10, height: 8, thickness: 8),
-      ],
+        ],
+      ),
     );
   }
 }

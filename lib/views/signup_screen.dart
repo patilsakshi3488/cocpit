@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'signin_screen.dart';
 import 'home_screen.dart';
 
@@ -14,8 +15,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final nameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String selectedRole = 'Select your role';
 
@@ -42,11 +41,11 @@ class _SignupScreenState extends State<SignupScreen> {
     end: Alignment.centerRight,
   );
 
-  // ---------------- FIREBASE SIGN UP ----------------
+  // ---------------- BACKEND SIGN UP ----------------
 
   Future<void> _createAccount() async {
-    if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
-      _showMsg("Email and password required");
+    if (nameCtrl.text.isEmpty || emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
+      _showMsg("All fields are required");
       return;
     }
 
@@ -58,27 +57,38 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       setState(() => isLoading = true);
 
-      UserCredential userCredential =
-      await _auth.createUserWithEmailAndPassword(
-        email: emailCtrl.text.trim(),
-        password: passCtrl.text.trim(),
+      // Node.js API Endpoint (10.0.2.2 is localhost for Android Emulator)
+      final url = Uri.parse("http://10.0.2.2:5000/api/auth/register");
+      
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "fullName": nameCtrl.text.trim(),
+          "email": emailCtrl.text.trim(),
+          "password": passCtrl.text.trim(),
+          "role": selectedRole,
+        }),
       );
 
-      await userCredential.user!
-          .updateDisplayName(nameCtrl.text.trim());
-      await userCredential.user!.sendEmailVerification();
+      final responseData = jsonDecode(response.body);
 
-      _showMsg("Account created successfully");
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        _showMsg("Account created successfully");
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-            (route) => false,
-      );
-    } on FirebaseAuthException catch (e) {
-      _showMsg(e.message ?? "Signup failed");
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      } else {
+        _showMsg(responseData['message'] ?? "Signup failed");
+      }
+    } catch (e) {
+      _showMsg("Server connection failed. Please try again.");
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -286,11 +296,15 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
           child: isLoading
-              ? const CircularProgressIndicator(color: Colors.white)
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                )
               : const Text(
             "Create Account",
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w600),
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
           ),
         ),
       ),
