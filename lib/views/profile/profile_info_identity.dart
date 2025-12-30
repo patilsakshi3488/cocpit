@@ -8,6 +8,7 @@ class ProfileInfoIdentity extends StatelessWidget {
   final String availability;
   final String preference;
   final VoidCallback onEditProfile;
+  final VoidCallback onEditIdentity;
 
   const ProfileInfoIdentity({
     super.key,
@@ -18,6 +19,7 @@ class ProfileInfoIdentity extends StatelessWidget {
     required this.availability,
     required this.preference,
     required this.onEditProfile,
+    required this.onEditIdentity,
   });
 
   @override
@@ -75,11 +77,19 @@ class ProfileInfoIdentity extends StatelessWidget {
             style: TextStyle(color: Colors.white38, fontSize: 14),
           ),
           const SizedBox(height: 24),
-          _identityRow("OPEN TO:", openTo, const Color(0xFF1E293B), const Color(0xFF60A5FA)),
-          const SizedBox(height: 8),
-          _identityRow("AVAILABILITY:", availability, const Color(0xFF064E3B), const Color(0xFF34D399)),
-          const SizedBox(height: 8),
-          _identityRow("PREFERENCE:", preference, const Color(0xFF1E293B), const Color(0xFF60A5FA)),
+          GestureDetector(
+            onTap: onEditIdentity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _identityRow("OPEN TO:", openTo, const Color(0xFF1E293B), const Color(0xFF60A5FA)),
+                const SizedBox(height: 8),
+                _identityRow("AVAILABILITY:", availability, const Color(0xFF064E3B), const Color(0xFF34D399)),
+                const SizedBox(height: 8),
+                _identityRow("PREFERENCE:", preference, const Color(0xFF1E293B), const Color(0xFF60A5FA)),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
         ],
       ),

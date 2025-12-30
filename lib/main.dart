@@ -29,14 +29,16 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             themeMode: themeService.themeMode,
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark(),
+            theme: themeService.lightTheme,
+            darkTheme: themeService.currentTheme == AppTheme.navy 
+                ? themeService.navyTheme 
+                : themeService.darkTheme,
             home: const _RootDecider(),
             routes: {
               '/feed': (_) => const HomeScreen(),
               '/jobs': (_) => const JobsScreen(),
               '/add': (_) => const CreatePostScreen(),
-              '/events': (_) => EventsScreen(),
+              '/events': (_) => const EventsScreen(),
               '/profile': (_) => const ProfileScreen(),
               '/notifications': (_) => const NotificationScreen(),
             },
@@ -47,7 +49,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// TEMP auth decision (NO Firebase)
 class _RootDecider extends StatelessWidget {
   const _RootDecider();
 

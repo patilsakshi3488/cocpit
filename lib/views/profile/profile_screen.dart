@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../edit_profile_screen.dart';
 import '../bottom_navigation.dart';
-import '../settings_screen.dart';
+import 'settings_screen/settings_screen.dart';
+import 'analytics/analytics_dashboard_screen.dart';
 
 import 'profile_models.dart';
 import 'profile_header.dart';
@@ -28,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final Color bg = const Color(0xFF0B1220);
   final Color primary = const Color(0xFF6366F1);
-  final Color dividerColor = Colors.white.withOpacity(0.1);
+  final Color dividerColor = Colors.white.withValues(alpha: 0.05);
 
   // Profile Data
   String name = "Sally Liang";
@@ -44,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String availability = "Immediate";
   String preference = "Hybrid";
   String profileImage = 'lib/images/profile.jpg';
-  String? coverImage; // Added cover image state
+  String? coverImage;
 
   List<Experience> experiences = [
     Experience(
@@ -144,7 +145,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       imagePath: profileImage,
       heroTag: 'profile_hero',
       onUpdate: () {
-        // Placeholder for image picker logic
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile photo update coming soon")));
       },
       onDelete: () {
@@ -161,7 +161,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       imagePath: coverImage,
       heroTag: 'cover_hero',
       onUpdate: () {
-        // Placeholder for image picker logic
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cover photo update coming soon")));
       },
       onDelete: () {
@@ -301,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onCoverCameraPressed: _handleCoverPhotoActions,
               backgroundColor: bg,
             ),
-            const SizedBox(height: 60),
+            const SizedBox(height: 80),
             ProfileInfoIdentity(
               name: name,
               headline: headline,
@@ -310,6 +309,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               availability: availability,
               preference: preference,
               onEditProfile: _navigateToEditProfile,
+              onEditIdentity: _showEditIdentityModal,
             ),
             _buildDivider(),
             const ProfileStats(),
@@ -361,7 +361,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             _buildDivider(),
             ProfileSuggestedSection(suggestedUsers: suggestedUsers),
-            const SizedBox(height: 40),
+            const SizedBox(height: 80),
           ],
         ),
       ),
@@ -370,63 +370,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildMenuDrawer() {
     return Drawer(
-      backgroundColor: const Color(0xFF0F172A),
+      width: 200,
+      backgroundColor: const Color(0xFF1E293B).withValues(alpha: 0.95),
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundImage: profileImage.isNotEmpty ? AssetImage(profileImage) : null,
-                    child: profileImage.isEmpty ? const Icon(Icons.person, color: Colors.white) : null,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                        const Text("View Profile", style: TextStyle(color: Colors.white38, fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(color: Colors.white10),
-            _buildDrawerItem(Icons.settings_outlined, "Settings", () {
+            const SizedBox(height: 20),
+            _buildDrawerItem(null, "Settings", () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             }),
-            _buildDrawerItem(Icons.analytics_outlined, "Analytics", () {
+            _buildDrawerItem(null, "Analytics", () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Analytics coming soon")));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AnalyticsDashboardScreen()));
             }),
-            const Spacer(),
-            const Divider(color: Colors.white10),
-            _buildDrawerItem(Icons.logout, "Logout", () {
+            _buildDrawerItem(Icons.logout, "Log out", () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Logging out...")));
-            }, color: Colors.redAccent),
-            const SizedBox(height: 16),
+            }),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap, {Color color = Colors.white70}) {
+  Widget _buildDrawerItem(IconData? icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+      leading: icon != null ? Icon(icon, color: Colors.white, size: 20) : null,
+      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400)),
       onTap: onTap,
+      dense: true,
+      visualDensity: VisualDensity.compact,
     );
   }
 
   Widget _buildDivider() {
-    return Divider(color: dividerColor, thickness: 8, height: 32);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Divider(color: dividerColor, thickness: 1, height: 80),
+    );
   }
 }
