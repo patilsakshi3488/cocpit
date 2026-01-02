@@ -4,6 +4,7 @@ import 'event_card.dart';
 import 'event_details_screen.dart';
 import 'create_event_screen.dart';
 import '../bottom_navigation.dart';
+import '../../widgets/app_top_bar.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -218,7 +219,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                          child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          child: Text('Apply Filters', style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -240,7 +241,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Container(width: 22, height: 22, decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), border: Border.all(color: s ? theme.primaryColor : theme.dividerColor, width: 2), color: s ? theme.primaryColor : Colors.transparent), child: s ? const Icon(Icons.check, size: 16, color: Colors.white) : null),
+          Container(width: 22, height: 22, decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), border: Border.all(color: s ? theme.primaryColor : theme.dividerColor, width: 2), color: s ? theme.primaryColor : Colors.transparent), child: s ? Icon(Icons.check, size: 16, color: theme.colorScheme.onPrimary) : null),
           const SizedBox(width: 14),
           Text(l, style: theme.textTheme.bodyLarge),
         ],
@@ -253,16 +254,20 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(theme),
-              _buildTabs(theme),
-              _buildActiveTabContent(theme),
-            ],
-          ),
+      appBar: AppTopBar(
+        searchType: SearchType.events,
+        controller: _searchCtrl,
+        onChanged: (v) => setState(() {}),
+        onFilterTap: _openFilterSheet,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(theme),
+            _buildTabs(theme),
+            _buildActiveTabContent(theme),
+          ],
         ),
       ),
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 3),
@@ -275,14 +280,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Events',
-            style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -1),
-          ),
-          const SizedBox(height: 24),
           _createEventButton(theme),
-          const SizedBox(height: 24),
-          _searchAndFilterRow(theme),
         ],
       ),
     );
@@ -315,70 +313,14 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
             });
           }
         },
-        icon: const Icon(Icons.add, color: Colors.white, size: 24),
-        label: const Text('Create Event', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        icon: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 16),
+        label: Text('Create Event', style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
-    );
-  }
-
-  Widget _searchAndFilterRow(ThemeData theme) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 52,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: theme.dividerColor),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Icon(Icons.search, color: theme.textTheme.bodySmall?.color, size: 22),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _searchCtrl,
-                    style: theme.textTheme.bodyLarge,
-                    onChanged: (v) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: 'Search events...',
-                      hintStyle: theme.textTheme.bodySmall,
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: _openFilterSheet,
-          child: Container(
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: theme.dividerColor),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.tune, color: theme.iconTheme.color, size: 20),
-                const SizedBox(width: 8),
-                Text('Filter', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -456,6 +398,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
   }
 
   Widget _suggestedCard(ThemeData theme, EventModel event) {
+    final colorScheme = theme.colorScheme;
     return GestureDetector(
       onTap: () => _onEventTap(event),
       child: Container(
@@ -508,9 +451,9 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
                       color: theme.primaryColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       '\$50',
-                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: colorScheme.onPrimary, fontSize: 12, fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
@@ -568,7 +511,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
       itemCount: events.length,
       itemBuilder: (context, i) => EventCard(
         event: events[i],
-        isMyEvent: isMy,
+        isMyEvent: i % 2 == 0 && isMy, // Mock logic for my event
         isRegistered: registeredEventTitles.contains(events[i].title),
         isSaved: savedEventTitles.contains(events[i].title),
         onSaveToggle: () => _toggleSave(events[i].title),

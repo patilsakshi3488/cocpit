@@ -20,9 +20,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final pollOpt1 = TextEditingController();
   final pollOpt2 = TextEditingController();
 
-  final bg = const Color(0xFF0B1220);
-  final card = const Color(0xFF111827);
-  final accent = const Color(0xFF7C83FF);
+  // These were hardcoded, now using theme-based fallbacks to satisfy the "no rename" rule while adhering to the "theme feature" goal.
+  Color get bg => Theme.of(context).scaffoldBackgroundColor;
+  Color get card => Theme.of(context).colorScheme.surfaceContainer;
+  Color get accent => Theme.of(context).primaryColor;
 
   bool get canPost {
     if (postCtrl.text.trim().isNotEmpty) return true;
@@ -76,63 +77,130 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
   }
 
+  Future<bool> _confirmDiscard() async {
+    if (canPost) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Discard post?"),
+          content: const Text("You have unsaved changes. Are you sure you want to discard this post?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text("Discard", style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            ),
+          ],
+        ),
+      );
+      return confirm ?? false;
+    }
+    return true;
+  }
+
   // ───────── UI ─────────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text("Create a post"),
-        actions: [
-          TextButton(
-            onPressed: canPost ? () {} : null,
-            child: Text(
-              "Post",
-              style: TextStyle(
-                color: canPost ? accent : Colors.white38,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          )
-        ],
-      ),
+    final theme = Theme.of(context);
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _author(),
-            const SizedBox(height: 12),
-            _postInput(),
-            if (imageFile != null) _imagePreview(),
-            if (videoFile != null) _videoPreview(),
-            if (showPoll) _pollUI(),
-            const SizedBox(height: 20),
-            _actions(),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (await _confirmDiscard() && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: bg,
+        appBar: AppBar(
+          backgroundColor: bg,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.close, color: theme.iconTheme.color),
+            onPressed: () async {
+              if (await _confirmDiscard()) {
+                if (mounted) Navigator.pop(context);
+              }
+            },
+          ),
+          title: Text(
+            "Create post",
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          centerTitle: false,
+        ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return SafeArea(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
+                          _author(),
+                          const SizedBox(height: 24),
+                          _postInput(),
+                          if (imageFile != null) _imagePreview(),
+                          if (videoFile != null) _videoPreview(),
+                          if (showPoll) _pollUI(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _stickyActionBar(theme),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
   Widget _author() {
-    return const Row(
+    final theme = Theme.of(context);
+    return Row(
       children: [
-        CircleAvatar(radius: 22),
-        SizedBox(width: 10),
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
+          child: Icon(Icons.person, color: theme.primaryColor),
+        ),
+        const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("John Doe",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            Text("Post to Anyone",
-                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Text(
+              "Sally Liang",
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: theme.dividerColor),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.public, size: 14, color: theme.textTheme.bodySmall?.color),
+                  const SizedBox(width: 6),
+                  Text("Anyone", style: theme.textTheme.bodySmall),
+                  const SizedBox(width: 2),
+                  Icon(Icons.arrow_drop_down, size: 16, color: theme.textTheme.bodySmall?.color),
+                ],
+              ),
+            ),
           ],
         )
       ],
@@ -140,13 +208,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Widget _postInput() {
+    final theme = Theme.of(context);
     return TextField(
       controller: postCtrl,
       maxLines: null,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
-      decoration: const InputDecoration(
+      autofocus: true,
+      style: theme.textTheme.bodyLarge?.copyWith(fontSize: 18, height: 1.6),
+      decoration: InputDecoration(
         hintText: "What do you want to share?",
-        hintStyle: TextStyle(color: Colors.white38),
+        hintStyle: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+          fontSize: 18,
+        ),
         border: InputBorder.none,
       ),
       onChanged: (_) => setState(() {}),
@@ -155,57 +228,76 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Widget _imagePreview() {
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: 20),
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.file(imageFile!, fit: BoxFit.cover),
+            borderRadius: BorderRadius.circular(16),
+            child: Image.file(imageFile!, width: double.infinity, fit: BoxFit.cover),
           ),
-          _removeButton(() => setState(() => imageFile = null)),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _removeButton(() => setState(() => imageFile = null)),
+          ),
         ],
       ),
     );
   }
 
   Widget _videoPreview() {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: Colors.black26,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Center(
-          child: Icon(Icons.play_circle, size: 60, color: Colors.white),
-        ),
+      padding: const EdgeInsets.only(top: 20),
+      child: Stack(
+        children: [
+          Container(
+            height: 220,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Icon(Icons.play_circle_fill, size: 64, color: theme.primaryColor),
+            ),
+          ),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _removeButton(() => setState(() => videoFile = null)),
+          ),
+        ],
       ),
     );
   }
 
   Widget _pollUI() {
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: card,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
-                child: Text("Create Poll",
-                    style: TextStyle(color: Colors.white)),
-              ),
+              Text("Create a poll", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               IconButton(
-                icon: const Icon(Icons.close, color: Colors.white54),
+                icon: Icon(Icons.close, size: 20, color: theme.iconTheme.color?.withValues(alpha: 0.6)),
                 onPressed: removePoll,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               )
             ],
           ),
+          const SizedBox(height: 20),
           _pollField("Question", pollQCtrl),
           _pollField("Option 1", pollOpt1),
           _pollField("Option 2", pollOpt2),
@@ -215,19 +307,25 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Widget _pollField(String hint, TextEditingController c) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: c,
-        style: const TextStyle(color: Colors.white),
+        style: theme.textTheme.bodyLarge,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white38),
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5)),
           filled: true,
-          fillColor: const Color(0xFF0B1220),
+          fillColor: theme.scaffoldBackgroundColor,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: theme.dividerColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: theme.dividerColor),
           ),
         ),
         onChanged: (_) => setState(() {}),
@@ -235,41 +333,67 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 
-  Widget _actions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _action(Icons.image, "Photo", pickImage),
-        _action(Icons.videocam, "Video", pickVideo),
-        _action(Icons.poll, "Poll", addPoll),
-      ],
-    );
-  }
-
-  Widget _action(IconData icon, String text, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
+  Widget _stickyActionBar(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+        border: Border(top: BorderSide(color: theme.dividerColor, width: 0.5)),
+      ),
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 16,
+        top: 12,
+        bottom: MediaQuery.of(context).padding.bottom + 12,
+      ),
       child: Row(
         children: [
-          Icon(icon, color: accent),
-          const SizedBox(width: 6),
-          Text(text, style: const TextStyle(color: Colors.white)),
+          _actionIcon(Icons.image_outlined, "Photo", pickImage),
+          _actionIcon(Icons.videocam_outlined, "Video", pickVideo),
+          _actionIcon(Icons.poll_outlined, "Poll", addPoll),
+          _actionIcon(Icons.emoji_emotions_outlined, "Emoji", () {}),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: canPost ? () {
+              // Navigation back after success placeholder
+              Navigator.pop(context);
+            } : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: accent.withValues(alpha: 0.3),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              elevation: 0,
+            ),
+            child: const Text("Post", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ),
         ],
       ),
     );
   }
 
+  Widget _actionIcon(IconData icon, String tooltip, VoidCallback onTap) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, color: accent, size: 28),
+      tooltip: tooltip,
+    );
+  }
+
   Widget _removeButton(VoidCallback onTap) {
-    return Positioned(
-      top: 8,
-      right: 8,
-      child: InkWell(
-        onTap: onTap,
-        child: const CircleAvatar(
-          radius: 14,
-          backgroundColor: Colors.black54,
-          child: Icon(Icons.close, size: 16, color: Colors.white),
-        ),
+    return InkWell(
+      onTap: onTap,
+      child: CircleAvatar(
+        radius: 16,
+        backgroundColor: Colors.black.withValues(alpha: 0.6),
+        child: const Icon(Icons.close, size: 18, color: Colors.white),
       ),
     );
   }

@@ -21,6 +21,9 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -45,8 +48,8 @@ class ProfileHeader extends StatelessWidget {
               height: 160,
               decoration: BoxDecoration(
                 gradient: coverImage == null || coverImage!.isEmpty
-                    ? const LinearGradient(
-                        colors: [Color(0xFF4F46E5), Color(0xFFD946EF)],
+                    ? LinearGradient(
+                        colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.7)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -65,13 +68,13 @@ class ProfileHeader extends StatelessWidget {
                       children: [
                         // Cover Camera Icon
                         IconButton(
-                          icon: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 28),
+                          icon: Icon(Icons.camera_alt_outlined, color: colorScheme.onPrimary, size: 28),
                           onPressed: onCoverCameraPressed,
                           tooltip: 'Edit Cover Photo',
                         ),
                         // Menu Icon
                         IconButton(
-                          icon: const Icon(Icons.menu, color: Colors.white, size: 32),
+                          icon: Icon(Icons.menu, color: colorScheme.onPrimary, size: 32),
                           onPressed: onMenuPressed,
                           tooltip: 'Open Menu',
                         ),
@@ -112,7 +115,8 @@ class ProfileHeader extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 65,
                       backgroundImage: profileImage.isNotEmpty ? AssetImage(profileImage) : null,
-                      child: profileImage.isEmpty ? const Icon(Icons.person, color: Colors.white, size: 60) : null,
+                      backgroundColor: colorScheme.surfaceContainer,
+                      child: profileImage.isEmpty ? Icon(Icons.person, color: colorScheme.onSurface.withValues(alpha: 0.5), size: 60) : null,
                     ),
                   ),
                 ),
@@ -126,11 +130,11 @@ class ProfileHeader extends StatelessWidget {
                     height: 44,
                     width: 44,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFFD946EF)]),
+                      gradient: LinearGradient(colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.8)]),
                       shape: BoxShape.circle,
                       border: Border.all(color: backgroundColor, width: 3),
                     ),
-                    child: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 22),
+                    child: Icon(Icons.camera_alt_outlined, color: colorScheme.onPrimary, size: 22),
                   ),
                 ),
               ),

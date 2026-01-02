@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'profile_models.dart';
-import '../bottom_navigation.dart';
 
 class ProfileLatestPostsSection extends StatelessWidget {
   final List<UserPost> posts;
@@ -16,6 +15,9 @@ class ProfileLatestPostsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -24,193 +26,143 @@ class ProfileLatestPostsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Latest Posts",
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+              Text(
+                "Activity",
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               TextButton(
                 onPressed: onSeeAllPosts,
-                child: const Text("See all posts", style: TextStyle(color: Color(0xFF6366F1))),
+                child: Text("See all", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return Container(
-                  width: 160,
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post.content,
-                        maxLines: 5,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                      const Spacer(),
-                      Text(
-                        post.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+          const SizedBox(height: 8),
+          Text(
+            "500 followers",
+            style: theme.textTheme.bodySmall,
           ),
+          const SizedBox(height: 16),
+          ...posts.take(2).map((post) => _postItem(context, post)).toList(),
         ],
       ),
     );
   }
+
+  Widget _postItem(BuildContext context, UserPost post) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                post.content,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.thumb_up_off_alt, size: 14, color: theme.primaryColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${post.likes} likes",
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "• ${post.comments} comments",
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Divider(color: theme.dividerColor),
+      ],
+    );
+  }
 }
 
-class AllPostsScreen extends StatefulWidget {
+class AllPostsScreen extends StatelessWidget {
   final List<UserPost> posts;
   final String userName;
 
   const AllPostsScreen({super.key, required this.posts, required this.userName});
 
   @override
-  State<AllPostsScreen> createState() => _AllPostsScreenState();
-}
-
-class _AllPostsScreenState extends State<AllPostsScreen> {
-  String selectedFilter = "All";
-
-  @override
   Widget build(BuildContext context) {
-    final filteredPosts = selectedFilter == "All" 
-        ? widget.posts 
-        : widget.posts.where((p) => p.category == selectedFilter).toList();
-
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text("All Posts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text("All Posts"),
+        centerTitle: true,
       ),
-      bottomNavigationBar: const AppBottomNavigation(currentIndex: 4),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                _filterChip("All"),
-                const SizedBox(width: 12),
-                _filterChip("Professional"),
-                const SizedBox(width: 12),
-                _filterChip("Personal"),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredPosts.length,
-              itemBuilder: (context, index) {
-                final post = filteredPosts[index];
-                return _buildPostCard(post);
-              },
-            ),
-          ),
-        ],
+      body: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: posts.length,
+        itemBuilder: (context, index) => _fullPostItem(context, posts[index]),
       ),
     );
   }
 
-  Widget _filterChip(String label) {
-    bool isSelected = selectedFilter == label;
-    return GestureDetector(
-      onTap: () => setState(() => selectedFilter = label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6366F1) : const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(color: isSelected ? Colors.white : Colors.white38, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPostCard(UserPost post) {
+  Widget _fullPostItem(BuildContext context, UserPost post) {
+    final theme = Theme.of(context);
+    
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(20),
-      color: const Color(0xFF0F172A),
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                radius: 20,
-                backgroundImage: AssetImage('lib/images/profile.jpg'),
+              CircleAvatar(
+                backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
+                child: Text(userName[0], style: TextStyle(color: theme.primaryColor)),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.userName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  const Text("Senior Financial Analyst at Johnson & Johnson", style: TextStyle(color: Colors.white38, fontSize: 12)),
-                  Text(post.date, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                  Text(userName, style: theme.textTheme.titleSmall),
+                  Text(post.date, style: theme.textTheme.bodySmall),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(post.content, style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4)),
-          const SizedBox(height: 24),
+          Text(post.content, style: theme.textTheme.bodyLarge),
+          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("${(post.likes/1000).toStringAsFixed(1)}k likes", style: const TextStyle(color: Colors.white38, fontSize: 13)),
-              const Spacer(),
-              Text("${post.comments} comments  •  ${post.shares} shares", style: const TextStyle(color: Colors.white38, fontSize: 13)),
-            ],
-          ),
-          const Divider(color: Colors.white10, height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _actionItem(Icons.thumb_up_outlined, "Like"),
-              _actionItem(Icons.chat_bubble_outline, "Comment"),
-              _actionItem(Icons.share_outlined, "Share"),
+              Row(
+                children: [
+                  Icon(Icons.favorite, color: theme.colorScheme.secondary, size: 16),
+                  const SizedBox(width: 4),
+                  Text("${post.likes}", style: theme.textTheme.bodySmall),
+                ],
+              ),
+              Text("${post.comments} comments • ${post.shares} shares", style: theme.textTheme.bodySmall),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _actionItem(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white38, size: 20),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.white38, fontWeight: FontWeight.w500)),
-      ],
     );
   }
 }

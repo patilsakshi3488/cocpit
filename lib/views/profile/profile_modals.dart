@@ -60,7 +60,7 @@ class _EditIdentityModalState extends State<EditIdentityModal> {
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               IconButton(
-                icon: Icon(Icons.close, color: colorScheme.onBackground.withValues(alpha: 0.4)),
+                icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -80,7 +80,7 @@ class _EditIdentityModalState extends State<EditIdentityModal> {
             }),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: colorScheme.onPrimary,
               minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 0,
@@ -91,7 +91,7 @@ class _EditIdentityModalState extends State<EditIdentityModal> {
           Center(
             child: TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: TextStyle(color: colorScheme.onBackground.withValues(alpha: 0.4), fontSize: 16, fontWeight: FontWeight.w500)),
+              child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 16, fontWeight: FontWeight.w500)),
             ),
           ),
         ],
@@ -101,6 +101,7 @@ class _EditIdentityModalState extends State<EditIdentityModal> {
 
   Widget _buildSection(String title, List<String> options, String current, Function(String) onSelect, {Color? activeColor}) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final primary = activeColor ?? theme.primaryColor;
 
     return Column(
@@ -118,14 +119,14 @@ class _EditIdentityModalState extends State<EditIdentityModal> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isSelected ? primary : theme.colorScheme.surfaceContainer,
+                  color: isSelected ? primary : colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: isSelected ? primary : theme.dividerColor),
                 ),
                 child: Text(
                   opt,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
+                    color: isSelected ? colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     fontSize: 14,
                   ),
@@ -165,7 +166,7 @@ class UploadResumeModal extends StatelessWidget {
                 style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               IconButton(
-                icon: Icon(Icons.close, color: colorScheme.onBackground.withValues(alpha: 0.4)),
+                icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -182,7 +183,7 @@ class UploadResumeModal extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(color: theme.dividerColor),
               borderRadius: BorderRadius.circular(16),
-              color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
+              color: colorScheme.surfaceContainer.withValues(alpha: 0.5),
             ),
             child: Column(
               children: [
@@ -199,7 +200,7 @@ class UploadResumeModal extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: colorScheme.onPrimary,
               minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -208,7 +209,7 @@ class UploadResumeModal extends StatelessWidget {
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Cancel", style: TextStyle(color: colorScheme.onBackground.withValues(alpha: 0.4), fontSize: 16)),
+            child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 16)),
           ),
         ],
       ),
@@ -260,6 +261,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     bool isEdit = widget.experience != null;
 
     return Container(
@@ -347,8 +349,9 @@ class _ExperienceModalState extends State<ExperienceModal> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context, null),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade900,
-                          foregroundColor: Colors.white,
+                          backgroundColor: colorScheme.error.withValues(alpha: 0.1),
+                          foregroundColor: colorScheme.error,
+                          side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
                           minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -390,7 +393,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: colorScheme.onPrimary,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -422,7 +425,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
       style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
+        hintStyle: theme.textTheme.bodySmall,
         filled: true,
         fillColor: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
@@ -507,6 +510,7 @@ class _EducationModalState extends State<EducationModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     bool isEdit = widget.education != null;
 
     return Container(
@@ -594,8 +598,9 @@ class _EducationModalState extends State<EducationModal> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context, null),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade900,
-                          foregroundColor: Colors.white,
+                          backgroundColor: colorScheme.error.withValues(alpha: 0.1),
+                          foregroundColor: colorScheme.error,
+                          side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
                           minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -637,7 +642,7 @@ class _EducationModalState extends State<EducationModal> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: colorScheme.onPrimary,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -669,7 +674,7 @@ class _EducationModalState extends State<EducationModal> {
       style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
+        hintStyle: theme.textTheme.bodySmall,
         filled: true,
         fillColor: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
@@ -765,6 +770,7 @@ class _SkillsModalState extends State<SkillsModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -801,7 +807,7 @@ class _SkillsModalState extends State<SkillsModal> {
                     hintText: "Add a new skill...",
                     hintStyle: theme.textTheme.bodySmall,
                     filled: true,
-                    fillColor: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
+                    fillColor: colorScheme.surfaceContainer.withValues(alpha: 0.5),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -814,7 +820,7 @@ class _SkillsModalState extends State<SkillsModal> {
                 onPressed: _addSkill,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.primaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.all(16),
                 ),
@@ -829,7 +835,7 @@ class _SkillsModalState extends State<SkillsModal> {
             children: _currentSkills.map((skill) => Container(
               padding: const EdgeInsets.only(left: 16, right: 8, top: 4, bottom: 4),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer,
+                color: colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: theme.dividerColor),
               ),
@@ -852,7 +858,7 @@ class _SkillsModalState extends State<SkillsModal> {
             onPressed: () => Navigator.pop(context, _currentSkills),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: colorScheme.onPrimary,
               minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),

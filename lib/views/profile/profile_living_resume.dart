@@ -16,112 +16,158 @@ class ProfileLivingResume extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.description_outlined, color: Color(0xFF6366F1), size: 24),
-              SizedBox(width: 12),
               Text(
                 "Living Resume",
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.file_upload_outlined, color: theme.primaryColor),
+                    onPressed: onUploadResume,
+                    tooltip: 'Upload Resume',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.picture_as_pdf_outlined, color: theme.primaryColor),
+                    onPressed: onDownloadPDF,
+                    tooltip: 'Download PDF',
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onUploadResume,
-                  icon: const Icon(Icons.upload_outlined, size: 18),
-                  label: const Text("Add Custom\nResume", textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E293B),
-                    foregroundColor: Colors.white70,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onDownloadPDF,
-                  icon: const Icon(Icons.download_outlined, size: 18),
-                  label: const Text("Download\nPDF", textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
+              _tabItem(context, "Overview", isOverviewSelected, () => onTabChanged(true)),
+              const SizedBox(width: 12),
+              _tabItem(context, "Documents", !isOverviewSelected, () => onTabChanged(false)),
             ],
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              _buildResumeTab("Overview", isOverviewSelected),
-              const SizedBox(width: 24),
-              _buildResumeTab("Metrics", !isOverviewSelected),
-            ],
-          ),
-          const SizedBox(height: 24),
-          if (isOverviewSelected) ...[
-            _buildResumeCard("7+ years experience", "across product management & strategy"),
-            const SizedBox(height: 16),
-            _buildResumeCard("30+ features shipped", "driving user growth & revenue"),
-            const SizedBox(height: 24),
-            const Text(
-              "Product leader with 7+ years of experience in high-growth tech environments. Specializing in data-driven product strategy and user-centric design.",
-              style: TextStyle(color: Colors.white70, fontSize: 15, height: 1.5),
-            ),
-          ],
+          if (isOverviewSelected) _buildOverview(context) else _buildDocuments(context),
         ],
       ),
     );
   }
 
-  Widget _buildResumeTab(String label, bool isSelected) {
+  Widget _tabItem(BuildContext context, String title, bool isSelected, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return GestureDetector(
-      onTap: () => onTabChanged(label == "Overview"),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFF6366F1) : Colors.white38,
-              fontSize: 16,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? theme.primaryColor : colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? theme.primaryColor : theme.dividerColor,
           ),
-          const SizedBox(height: 8),
-          if (isSelected)
-            Container(height: 2, width: 40, color: const Color(0xFF6366F1)),
-        ],
+        ),
+        child: Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: isSelected ? colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildResumeCard(String title, String subtitle) {
+  Widget _buildOverview(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Your profile is your living resume.",
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          "Keep it updated to showcase your latest achievements and skills to recruiters and your network.",
+          style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+        ),
+        const SizedBox(height: 24),
+        OutlinedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.share_outlined),
+          label: const Text("Share Profile"),
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: theme.primaryColor),
+            foregroundColor: theme.primaryColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDocuments(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      children: [
+        _documentItem(context, "Resume_Sally_Liang.pdf", "Updated 2 days ago"),
+        const SizedBox(height: 16),
+        _documentItem(context, "Portfolio_2024.pdf", "Updated 1 month ago"),
+      ],
+    );
+  }
+
+  Widget _documentItem(BuildContext context, String title, String subtitle) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withOpacity(0.5),
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(subtitle, style: const TextStyle(color: Colors.white38, fontSize: 14)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.description_outlined, color: theme.primaryColor),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleSmall),
+                const SizedBox(height: 4),
+                Text(subtitle, style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+            onPressed: () {},
+          ),
         ],
       ),
     );

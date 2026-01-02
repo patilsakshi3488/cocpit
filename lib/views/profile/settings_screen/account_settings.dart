@@ -5,42 +5,54 @@ class AccountSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color textColor = Colors.white;
-    final Color subTextColor = Colors.white.withValues(alpha: 0.5);
-    final Color cardBg = const Color(0xFF111827);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B1220),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text("Account Settings"),
+        centerTitle: true,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildAccountItem("Personal Info", "Name, email, and phone number", Icons.person_outline, textColor, subTextColor, cardBg),
-          const SizedBox(height: 12),
-          _buildAccountItem("Password", "Change your account password", Icons.lock_outline, textColor, subTextColor, cardBg),
-          const SizedBox(height: 12),
-          _buildAccountItem("Language", "English (US)", Icons.language, textColor, subTextColor, cardBg),
-          const SizedBox(height: 12),
-          _buildAccountItem("Delete Account", "Permanently remove your data", Icons.delete_outline, Colors.redAccent, subTextColor, cardBg, isDanger: true),
-        ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildAccountItem(context, "Personal Info", "Name, email, and phone number", Icons.person_outline),
+              const SizedBox(height: 12),
+              _buildAccountItem(context, "Password", "Change your account password", Icons.lock_outline),
+              const SizedBox(height: 12),
+              _buildAccountItem(context, "Language", "English (US)", Icons.language),
+              const SizedBox(height: 12),
+              _buildAccountItem(context, "Delete Account", "Permanently remove your data", Icons.delete_outline, isDanger: true),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildAccountItem(String title, String subtitle, IconData icon, Color textColor, Color subTextColor, Color cardBg, {bool isDanger = false}) {
+  Widget _buildAccountItem(BuildContext context, String title, String subtitle, IconData icon, {bool isDanger = false}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(icon, color: isDanger ? Colors.redAccent : Colors.white, size: 24),
+          Icon(icon, color: isDanger ? colorScheme.error : theme.primaryColor, size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -48,24 +60,19 @@ class AccountSettings extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: isDanger ? colorScheme.error : null,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 12,
-                  ),
+                  style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
           ),
-          Icon(Icons.arrow_forward_ios, color: subTextColor.withValues(alpha: 0.3), size: 14),
+          Icon(Icons.arrow_forward_ios, color: theme.iconTheme.color?.withValues(alpha: 0.3), size: 14),
         ],
       ),
     );

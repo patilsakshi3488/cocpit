@@ -25,18 +25,14 @@ class ProfileStats extends StatelessWidget {
 
   Widget _statItem(BuildContext context, String value, String label) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Column(
       children: [
         Text(value, style: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
-          color: colorScheme.onBackground,
         )),
         const SizedBox(height: 4),
-        Text(label, style: theme.textTheme.bodyMedium?.copyWith(
-          color: colorScheme.onBackground.withValues(alpha: 0.4),
-        )),
+        Text(label, style: theme.textTheme.bodyMedium),
       ],
     );
   }

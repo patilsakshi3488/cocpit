@@ -1,167 +1,119 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../services/theme_service.dart';
 
 class AppearanceSettings extends StatelessWidget {
-  final AppTheme selectedTheme;
-  final bool isCompactMode;
-  final ValueChanged<AppTheme> onThemeChanged;
-  final ValueChanged<bool> onCompactModeChanged;
-
-  const AppearanceSettings({
-    super.key,
-    required this.selectedTheme,
-    required this.isCompactMode,
-    required this.onThemeChanged,
-    required this.onCompactModeChanged,
-  });
+  const AppearanceSettings({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = theme.primaryColor;
-    final cardBg = theme.colorScheme.surfaceContainer;
-    final subTextColor = theme.textTheme.bodySmall?.color ?? Colors.grey;
+    final themeService = Provider.of<ThemeService>(context);
+    
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text("Appearance"),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          _buildGroup(context, "Theme", [
+            _ThemeOption(
+              theme: AppTheme.light,
+              title: "Light Mode",
+              subtitle: "Clean and bright interface",
+              icon: Icons.light_mode_outlined,
+              isSelected: themeService.currentTheme == AppTheme.light,
+              onTap: () => themeService.setTheme(AppTheme.light),
+            ),
+            _ThemeOption(
+              theme: AppTheme.dark,
+              title: "Dark Mode",
+              subtitle: "Classic dark experience",
+              icon: Icons.nightlight_outlined,
+              isSelected: themeService.currentTheme == AppTheme.dark,
+              onTap: () => themeService.setTheme(AppTheme.dark),
+            ),
+            _ThemeOption(
+              theme: AppTheme.navy,
+              title: "Navy Mode",
+              subtitle: "Premium deep blue look",
+              icon: Icons.bolt,
+              isSelected: themeService.currentTheme == AppTheme.navy,
+              onTap: () => themeService.setTheme(AppTheme.navy),
+            ),
+            _ThemeOption(
+              theme: AppTheme.system,
+              title: "System Default",
+              subtitle: "Follow device settings",
+              icon: Icons.settings_suggest_outlined,
+              isSelected: themeService.currentTheme == AppTheme.system,
+              onTap: () => themeService.setTheme(AppTheme.system),
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildGroup(BuildContext context, String title, List<Widget> children) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Theme Card
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Theme",
-                style: theme.textTheme.titleLarge,
-              ),
-              const SizedBox(height: 20),
-              _buildThemeOption(context, AppTheme.navy, "Navy Mode", "The classic experience", Icons.bolt, primary, subTextColor),
-              const SizedBox(height: 12),
-              _buildThemeOption(context, AppTheme.light, "Light Mode", "Clean and bright interface", Icons.light_mode_outlined, primary, subTextColor),
-              const SizedBox(height: 12),
-              _buildThemeOption(context, AppTheme.dark, "Dark Mode", "Easy on the eyes, perfect for night", Icons.nightlight_outlined, primary, subTextColor),
-              const SizedBox(height: 12),
-              _buildThemeOption(context, AppTheme.system, "System", "Follow your device's setting", Icons.desktop_windows_outlined, primary, subTextColor),
-            ],
+        Padding(
+          padding: const EdgeInsets.only(left: 12, bottom: 8),
+          child: Text(
+            title.toUpperCase(),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
-        const SizedBox(height: 24),
-        
-        // Display Card
         Container(
-          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(24),
+            color: theme.colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.dividerColor),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Display",
-                style: theme.textTheme.titleLarge,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Compact mode",
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Show more content in less space",
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: isCompactMode,
-                    onChanged: onCompactModeChanged,
-                    activeColor: Colors.white,
-                    activeTrackColor: primary,
-                  ),
-                ],
-              ),
-            ],
-          ),
+          child: Column(children: children),
         ),
       ],
     );
   }
+}
 
-  Widget _buildThemeOption(BuildContext context, AppTheme theme, String title, String subtitle, IconData icon, Color primary, Color subTextColor) {
+class _ThemeOption extends StatelessWidget {
+  final AppTheme theme;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeOption({
+    required this.theme,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final appTheme = Theme.of(context);
-    bool isSelected = selectedTheme == theme;
-    return GestureDetector(
-      onTap: () => onThemeChanged(theme),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: appTheme.scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? primary : appTheme.dividerColor,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? primary : subTextColor, size: 24),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: appTheme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: appTheme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? primary : subTextColor.withOpacity(0.5),
-                  width: 2,
-                ),
-              ),
-              child: isSelected 
-                ? Center(
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ) 
-                : null,
-            ),
-          ],
-        ),
-      ),
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: isSelected ? appTheme.primaryColor : appTheme.iconTheme.color),
+      title: Text(title, style: appTheme.textTheme.bodyLarge),
+      subtitle: Text(subtitle, style: appTheme.textTheme.bodySmall),
+      trailing: isSelected 
+        ? Icon(Icons.check_circle, color: appTheme.primaryColor) 
+        : Icon(Icons.radio_button_off, color: appTheme.dividerColor),
     );
   }
 }

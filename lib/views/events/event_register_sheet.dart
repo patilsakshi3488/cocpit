@@ -29,11 +29,14 @@ class _EventRegisterSheetState extends State<EventRegisterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      decoration: const BoxDecoration(
-        color: Color(0xFF111827),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -49,23 +52,26 @@ class _EventRegisterSheetState extends State<EventRegisterSheet> {
                   Expanded(
                     child: Text(
                       'Register for ${widget.event.title}',
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54)),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
-              _field('Name', 'Your Name', _nameCtrl),
-              _field('Email', 'Your Email', _emailCtrl, isEmail: true),
-              _field('Mobile', 'Your Mobile Number', _mobileCtrl, isPhone: true),
-              _field('Company', 'Your Company', _companyCtrl),
-              _field('Job Title', 'Your Job Title', _jobTitleCtrl),
+              _field(theme, 'Name', 'Your Name', _nameCtrl),
+              _field(theme, 'Email', 'Your Email', _emailCtrl, isEmail: true),
+              _field(theme, 'Mobile', 'Your Mobile Number', _mobileCtrl, isPhone: true),
+              _field(theme, 'Company', 'Your Company', _companyCtrl),
+              _field(theme, 'Job Title', 'Your Job Title', _jobTitleCtrl),
               const SizedBox(height: 12),
               if (widget.event.isFree)
-                _infoBox('This is a free event.', null)
+                _infoBox(theme, 'This is a free event.', null)
               else
-                _infoBox('This is a premium event.', 'Price: \$50'),
+                _infoBox(theme, 'This is a premium event.', 'Price: \$50'),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -77,7 +83,7 @@ class _EventRegisterSheetState extends State<EventRegisterSheet> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: theme.primaryColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: const Text('Register', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
@@ -87,7 +93,7 @@ class _EventRegisterSheetState extends State<EventRegisterSheet> {
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.white54, fontSize: 16)),
+                  child: Text('Cancel', style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 16)),
                 ),
               ),
             ],
@@ -97,23 +103,30 @@ class _EventRegisterSheetState extends State<EventRegisterSheet> {
     );
   }
 
-  Widget _field(String label, String hint, TextEditingController controller, {bool isEmail = false, bool isPhone = false}) => Padding(
+  Widget _field(ThemeData theme, String label, String hint, TextEditingController controller, {bool isEmail = false, bool isPhone = false}) => Padding(
         padding: const EdgeInsets.only(bottom: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            Text(label, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextFormField(
               controller: controller,
-              style: const TextStyle(color: Colors.white),
+              style: theme.textTheme.bodyLarge,
               keyboardType: isEmail ? TextInputType.emailAddress : (isPhone ? TextInputType.phone : TextInputType.text),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: const TextStyle(color: Colors.white38),
+                hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5)),
                 filled: true,
-                fillColor: const Color(0xFF1F2937),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                fillColor: theme.colorScheme.surfaceContainer,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: theme.dividerColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: theme.dividerColor),
+                ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
               validator: (v) {
@@ -127,22 +140,29 @@ class _EventRegisterSheetState extends State<EventRegisterSheet> {
         ),
       );
 
-  Widget _infoBox(String t1, String? t2) => Container(
+  Widget _infoBox(ThemeData theme, String t1, String? t2) => Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: const Color(0xFF1F2937), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.dividerColor),
+        ),
         child: Column(
           children: [
-            Text(t1, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            Text(t1, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             if (t2 != null) ...[
               const SizedBox(height: 8),
-              Text(t2, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(t2, style: theme.textTheme.headlineMedium?.copyWith(color: theme.primaryColor, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {},
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.primaryColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   child: const Text('Proceed to Payment', style: TextStyle(color: Colors.white)),
                 ),
               ),

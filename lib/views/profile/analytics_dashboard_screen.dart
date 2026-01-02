@@ -43,18 +43,16 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBlue = Color(0xFF6366F1);
-    const Color backgroundNavy = Color(0xFF0B1220);
-    const Color cardBackground = Color(0xFF111827);
-    final Color subTextColor = Colors.white.withValues(alpha: 0.6);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: backgroundNavy,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -68,14 +66,14 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Analytics Dashboard",
-                    style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                    style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "Track your professional growth and reach",
-                    style: TextStyle(color: subTextColor, fontSize: 16),
+                    style: theme.textTheme.bodyLarge,
                   ),
                 ],
               ),
@@ -87,7 +85,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 20),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: cardBackground,
+                color: colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -112,7 +110,6 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                     value: _getStatValue("Profile Views"),
                     trend: "+12.5%",
                     isPositive: true,
-                    cardBg: cardBackground,
                   ),
                   _buildStatCard(
                     icon: Icons.search,
@@ -120,7 +117,6 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                     value: _getStatValue("Search Appearances"),
                     trend: "+5.2%",
                     isPositive: true,
-                    cardBg: cardBackground,
                   ),
                   _buildStatCard(
                     icon: Icons.person_add_outlined,
@@ -128,7 +124,6 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                     value: "297.5",
                     trend: "-2.1%",
                     isPositive: false,
-                    cardBg: cardBackground,
                   ),
                   _buildStatCard(
                     icon: Icons.chat_bubble_outline,
@@ -136,7 +131,6 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                     value: "84",
                     trend: "+18.0%",
                     isPositive: true,
-                    cardBg: cardBackground,
                   ),
                 ],
               ),
@@ -145,17 +139,17 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             const SizedBox(height: 24),
 
             // Career Trajectory Section
-            _buildTrajectoryCard(primaryBlue),
+            _buildTrajectoryCard(),
             
             const SizedBox(height: 24),
             
             // Engagement Overview Section
-            _buildEngagementCard(primaryBlue, cardBackground),
+            _buildEngagementCard(),
             
             const SizedBox(height: 24),
             
             // Recruiter Funnel Section
-            _buildFunnelCard(primaryBlue, cardBackground),
+            _buildFunnelCard(),
             
             const SizedBox(height: 40),
           ],
@@ -172,6 +166,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildRangeButton(String label) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     bool isSelected = selectedRange == label;
     return Expanded(
       child: GestureDetector(
@@ -179,14 +175,14 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF6366F1) : Colors.transparent,
+            color: isSelected ? theme.primaryColor : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             label.split(" ").join("\n"),
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+              color: isSelected ? colorScheme.onPrimary : theme.textTheme.bodySmall?.color,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -202,13 +198,15 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     required String value,
     required String trend,
     required bool isPositive,
-    required Color cardBg,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Stack(
@@ -219,20 +217,20 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937),
+                  color: theme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: const Color(0xFF9CA3AF), size: 24),
+                child: Icon(icon, color: theme.primaryColor, size: 24),
               ),
               const SizedBox(height: 20),
               Text(
                 value,
-                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
+                style: theme.textTheme.bodyLarge,
               ),
             ],
           ),
@@ -271,31 +269,37 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     );
   }
 
-  Widget _buildTrajectoryCard(Color primary) {
+  Widget _buildTrajectoryCard() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.track_changes, color: Color(0xFF6366F1), size: 28),
+              Icon(Icons.track_changes, color: theme.primaryColor, size: 28),
               const SizedBox(width: 12),
-              const Text(
-                "Career Trajectory & Skill Gap",
-                style: TextStyle(color: Color(0xFF111827), fontSize: 20, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  "Career Trajectory & Skill Gap",
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Compare your current skills against your dream role.",
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 16),
+            style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           
@@ -303,15 +307,16 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: theme.dividerColor),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedRole,
                 isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
+                dropdownColor: theme.scaffoldBackgroundColor,
+                icon: Icon(Icons.keyboard_arrow_down, color: theme.iconTheme.color?.withValues(alpha: 0.5)),
                 onChanged: (String? newValue) {
                   setState(() {
                     selectedRole = newValue!;
@@ -320,7 +325,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 items: roles.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value, style: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500, fontSize: 16)),
+                    child: Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
                   );
                 }).toList(),
               ),
@@ -334,6 +339,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
               width: 280,
               child: CustomPaint(
                 painter: RadarChartPainter(
+                  theme: theme,
                   skills: roleSkills[selectedRole]!,
                   targetValues: roleTargetValues[selectedRole]!,
                   youValues: roleYouValues[selectedRole]!,
@@ -345,8 +351,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Role Readiness", style: TextStyle(color: Color(0xFF6B7280), fontSize: 16, fontWeight: FontWeight.w500)),
-              Text("${(roleYouValues[selectedRole]!.reduce((a, b) => a + b) / roleTargetValues[selectedRole]!.reduce((a, b) => a + b) * 100).toInt()}%", style: TextStyle(color: primary, fontSize: 28, fontWeight: FontWeight.bold)),
+              Text("Role Readiness", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+              Text("${(roleYouValues[selectedRole]!.reduce((a, b) => a + b) / roleTargetValues[selectedRole]!.reduce((a, b) => a + b) * 100).toInt()}%", style: theme.textTheme.headlineMedium?.copyWith(color: theme.primaryColor, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),
@@ -354,47 +360,50 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: roleYouValues[selectedRole]!.reduce((a, b) => a + b) / roleTargetValues[selectedRole]!.reduce((a, b) => a + b),
-              backgroundColor: primary.withValues(alpha: 0.1),
-              color: primary,
+              backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
+              color: theme.primaryColor,
               minHeight: 10,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             "You are on track for this role.",
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+            style: theme.textTheme.bodySmall,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEngagementCard(Color primary, Color cardBg) {
+  Widget _buildEngagementCard() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "Engagement Overview",
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             "Profile interactions over time",
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
+            style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           Row(
             children: [
               _buildLegendItem("Interactions", const Color(0xFF10B981)),
               const SizedBox(width: 16),
-              _buildLegendItem("Profile Views", const Color(0xFF6366F1)),
+              _buildLegendItem("Profile Views", theme.primaryColor),
             ],
           ),
           const SizedBox(height: 32),
@@ -402,7 +411,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             height: 200,
             width: double.infinity,
             child: CustomPaint(
-              painter: LineChartPainter(),
+              painter: LineChartPainter(theme: theme),
             ),
           ),
         ],
@@ -411,38 +420,42 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildLegendItem(String label, Color color) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
+        Text(label, style: theme.textTheme.bodySmall),
       ],
     );
   }
 
-  Widget _buildFunnelCard(Color primary, Color cardBg) {
+  Widget _buildFunnelCard() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "Recruiter Funnel",
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             "From search to conversation",
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
+            style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           _funnelStep("SEARCH APPEARANCES", "15,750", "100%", Icons.filter_alt, const Color(0xFF3B82F6)),
-          _funnelStep("PROFILE CLICKS", "4,340", "27.5%", Icons.mouse, const Color(0xFF6366F1)),
+          _funnelStep("PROFILE CLICKS", "4,340", "27.5%", Icons.mouse, theme.primaryColor),
           _funnelStep("CONNECTED/FOLLOWED", "630", "14.5%", Icons.person_add, const Color(0xFF8B5CF6)),
           _funnelStep("MESSAGE/INQUIRY", "84", "13.3%", Icons.chat_bubble, const Color(0xFFA855F7)),
         ],
@@ -451,13 +464,15 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _funnelStep(String label, String value, String percentage, IconData icon, Color iconColor) {
+    final theme = Theme.of(context);
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -474,19 +489,19 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                 const SizedBox(height: 4),
-                Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: theme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(percentage, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            child: Text(percentage, style: TextStyle(color: theme.primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -495,11 +510,13 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 }
 
 class RadarChartPainter extends CustomPainter {
+  final ThemeData theme;
   final List<String> skills;
   final List<double> targetValues;
   final List<double> youValues;
 
   RadarChartPainter({
+    required this.theme,
     required this.skills,
     required this.targetValues,
     required this.youValues,
@@ -511,7 +528,7 @@ class RadarChartPainter extends CustomPainter {
     final radius = size.width / 2 * 0.8;
     
     final gridPaint = Paint()
-      ..color = const Color(0xFFE5E7EB)
+      ..color = theme.dividerColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -542,7 +559,7 @@ class RadarChartPainter extends CustomPainter {
       final x = center.dx + (radius + 25) * math.cos(angle);
       final y = center.dy + (radius + 20) * math.sin(angle);
       
-      textPainter.text = TextSpan(text: skills[i], style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 10));
+      textPainter.text = TextSpan(text: skills[i], style: theme.textTheme.bodySmall?.copyWith(fontSize: 10));
       textPainter.layout();
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
     }
@@ -565,10 +582,10 @@ class RadarChartPainter extends CustomPainter {
 
     // You Area (Blue filled)
     final youPaint = Paint()
-      ..color = const Color(0xFF6366F1).withValues(alpha: 0.3)
+      ..color = theme.primaryColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
     final youBorderPaint = Paint()
-      ..color = const Color(0xFF6366F1)
+      ..color = theme.primaryColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
       
@@ -586,37 +603,36 @@ class RadarChartPainter extends CustomPainter {
     
     // Legend
     final legendX = size.width - 60;
-    canvas.drawCircle(Offset(legendX, 20), 4, Paint()..color = const Color(0xFF6366F1).withValues(alpha: 0.5));
-    textPainter.text = const TextSpan(text: "You", style: TextStyle(color: Color(0xFF6B7280), fontSize: 10));
+    canvas.drawCircle(Offset(legendX, 20), 4, Paint()..color = theme.primaryColor.withValues(alpha: 0.5));
+    textPainter.text = TextSpan(text: "You", style: theme.textTheme.bodySmall?.copyWith(fontSize: 10));
     textPainter.layout();
     textPainter.paint(canvas, Offset(legendX + 10, 14));
     
     canvas.drawCircle(Offset(legendX, 40), 4, Paint()..color = const Color(0xFF10B981)..style = PaintingStyle.stroke..strokeWidth = 2);
-    textPainter.text = const TextSpan(text: "Target", style: TextStyle(color: Color(0xFF6B7280), fontSize: 10));
+    textPainter.text = TextSpan(text: "Target", style: theme.textTheme.bodySmall?.copyWith(fontSize: 10));
     textPainter.layout();
     textPainter.paint(canvas, Offset(legendX + 10, 34));
   }
 
   @override
   bool shouldRepaint(covariant RadarChartPainter oldDelegate) {
-    return oldDelegate.selectedRole != selectedRole;
+    return true;
   }
 }
 
-extension on RadarChartPainter {
-  get selectedRole => null;
-}
-
 class LineChartPainter extends CustomPainter {
+  final ThemeData theme;
+  LineChartPainter({required this.theme});
+
   @override
   void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()..color = Colors.white.withValues(alpha: 0.05)..strokeWidth = 1;
+    final gridPaint = Paint()..color = theme.dividerColor..strokeWidth = 1;
     for (var i = 0; i <= 4; i++) {
       final y = size.height - (size.height / 4 * i);
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
       
       final textPainter = TextPainter(
-        text: TextSpan(text: "${50 * i}", style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10)),
+        text: TextSpan(text: "${50 * i}", style: theme.textTheme.bodySmall?.copyWith(fontSize: 10)),
         textDirection: TextDirection.ltr,
       )..layout();
       textPainter.paint(canvas, Offset(-25, y - 5));
@@ -626,7 +642,7 @@ class LineChartPainter extends CustomPainter {
     for (var i = 0; i < dates.length; i++) {
       final x = (size.width / (dates.length - 1)) * i;
       final textPainter = TextPainter(
-        text: TextSpan(text: dates[i], style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10)),
+        text: TextSpan(text: dates[i], style: theme.textTheme.bodySmall?.copyWith(fontSize: 10)),
         textDirection: TextDirection.ltr,
       )..layout();
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, size.height + 10));
@@ -649,11 +665,11 @@ class LineChartPainter extends CustomPainter {
     final gradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [const Color(0xFF6366F1).withValues(alpha: 0.3), const Color(0xFF6366F1).withValues(alpha: 0.0)],
+      colors: [theme.primaryColor.withValues(alpha: 0.3), theme.primaryColor.withValues(alpha: 0.0)],
     ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     
     canvas.drawPath(blueFillPath, Paint()..shader = gradient);
-    canvas.drawPath(bluePath, Paint()..color = const Color(0xFF6366F1)..style = PaintingStyle.stroke..strokeWidth = 2);
+    canvas.drawPath(bluePath, Paint()..color = theme.primaryColor..style = PaintingStyle.stroke..strokeWidth = 2);
 
     // Interactions Path (Green)
     final greenPath = Path();

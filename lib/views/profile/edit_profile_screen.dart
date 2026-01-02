@@ -50,23 +50,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
         toolbarHeight: 80,
         title: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
               onPressed: () => Navigator.pop(context),
             ),
-            const Expanded(
+            Expanded(
               child: Text(
                 "Edit Profile",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -78,11 +81,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFF1E293B),
+                backgroundColor: colorScheme.surfaceContainer,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
               ),
-              child: const Text("Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+              child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.w500)),
             ),
           ),
           const SizedBox(width: 8),
@@ -103,11 +106,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   });
                 }
               },
-              icon: const Icon(Icons.save_outlined, size: 18),
-              label: const Text("Save Changes", style: TextStyle(fontWeight: FontWeight.bold)),
+              icon: Icon(Icons.save_outlined, size: 18, color: colorScheme.onPrimary),
+              label: Text("Save Changes", style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onPrimary)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
-                foregroundColor: Colors.white,
+                backgroundColor: theme.primaryColor,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 elevation: 0,
@@ -124,8 +126,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B).withOpacity(0.5),
+              color: colorScheme.surfaceContainer.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: theme.dividerColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,23 +158,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildInputLabel(String label) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, top: 16),
-      child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500)),
+      child: Text(label, style: theme.textTheme.titleSmall),
     );
   }
 
   Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
+    final theme = Theme.of(context);
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
+      style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white24),
+        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
         filled: true,
-        fillColor: const Color(0xFF0F172A),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        fillColor: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       validator: (value) {

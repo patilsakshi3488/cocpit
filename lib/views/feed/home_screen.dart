@@ -5,6 +5,7 @@ import 'notification_screen.dart';
 import '../bottom_navigation.dart';
 import 'create_career_moment_screen.dart';
 import 'career_moment_viewer.dart';
+import '../../widgets/app_top_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -292,85 +293,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _topBar(theme),
-            Expanded(
-              child: ListView(
-                children: [
-                  _storiesHeader(theme),
-                  _careerMomentsBar(theme),
-                  const SizedBox(height: 20),
-                  _topRecentToggle(theme),
-                  Divider(color: theme.dividerColor, height: 1),
-                  ..._posts.map((post) {
-                    if (post['type'] == 'suggested') {
-                      return _suggestedForYouSection(theme);
-                    }
-                    return _postView(post, theme);
-                  }),
-                ],
-              ),
-            ),
-          ],
-        ),
+      appBar: AppTopBar(
+        searchType: SearchType.feed,
+        controller: _searchController,
+        onChanged: _updateOverlay,
+        layerLink: _layerLink,
       ),
-      bottomNavigationBar: const AppBottomNavigation(currentIndex: 0),
-    );
-  }
-
-  Widget _topBar(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
+      body: ListView(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(8)),
-            child: Icon(Icons.logo_dev, color: theme.primaryColor, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: CompositedTransformTarget(
-              link: _layerLink,
-              child: Container(
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(10)),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: theme.textTheme.bodySmall?.color, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: _updateOverlay,
-                        style: theme.textTheme.bodyLarge,
-                        decoration: InputDecoration(
-                          hintText: "Search...",
-                          hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: Icon(Icons.notifications_none, color: theme.iconTheme.color),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())),
-          ),
-          IconButton(
-            icon: Icon(Icons.chat_bubble_outline, color: theme.iconTheme.color),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())),
-          ),
+          _storiesHeader(theme),
+          _careerMomentsBar(theme),
+          const SizedBox(height: 20),
+          _topRecentToggle(theme),
+          Divider(color: theme.dividerColor, height: 1),
+          ..._posts.map((post) {
+            if (post['type'] == 'suggested') {
+              return _suggestedForYouSection(theme);
+            }
+            return _postView(post, theme);
+          }),
         ],
       ),
+      bottomNavigationBar: const AppBottomNavigation(currentIndex: 0),
     );
   }
 
@@ -424,11 +368,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                            child: const Icon(Icons.add, color: Colors.white, size: 30),
+                            decoration: BoxDecoration(color: theme.colorScheme.onPrimary.withValues(alpha: 0.2), shape: BoxShape.circle),
+                            child: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 30),
                           ),
                           const SizedBox(height: 12),
-                          const Text("Your Update", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text("Your Update", style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
                         ],
                       ),
                     ),
@@ -471,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         decoration: BoxDecoration(color: selected ? theme.primaryColor : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-        child: Text(text, style: TextStyle(color: selected ? Colors.white : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.bold)),
+        child: Text(text, style: TextStyle(color: selected ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -516,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: CircleAvatar(
                               radius: 10,
                               backgroundColor: theme.primaryColor,
-                              child: const Icon(Icons.check, color: Colors.white, size: 12),
+                              child: Icon(Icons.check, color: theme.colorScheme.onPrimary, size: 12),
                             ),
                           ),
                       ],
@@ -534,7 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         minimumSize: const Size(double.infinity, 32),
                       ),
-                      child: const Text("Follow", style: TextStyle(color: Colors.white, fontSize: 13)),
+                      child: Text("Follow", style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 13)),
                     ),
                   ],
                 ),
@@ -617,13 +561,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            Icon(Icons.delete_outline, color: theme.colorScheme.error, size: 20),
                             const SizedBox(width: 12),
-                            Text("Delete", style: TextStyle(color: Colors.redAccent)),
+                            Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
                           ],
                         ),
                       ),
@@ -649,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.favorite, color: Colors.pinkAccent, size: 16),
+                        Icon(Icons.favorite, color: theme.colorScheme.secondary, size: 16),
                         const SizedBox(width: 4),
                         Text("$likesText likes", style: theme.textTheme.bodySmall),
                       ],
@@ -666,7 +610,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _actionBtn(
                       isLiked ? Icons.favorite : Icons.favorite_border, 
                       "Like", 
-                      isLiked ? Colors.pinkAccent : theme.textTheme.bodySmall?.color ?? Colors.grey,
+                      isLiked ? theme.colorScheme.secondary : theme.textTheme.bodySmall?.color ?? Colors.grey,
                       () {
                         setState(() {
                           post['isLiked'] = !isLiked;
@@ -777,7 +721,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   backgroundColor: user['color'],
                                   child: Text(
                                     user['name'][0],
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -798,7 +742,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     border: Border.all(color: isSelected ? theme.primaryColor : theme.dividerColor, width: 2),
                                     color: isSelected ? theme.primaryColor : Colors.transparent,
                                   ),
-                                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+                                  child: isSelected ? Icon(Icons.check, color: theme.colorScheme.onPrimary, size: 16) : null,
                                 ),
                               ],
                             ),
@@ -847,12 +791,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             minimumSize: const Size(double.infinity, 50),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.send, color: Colors.white, size: 20),
-                              SizedBox(width: 8),
-                              Text("Send", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              Icon(Icons.send, color: theme.colorScheme.onPrimary, size: 20),
+                              const SizedBox(width: 8),
+                              Text("Send", style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -995,7 +939,7 @@ class _CommentItemState extends State<_CommentItem> {
                         widget.comment['isLiked'] = !isLiked;
                         widget.comment['likes'] += isLiked ? -1 : 1;
                       }),
-                      child: Text("Like", style: TextStyle(color: isLiked ? Colors.pinkAccent : widget.theme.textTheme.bodySmall?.color, fontSize: 12, fontWeight: isLiked ? FontWeight.bold : FontWeight.normal)),
+                      child: Text("Like", style: TextStyle(color: isLiked ? widget.theme.colorScheme.secondary : widget.theme.textTheme.bodySmall?.color, fontSize: 12, fontWeight: isLiked ? FontWeight.bold : FontWeight.normal)),
                     ),
                     const SizedBox(width: 16),
                     Text("Reply", style: widget.theme.textTheme.bodySmall?.copyWith(fontSize: 12)),

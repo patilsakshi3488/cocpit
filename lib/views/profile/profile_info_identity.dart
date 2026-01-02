@@ -40,7 +40,6 @@ class ProfileInfoIdentity extends StatelessWidget {
                   name,
                   style: theme.textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.onBackground,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -48,10 +47,10 @@ class ProfileInfoIdentity extends StatelessWidget {
               const SizedBox(width: 8),
               Icon(Icons.verified, color: theme.primaryColor, size: 24),
               const SizedBox(width: 8),
-              Text("• 2nd", style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onBackground.withValues(alpha: 0.4))),
+              Text("• 2nd", style: theme.textTheme.bodyLarge?.copyWith(color: theme.textTheme.bodySmall?.color)),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.edit_outlined, color: colorScheme.onBackground.withValues(alpha: 0.4), size: 28),
+                icon: Icon(Icons.edit_outlined, color: theme.iconTheme.color?.withValues(alpha: 0.5), size: 28),
                 onPressed: onEditProfile,
               ),
             ],
@@ -60,7 +59,6 @@ class ProfileInfoIdentity extends StatelessWidget {
           Text(
             headline,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onBackground,
               fontWeight: FontWeight.w400,
               height: 1.3,
             ),
@@ -70,7 +68,7 @@ class ProfileInfoIdentity extends StatelessWidget {
             children: [
               Text(
                 "$location  •  ",
-                style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onBackground.withValues(alpha: 0.4)),
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
               ),
               GestureDetector(
                 onTap: () {},
@@ -84,7 +82,7 @@ class ProfileInfoIdentity extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             "500+ connections",
-            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onBackground.withValues(alpha: 0.4)),
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
           ),
           const SizedBox(height: 24),
           GestureDetector(
@@ -92,11 +90,11 @@ class ProfileInfoIdentity extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _identityRow(context, "OPEN TO:", openTo, colorScheme.surfaceContainer, colorScheme.primary),
+                _identityRow(context, "OPEN TO:", openTo, colorScheme.surfaceContainer, theme.primaryColor),
                 const SizedBox(height: 8),
                 _identityRow(context, "AVAILABILITY:", availability, Colors.green.withValues(alpha: 0.1), Colors.green),
                 const SizedBox(height: 8),
-                _identityRow(context, "PREFERENCE:", preference, colorScheme.surfaceContainer, colorScheme.primary),
+                _identityRow(context, "PREFERENCE:", preference, colorScheme.surfaceContainer, theme.primaryColor),
               ],
             ),
           ),
@@ -122,7 +120,7 @@ class ProfileInfoIdentity extends StatelessWidget {
           children: [
             TextSpan(
               text: "$label ",
-              style: TextStyle(color: colorScheme.onBackground.withValues(alpha: 0.4), fontSize: 11, fontWeight: FontWeight.bold),
+              style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 11, fontWeight: FontWeight.bold),
             ),
             TextSpan(
               text: value,

@@ -10,12 +10,6 @@ class ApplyJobScreen extends StatefulWidget {
 }
 
 class _ApplyJobScreenState extends State<ApplyJobScreen> {
-  /* ================= THEME ================= */
-  static const Color bg = Color(0xFF0B1220);
-  static const Color card = Color(0xFF111827);
-  static const Color border = Color(0xFF1F2937);
-  static const Color primary = Color(0xFF7C83FF);
-
   /* ================= FORM ================= */
   final _formKey = GlobalKey<FormState>();
   final TextEditingController nameCtrl = TextEditingController();
@@ -36,15 +30,18 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: bg,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const BackButton(color: Colors.white),
-        title: const Text(
+        leading: BackButton(color: colorScheme.onSurface),
+        title: Text(
           'Back to Job Listings',
-          style: TextStyle(color: Colors.white70, fontSize: 14),
+          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.7)),
         ),
       ),
       body: Column(
@@ -54,16 +51,16 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _jobHeader(),
+                  _jobHeader(theme),
                   const SizedBox(height: 24),
-                  _jobDescription(),
+                  _jobDescription(theme),
                   const SizedBox(height: 24),
-                  _applyForm(),
+                  _applyForm(theme),
                 ],
               ),
             ),
           ),
-          _submitButton(),
+          _submitButton(theme),
         ],
       ),
     );
@@ -71,15 +68,16 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   /* ================= JOB HEADER ================= */
 
-  Widget _jobHeader() {
+  Widget _jobHeader(ThemeData theme) {
     final job = widget.job;
+    final colorScheme = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: card,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -87,10 +85,16 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
             height: 56,
             width: 56,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF38BDF8), Color(0xFF6366F1)],
+              gradient: LinearGradient(
+                colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.7)],
               ),
               borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Text(
+                job['initial'] ?? (job['company'] != null ? job['company'][0] : 'J'),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -100,25 +104,22 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
               children: [
                 Text(
                   job['title'],
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(job['company'],
-                    style: const TextStyle(color: Colors.white70)),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.7))),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 14,
                   runSpacing: 8,
                   children: [
-                    _meta(Icons.location_on_outlined, job['location']),
-                    _meta(Icons.work_outline, job['type']),
-                    _meta(Icons.schedule, job['time']),
+                    _meta(theme, Icons.location_on_outlined, job['location']),
+                    _meta(theme, Icons.work_outline, job['type']),
+                    _meta(theme, Icons.schedule, job['time']),
                     Text(job['salary'],
-                        style: const TextStyle(
-                            color: Colors.blueAccent,
+                        style: TextStyle(
+                            color: theme.primaryColor,
                             fontWeight: FontWeight.w600)),
                   ],
                 )
@@ -132,31 +133,32 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   /* ================= DESCRIPTION ================= */
 
-  Widget _jobDescription() {
+  Widget _jobDescription(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: card,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _section('About the role'),
-          _text(
+          _section(theme, 'About the role'),
+          _text(theme,
               'This is a placeholder for the full job description. '
                   'Once backend APIs are connected, this content will be fetched dynamically.'),
-          _section('Responsibilities'),
-          _bullet('Collaborate with cross-functional teams'),
-          _bullet('Design and implement new features'),
-          _bullet('Write clean and maintainable code'),
-          _bullet('Participate in code reviews'),
-          _bullet('Fix bugs and improve performance'),
-          _section('Qualifications'),
-          _bullet('Bachelor’s degree or equivalent experience'),
-          _bullet('3+ years of relevant experience'),
-          _bullet('Strong problem-solving skills'),
+          _section(theme, 'Responsibilities'),
+          _bullet(theme, 'Collaborate with cross-functional teams'),
+          _bullet(theme, 'Design and implement new features'),
+          _bullet(theme, 'Write clean and maintainable code'),
+          _bullet(theme, 'Participate in code reviews'),
+          _bullet(theme, 'Fix bugs and improve performance'),
+          _section(theme, 'Qualifications'),
+          _bullet(theme, 'Bachelor’s degree or equivalent experience'),
+          _bullet(theme, '3+ years of relevant experience'),
+          _bullet(theme, 'Strong problem-solving skills'),
         ],
       ),
     );
@@ -164,33 +166,31 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   /* ================= APPLY FORM ================= */
 
-  Widget _applyForm() {
+  Widget _applyForm(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: card,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Apply for this Job',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            _input('Full Name', nameCtrl),
-            _input('Email Address', emailCtrl,
+            _input(theme, 'Full Name', nameCtrl),
+            _input(theme, 'Email Address', emailCtrl,
                 keyboard: TextInputType.emailAddress),
-            _input('Phone Number', phoneCtrl,
+            _input(theme, 'Phone Number', phoneCtrl,
                 keyboard: TextInputType.phone),
-            _input('Resume Link (PDF / Drive URL)', resumeCtrl),
+            _input(theme, 'Resume Link (PDF / Drive URL)', resumeCtrl),
           ],
         ),
       ),
@@ -199,19 +199,19 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   /* ================= SUBMIT ================= */
 
-  Widget _submitButton() {
+  Widget _submitButton(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: bg,
-        border: Border(top: BorderSide(color: border)),
+        color: theme.scaffoldBackgroundColor,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
       child: SizedBox(
         width: double.infinity,
         height: 50,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
+            backgroundColor: theme.primaryColor,
             shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
@@ -221,6 +221,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
               : const Text(
             'Apply for this Job',
             style: TextStyle(
+                color: Colors.white,
                 fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
@@ -234,20 +235,6 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => isSubmitting = true);
-
-    /// 🔥 BACKEND PAYLOAD (READY)
-    final payload = {
-      "jobId": widget.job['id'] ?? '',
-      "name": nameCtrl.text.trim(),
-      "email": emailCtrl.text.trim(),
-      "phone": phoneCtrl.text.trim(),
-      "resumeUrl": resumeCtrl.text.trim(),
-    };
-
-    /// ⛔ No Firebase
-    /// 🔗 Call REST API here later
-    /// Example:
-    /// await ApiService.applyJob(payload);
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -264,67 +251,67 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
   /* ================= UI HELPERS ================= */
 
-  Widget _input(String hint, TextEditingController ctrl,
+  Widget _input(ThemeData theme, String hint, TextEditingController ctrl,
       {TextInputType keyboard = TextInputType.text}) {
+    final colorScheme = theme.colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextFormField(
         controller: ctrl,
         keyboardType: keyboard,
-        style: const TextStyle(color: Colors.white),
+        style: theme.textTheme.bodyLarge,
         validator: (v) =>
         v == null || v.isEmpty ? 'This field is required' : null,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white54),
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.5)),
           filled: true,
-          fillColor: bg,
+          fillColor: theme.scaffoldBackgroundColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: theme.dividerColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: theme.dividerColor),
           ),
         ),
       ),
     );
   }
 
-  Widget _meta(IconData icon, String text) {
+  Widget _meta(ThemeData theme, IconData icon, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Colors.white54),
+        Icon(icon, size: 16, color: theme.textTheme.bodySmall?.color),
         const SizedBox(width: 6),
-        Text(text, style: const TextStyle(color: Colors.white60)),
+        Text(text, style: theme.textTheme.bodySmall),
       ],
     );
   }
 
-  Widget _section(String t) => Padding(
+  Widget _section(ThemeData theme, String t) => Padding(
     padding: const EdgeInsets.only(top: 18, bottom: 8),
     child: Text(t,
-        style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600)),
+        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
   );
 
-  Widget _text(String t) => Padding(
+  Widget _text(ThemeData theme, String t) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: Text(t,
-        style:
-        const TextStyle(color: Colors.white70, height: 1.5)),
+        style: theme.textTheme.bodyMedium?.copyWith(height: 1.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
   );
 
-  Widget _bullet(String t) => Padding(
+  Widget _bullet(ThemeData theme, String t) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('• ', style: TextStyle(color: Colors.white70)),
+        Text('• ', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
         Expanded(
             child: Text(t,
-                style: const TextStyle(
-                    color: Colors.white70, height: 1.5))),
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
       ],
     ),
   );

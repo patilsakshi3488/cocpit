@@ -12,6 +12,9 @@ class ProfileSkillsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -20,28 +23,31 @@ class ProfileSkillsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "Skills",
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               TextButton(
                 onPressed: onAddSkill,
-                child: const Text("Add", style: TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.bold)),
+                child: Text("Add", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Wrap(
-            spacing: 12,
+            spacing: 10,
             runSpacing: 12,
             children: skills.map((skill) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white10),
+                border: Border.all(color: theme.dividerColor),
               ),
-              child: Text(skill, style: const TextStyle(color: Colors.white, fontSize: 14)),
+              child: Text(
+                skill,
+                style: theme.textTheme.bodyMedium,
+              ),
             )).toList(),
           ),
         ],

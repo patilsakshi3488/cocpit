@@ -43,8 +43,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           CustomScrollView(
@@ -52,7 +55,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               SliverAppBar(
                 expandedHeight: 400,
                 pinned: true,
-                backgroundColor: const Color(0xFF0B1220),
+                backgroundColor: theme.scaffoldBackgroundColor,
                 leading: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CircleAvatar(
@@ -69,22 +72,22 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         duration: const Duration(milliseconds: 300),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          color: _isSaved ? const Color(0xFF6366F1).withAlpha(40) : Colors.black.withAlpha(150),
+                          color: _isSaved ? theme.primaryColor.withAlpha(40) : Colors.black.withAlpha(150),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: _isSaved ? const Color(0xFF6366F1) : Colors.white24),
+                          border: Border.all(color: _isSaved ? theme.primaryColor : Colors.white24),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               _isSaved ? Icons.bookmark : Icons.bookmark_border,
                               size: 18,
-                              color: _isSaved ? const Color(0xFF6366F1) : Colors.white,
+                              color: _isSaved ? theme.primaryColor : Colors.white,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               _isSaved ? 'Saved' : 'Save Event',
                               style: TextStyle(
-                                color: _isSaved ? const Color(0xFF6366F1) : Colors.white,
+                                color: _isSaved ? theme.primaryColor : Colors.white,
                                 fontWeight: _isSaved ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),
@@ -149,50 +152,38 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'About this event',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         widget.event.description,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                          height: 1.6,
-                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
                       ),
                       const SizedBox(height: 32),
-                      _infoRow(Icons.calendar_today, 'Date and Time', '${widget.event.startDate} · ${widget.event.startTime}'),
-                      _infoRow(Icons.location_on_outlined, 'Location', widget.event.location),
-                      _infoRow(Icons.people_outline, 'Attendees', '${widget.event.totalRegistrations} going'),
+                      _infoRow(theme, Icons.calendar_today, 'Date and Time', '${widget.event.startDate} · ${widget.event.startTime}'),
+                      _infoRow(theme, Icons.location_on_outlined, 'Location', widget.event.location),
+                      _infoRow(theme, Icons.people_outline, 'Attendees', '${widget.event.totalRegistrations} going'),
                       const SizedBox(height: 32),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF111827),
+                          color: colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white10),
+                          border: Border.all(color: theme.dividerColor),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Organizers',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 20),
-                            _organizerItem(Icons.person_outline, 'The Company Inc.'),
-                            _organizerItem(Icons.email_outlined, 'contact@thecompany.com'),
-                            _organizerItem(Icons.phone_outlined, '+1 234 567 890'),
+                            _organizerItem(theme, Icons.person_outline, 'The Company Inc.'),
+                            _organizerItem(theme, Icons.email_outlined, 'contact@thecompany.com'),
+                            _organizerItem(theme, Icons.phone_outlined, '+1 234 567 890'),
                           ],
                         ),
                       ),
@@ -207,14 +198,14 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             bottom: 24,
             left: 24,
             right: 24,
-            child: _actionButtons(context),
+            child: _actionButtons(context, theme),
           ),
         ],
       ),
     );
   }
 
-  Widget _actionButtons(BuildContext context) {
+  Widget _actionButtons(BuildContext context, ThemeData theme) {
     if (widget.event.createdByMe) {
       return SizedBox(
         width: double.infinity,
@@ -227,7 +218,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6366F1),
+            backgroundColor: theme.primaryColor,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: const Text(
@@ -268,7 +259,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             child: OutlinedButton(
               onPressed: widget.onCancelRegistration,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.white24),
+                side: BorderSide(color: theme.dividerColor),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               child: const Text(
@@ -297,7 +288,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6366F1),
+          backgroundColor: theme.primaryColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: const Text(
@@ -308,17 +299,17 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  Widget _infoRow(IconData icon, String title, String sub) => Padding(
+  Widget _infoRow(ThemeData theme, IconData icon, String title, String sub) => Padding(
         padding: const EdgeInsets.only(bottom: 24),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF1F2937),
+                color: theme.colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFF6366F1), size: 24),
+              child: Icon(icon, color: theme.primaryColor, size: 24),
             ),
             const SizedBox(width: 16),
             Column(
@@ -326,12 +317,12 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   sub,
-                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
                 ),
               ],
             ),
@@ -339,13 +330,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         ),
       );
 
-  Widget _organizerItem(IconData icon, String text) => Padding(
+  Widget _organizerItem(ThemeData theme, IconData icon, String text) => Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white54, size: 20),
+            Icon(icon, color: theme.textTheme.bodySmall?.color, size: 20),
             const SizedBox(width: 12),
-            Text(text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+            Text(text, style: theme.textTheme.bodyLarge),
           ],
         ),
       );

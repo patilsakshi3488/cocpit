@@ -1,75 +1,71 @@
 import 'package:flutter/material.dart';
 
-class PrivacySettings extends StatelessWidget {
-  final bool profileVisibility;
-  final bool showActivityStatus;
-  final bool searchEngineIndexing;
-  final ValueChanged<bool> onProfileVisibilityChanged;
-  final ValueChanged<bool> onActivityStatusChanged;
-  final ValueChanged<bool> onIndexingChanged;
+class PrivacySettings extends StatefulWidget {
+  const PrivacySettings({super.key});
 
-  const PrivacySettings({
-    super.key,
-    required this.profileVisibility,
-    required this.showActivityStatus,
-    required this.searchEngineIndexing,
-    required this.onProfileVisibilityChanged,
-    required this.onActivityStatusChanged,
-    required this.onIndexingChanged,
-  });
+  @override
+  State<PrivacySettings> createState() => _PrivacySettingsState();
+}
+
+class _PrivacySettingsState extends State<PrivacySettings> {
+  bool profileVisibility = true;
+  bool showActivityStatus = true;
+  bool searchEngineIndexing = false;
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color textColor = Theme.of(context).textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black);
-    final Color subTextColor = textColor.withValues(alpha: 0.5);
-    final Color primary = const Color(0xFF6366F1);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B1220),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text("Privacy & Security"),
+        centerTitle: true,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSwitchOption(
-            "Profile Visibility", 
-            "Make your profile visible to everyone", 
-            profileVisibility, 
-            onProfileVisibilityChanged, 
-            primary,
-            textColor,
-            subTextColor
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.dividerColor),
           ),
-          const SizedBox(height: 16),
-          _buildSwitchOption(
-            "Show Activity Status", 
-            "Let others see when you're online", 
-            showActivityStatus, 
-            onActivityStatusChanged, 
-            primary,
-            textColor,
-            subTextColor
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSwitchOption(
+                "Profile Visibility", 
+                "Make your profile visible to everyone", 
+                profileVisibility, 
+                (v) => setState(() => profileVisibility = v),
+              ),
+              const SizedBox(height: 16),
+              _buildSwitchOption(
+                "Show Activity Status", 
+                "Let others see when you're online", 
+                showActivityStatus, 
+                (v) => setState(() => showActivityStatus = v),
+              ),
+              const SizedBox(height: 16),
+              _buildSwitchOption(
+                "Search Engine Indexing", 
+                "Allow search engines to show your profile", 
+                searchEngineIndexing, 
+                (v) => setState(() => searchEngineIndexing = v),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          _buildSwitchOption(
-            "Search Engine Indexing", 
-            "Allow search engines to show your profile", 
-            searchEngineIndexing, 
-            onIndexingChanged, 
-            primary,
-            textColor,
-            subTextColor
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSwitchOption(String title, String subtitle, bool value, ValueChanged<bool> onChanged, Color primary, Color textColor, Color subTextColor) {
+  Widget _buildSwitchOption(String title, String subtitle, bool value, ValueChanged<bool> onChanged) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -79,19 +75,12 @@ class PrivacySettings extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: theme.textTheme.titleSmall,
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 14,
-                ),
+                style: theme.textTheme.bodySmall,
               ),
             ],
           ),
@@ -99,8 +88,8 @@ class PrivacySettings extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
-          activeTrackColor: primary,
+          activeColor: colorScheme.onPrimary,
+          activeTrackColor: theme.primaryColor,
         ),
       ],
     );

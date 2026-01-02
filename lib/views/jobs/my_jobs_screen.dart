@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'job_details_screen.dart';
+import '../../widgets/app_top_bar.dart';
 
 class MyJobsScreen extends StatefulWidget {
   const MyJobsScreen({super.key});
@@ -20,114 +21,6 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
 
   final Gradient gradient =
   const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFFEC4899)]);
-  Widget _search() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
-      child: expandSearch ? _expandedSearch() : _collapsedSearch(),
-    );
-  }
-  Widget _collapsedSearch() {
-    return Row(
-      children: [
-        const Icon(Icons.search, color: Colors.white54),
-        const SizedBox(width: 10),
-        const Expanded(
-          child: Text(
-            'Search by title, skill, or company...',
-            style: TextStyle(color: Colors.white54),
-          ),
-        ),
-        GestureDetector(
-          onTap: () => setState(() => expandSearch = true),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'Search',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  Widget _expandedSearch() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Keywords', style: TextStyle(color: Colors.white70)),
-        const SizedBox(height: 6),
-        _inputField(
-          hint: 'Job title, keywords, or company',
-          onChanged: (v) => keyword = v,
-        ),
-        const SizedBox(height: 12),
-        const Text('Location', style: TextStyle(color: Colors.white70)),
-        const SizedBox(height: 6),
-        _inputField(
-          hint: 'Type city...',
-          icon: Icons.location_on,
-          onChanged: (v) => location = v,
-        ),
-        const SizedBox(height: 16),
-        Align(
-          alignment: Alignment.centerRight,
-          child: GestureDetector(
-            onTap: () => setState(() => expandSearch = false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: const Text(
-                'Search Jobs',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  Widget _inputField({
-    required String hint,
-    IconData? icon,
-    required ValueChanged<String> onChanged,
-  }) {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: TextField(
-        onChanged: onChanged,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white54),
-          border: InputBorder.none,
-          prefixIcon:
-          icon != null ? Icon(icon, color: Colors.white54) : null,
-        ),
-      ),
-    );
-  }
-
-
 
   /* ================= TABS ================= */
   int tab = 0;
@@ -184,56 +77,19 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
       'time': 'Interview scheduled',
     },
   ];
-  Widget _metaRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '${_filteredJobs().length} jobs found',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          GestureDetector(
-            onTap: () => setState(() => showFilter = true),
-            child: Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: card,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: border),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.tune, size: 16, color: Colors.white70),
-                  SizedBox(width: 6),
-                  Text(
-                    'Filters',
-                    style:
-                    TextStyle(fontSize: 12, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: _appBar(),
+      appBar: AppTopBar(
+        searchType: SearchType.jobs,
+        onFilterTap: () => setState(() => showFilter = true),
+      ),
       body: Stack(
         children: [
           Column(
             children: [
-              _search(),
-              _metaRow(),
               _tabsRow(),
               Expanded(child: _jobList()),
             ],
@@ -242,17 +98,6 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
           if (showFilter) _filterOverlay(),
         ],
       ),
-    );
-  }
-
-  /* ================= APP BAR ================= */
-  AppBar _appBar() {
-    return AppBar(
-      backgroundColor: bg,
-      elevation: 0,
-      leading: const BackButton(color: Colors.white),
-      title: const Text('My Jobs', style: TextStyle(color: Colors.white)),
-
     );
   }
 

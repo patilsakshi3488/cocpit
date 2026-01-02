@@ -13,6 +13,7 @@ class ProfileExperienceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -21,13 +22,13 @@ class ProfileExperienceSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "Experience",
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               TextButton(
                 onPressed: () => onAddEditExperience(),
-                child: const Text("Add", style: TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.bold)),
+                child: Text("Add", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -44,10 +45,10 @@ class ProfileExperienceSection extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withOpacity(0.8),
+                      color: theme.primaryColor.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.business_center, color: Colors.white),
+                    child: Icon(Icons.business_center, color: theme.colorScheme.onPrimary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -57,25 +58,25 @@ class ProfileExperienceSection extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(exp.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text(exp.title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                             IconButton(
-                              icon: const Icon(Icons.edit_outlined, color: Colors.white38, size: 20),
+                              icon: Icon(Icons.edit_outlined, color: theme.iconTheme.color?.withValues(alpha: 0.5), size: 20),
                               onPressed: () => onAddEditExperience(experience: exp, index: idx),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
-                        Text(exp.company, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                        Text(exp.company, style: theme.textTheme.bodyLarge),
                         const SizedBox(height: 4),
                         Text(
                           "${exp.startDate} - ${exp.currentlyWorking ? 'Present' : exp.endDate} • ${exp.location}",
-                          style: const TextStyle(color: Colors.white38, fontSize: 13),
+                          style: theme.textTheme.bodySmall,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           exp.description,
-                          style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+                          style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
                         ),
                       ],
                     ),

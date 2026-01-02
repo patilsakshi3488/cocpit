@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../bottom_navigation.dart';
-import 'offers_screen.dart';
+import '../../widgets/app_top_bar.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -160,69 +160,56 @@ class _JobsScreenState extends State<JobsScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppTopBar(
+        searchType: SearchType.jobs,
+        onSearchTap: () => _showSearchModal(context),
+        onFilterTap: () => _showFilterModal(context),
+      ),
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 1),
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: _header(theme)),
-            SliverToBoxAdapter(child: _searchSection(theme)),
-            SliverToBoxAdapter(child: _tabs(theme)),
-            SliverToBoxAdapter(child: _metaRow(theme)),
-            _contentArea(theme),
-          ],
-        ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: _postJobHeader(theme)),
+          SliverToBoxAdapter(child: _tabs(theme)),
+          _contentArea(theme),
+        ],
       ),
     );
   }
 
-  Widget _header(ThemeData theme) {
+  Widget _postJobHeader(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-      child: Text(
-        "Jobs",
-        style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _searchSection(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => _showSearchModal(context),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.dividerColor),
-                ),
-                child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: GestureDetector(
+        onTap: () => _showPostJobModal(context),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.primaryColor.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: theme.primaryColor,
+                child: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 16),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.search, color: theme.textTheme.bodySmall?.color, size: 24),
-                    const SizedBox(width: 12),
-                    Text("Search jobs...", style: theme.textTheme.bodyLarge?.copyWith(color: theme.textTheme.bodySmall?.color)),
+                    Text("Post a job", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.primaryColor)),
+                    Text("Find the right talent for your team", style: theme.textTheme.bodySmall),
                   ],
                 ),
               ),
-            ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: theme.primaryColor),
+            ],
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () => _showPostJobModal(context),
-            child: Container(
-              height: 52, width: 52,
-              decoration: BoxDecoration(color: theme.primaryColor, borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -280,13 +267,13 @@ class _JobsScreenState extends State<JobsScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(text, style: theme.textTheme.titleSmall?.copyWith(color: active ? Colors.white : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.bold)),
+            Text(text, style: theme.textTheme.titleSmall?.copyWith(color: active ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.bold)),
             if (badge != null) ...[
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: active ? Colors.white.withValues(alpha: 0.2) : theme.primaryColor, shape: BoxShape.circle),
-                child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(color: active ? theme.colorScheme.onPrimary.withValues(alpha: 0.2) : theme.primaryColor, shape: BoxShape.circle),
+                child: Text(badge, style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             ]
           ],
@@ -307,57 +294,7 @@ class _JobsScreenState extends State<JobsScreen> {
           borderRadius: BorderRadius.circular(20),
           border: active ? null : Border.all(color: theme.dividerColor),
         ),
-        child: Text(text, style: theme.textTheme.bodyMedium?.copyWith(color: active ? Colors.white : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.w500)),
-      ),
-    );
-  }
-
-  Widget _metaRow(ThemeData theme) {
-    int count = 0;
-    if (mainTab == 0) {
-      count = viewJobs.length;
-    } else if (mainTab == 1) {
-      if (subTab == 0) {
-        count = myJobsInProgress.length;
-      } else if (subTab == 1) {
-        count = myJobsApplied.length;
-      } else if (subTab == 2) {
-        count = myJobsInPast.length;
-      } else if (subTab == 3) {
-        count = myJobsSaved.length;
-      } else if (subTab == 4) {
-        count = myJobsHiring.length;
-      } else {
-        count = 0;
-      }
-    } else if (mainTab == 2) {
-      count = offers.length;
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text("$count jobs found", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w400)),
-          GestureDetector(
-            onTap: () => _showFilterModal(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.filter_list, size: 20, color: theme.textTheme.bodyLarge?.color),
-                  const SizedBox(width: 8),
-                  Text("Filters", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
-                ],
-              ),
-            ),
-          ),
-        ],
+        child: Text(text, style: theme.textTheme.bodyMedium?.copyWith(color: active ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.w500)),
       ),
     );
   }
@@ -366,17 +303,24 @@ class _JobsScreenState extends State<JobsScreen> {
     List<Map<String, dynamic>> list = [];
     bool isHiringView = false;
 
-    if (mainTab == 0) list = viewJobs;
-    else if (mainTab == 1) {
-      if (subTab == 0) list = myJobsInProgress;
-      else if (subTab == 1) list = myJobsApplied;
-      else if (subTab == 2) list = myJobsInPast;
-      else if (subTab == 3) list = myJobsSaved;
-      else if (subTab == 4) {
+    if (mainTab == 0) {
+      list = viewJobs;
+    } else if (mainTab == 1) {
+      if (subTab == 0) {
+        list = myJobsInProgress;
+      } else if (subTab == 1) {
+        list = myJobsApplied;
+      } else if (subTab == 2) {
+        list = myJobsInPast;
+      } else if (subTab == 3) {
+        list = myJobsSaved;
+      } else if (subTab == 4) {
         list = myJobsHiring;
         isHiringView = true;
       }
-    } else if (mainTab == 2) list = offers;
+    } else if (mainTab == 2) {
+      list = offers;
+    }
 
     if (list.isEmpty) {
       return SliverToBoxAdapter(child: _emptyState(theme));
@@ -487,7 +431,7 @@ class _JobsScreenState extends State<JobsScreen> {
                 ),
               ),
               IconButton(
-                icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? Colors.pinkAccent : theme.textTheme.bodySmall?.color),
+                icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? theme.colorScheme.secondary : theme.textTheme.bodySmall?.color),
                 onPressed: () => _toggleSaveJob(job),
               ),
             ],
@@ -570,9 +514,9 @@ class _JobsScreenState extends State<JobsScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bolt, color: Color(0xFFA855F7), size: 18),
+          Icon(Icons.bolt, color: theme.colorScheme.secondary, size: 18),
           const SizedBox(width: 6),
-          Text("$match Match", style: const TextStyle(color: Color(0xFFA855F7), fontWeight: FontWeight.bold, fontSize: 14)),
+          Text("$match Match", style: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 14)),
         ],
       ),
     );
@@ -641,7 +585,7 @@ class _JobsScreenState extends State<JobsScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               elevation: 0,
             ),
-            child: const Text("Analytics", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            child: Text("Analytics", style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),
       ],
@@ -683,12 +627,12 @@ class _JobsScreenState extends State<JobsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bolt, color: Colors.white, size: 20),
+          Icon(Icons.bolt, color: theme.colorScheme.onPrimary, size: 20),
           const SizedBox(width: 6),
-          const Text("Quick Apply", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text("Quick Apply", style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
         ],
       ),
     );
@@ -963,7 +907,7 @@ class _FilterModalState extends State<_FilterModal> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: widget.theme.primaryColor, minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
-              child: const Text("Show Results", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text("Show Results", style: TextStyle(color: widget.theme.colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -978,7 +922,11 @@ class _FilterModalState extends State<_FilterModal> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title, style: widget.theme.textTheme.bodyLarge),
-          Switch(value: val, onChanged: onChanged, activeColor: widget.theme.primaryColor),
+          Switch(
+            value: val, 
+            onChanged: onChanged, 
+            activeThumbColor: widget.theme.primaryColor,
+          ),
         ],
       ),
     );
@@ -991,7 +939,7 @@ class _FilterModalState extends State<_FilterModal> {
       onSelected: onSelected,
       selectedColor: widget.theme.primaryColor,
       backgroundColor: widget.theme.colorScheme.surfaceContainer,
-      labelStyle: TextStyle(color: selected ? Colors.white : widget.theme.textTheme.bodyMedium?.color),
+      labelStyle: TextStyle(color: selected ? widget.theme.colorScheme.onPrimary : widget.theme.textTheme.bodyMedium?.color),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: selected ? widget.theme.primaryColor : widget.theme.dividerColor)),
     );
   }
@@ -1051,7 +999,7 @@ class _SearchModalState extends State<_SearchModal> {
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: const Text("Search Results", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text("Search Results", style: TextStyle(color: widget.theme.colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -1141,7 +1089,7 @@ class _ApplyModal extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor, minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                    child: const Text("Submit Application", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: Text("Submit Application", style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -1304,7 +1252,7 @@ class _PostJobModalState extends State<_PostJobModal> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text("Post Job", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          child: Text("Post Job", style: TextStyle(color: widget.theme.colorScheme.onPrimary, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -1419,7 +1367,7 @@ class _AnalyticsModal extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor, minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-            child: const Text("View Applicants List", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text("View Applicants List", style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1525,12 +1473,12 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.bolt, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text("Quick Apply", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Icon(Icons.bolt, color: theme.colorScheme.onPrimary),
+                        const SizedBox(width: 8),
+                        Text("Quick Apply", style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -1542,15 +1490,15 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
                     },
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 56),
-                      side: BorderSide(color: isSaved ? Colors.pinkAccent : theme.dividerColor),
+                      side: BorderSide(color: isSaved ? theme.colorScheme.secondary : theme.dividerColor),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? Colors.pinkAccent : theme.iconTheme.color),
+                        Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? theme.colorScheme.secondary : theme.iconTheme.color),
                         const SizedBox(width: 8),
-                        Text(isSaved ? "Saved" : "Save Job", style: TextStyle(color: isSaved ? Colors.pinkAccent : theme.textTheme.bodyLarge?.color, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(isSaved ? "Saved" : "Save Job", style: TextStyle(color: isSaved ? theme.colorScheme.secondary : theme.textTheme.bodyLarge?.color, fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -1576,7 +1524,7 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.bolt, color: Color(0xFFA855F7), size: 20),
+                      Icon(Icons.bolt, color: theme.colorScheme.secondary, size: 20),
                       const SizedBox(width: 8),
                       Text("Recruiter Insights", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     ],

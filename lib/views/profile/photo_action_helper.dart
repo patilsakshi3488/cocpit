@@ -11,11 +11,12 @@ class PhotoActionHelper {
     required VoidCallback onDelete,
   }) {
     final isMobile = MediaQuery.of(context).size.width < 600;
+    final theme = Theme.of(context);
 
     if (isMobile) {
       showModalBottomSheet(
         context: context,
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: theme.colorScheme.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -25,7 +26,7 @@ class PhotoActionHelper {
       showDialog(
         context: context,
         builder: (context) => Dialog(
-          backgroundColor: const Color(0xFF0F172A),
+          backgroundColor: theme.colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -44,6 +45,7 @@ class PhotoActionHelper {
     VoidCallback onUpdate,
     VoidCallback onDelete,
   ) {
+    final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -51,11 +53,12 @@ class PhotoActionHelper {
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Text(
             title,
-            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge,
           ),
         ),
-        const Divider(color: Colors.white10),
+        Divider(color: theme.dividerColor),
         _buildOptionItem(
+          context: context,
           icon: Icons.visibility_outlined,
           title: "View Photo",
           onTap: () {
@@ -75,6 +78,7 @@ class PhotoActionHelper {
           },
         ),
         _buildOptionItem(
+          context: context,
           icon: Icons.edit_outlined,
           title: "Edit Photo",
           onTap: () {
@@ -88,14 +92,16 @@ class PhotoActionHelper {
   }
 
   static void _showEditSubMenu(BuildContext context, VoidCallback onUpdate, VoidCallback onDelete) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildOptionItem(
+            context: context,
             icon: Icons.cloud_upload_outlined,
             title: "Update Photo",
             onTap: () {
@@ -104,9 +110,10 @@ class PhotoActionHelper {
             },
           ),
           _buildOptionItem(
+            context: context,
             icon: Icons.delete_outline,
             title: "Delete Photo",
-            color: Colors.redAccent,
+            color: theme.colorScheme.error,
             onTap: () {
               Navigator.pop(context);
               _showDeleteConfirmation(context, onDelete);
@@ -119,14 +126,16 @@ class PhotoActionHelper {
   }
 
   static void _showUpdateOptions(BuildContext context, VoidCallback onUpdate) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildOptionItem(
+            context: context,
             icon: Icons.camera_alt_outlined,
             title: "Take Photo",
             onTap: () {
@@ -135,6 +144,7 @@ class PhotoActionHelper {
             },
           ),
           _buildOptionItem(
+            context: context,
             icon: Icons.image_outlined,
             title: "Upload from Gallery",
             onTap: () {
@@ -149,23 +159,24 @@ class PhotoActionHelper {
   }
 
   static void _showDeleteConfirmation(BuildContext context, VoidCallback onDelete) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text("Delete Photo", style: TextStyle(color: Colors.white)),
-        content: const Text("Are you sure you want to remove this photo?", style: TextStyle(color: Colors.white70)),
+        backgroundColor: theme.colorScheme.surface,
+        title: Text("Delete Photo", style: theme.textTheme.titleLarge),
+        content: Text("Are you sure you want to remove this photo?", style: theme.textTheme.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
+            child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodySmall?.color)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               onDelete();
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
+            child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
           ),
         ],
       ),
@@ -173,14 +184,17 @@ class PhotoActionHelper {
   }
 
   static Widget _buildOptionItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    Color color = Colors.white70,
+    Color? color,
   }) {
+    final theme = Theme.of(context);
+    final displayColor = color ?? theme.textTheme.bodyLarge?.color ?? Colors.grey;
     return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+      leading: Icon(icon, color: displayColor),
+      title: Text(title, style: TextStyle(color: displayColor, fontWeight: FontWeight.w500)),
       onTap: onTap,
     );
   }

@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
 import '../bottom_navigation.dart';
+import '../../widgets/app_top_bar.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,90 +25,62 @@ class ChatScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-              child: Text(
-                "Messages",
-                style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            // 🔍 Search Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: theme.dividerColor),
+      appBar: AppTopBar(
+        searchType: SearchType.chat,
+        controller: _searchController,
+        onChanged: (v) => setState(() {}),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 💬 Messages List
+          Expanded(
+            child: ListView(
+              children: [
+                _ChatTile(
+                  name: "Michael Chen",
+                  role: "Recruiter",
+                  message: "Thanks for connecting! Looking forwar...",
+                  time: "2m ago",
+                  unreadCount: 2,
+                  color: Colors.blueAccent,
+                  isOnline: true,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalChatScreen(name: "Michael Chen", role: "Recruiter", color: Colors.blueAccent))),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: colorScheme.onSurface.withValues(alpha: 0.4), size: 20),
-                    const SizedBox(width: 12),
-                    Text(
-                      "Search messages...",
-                      style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.4)),
-                    ),
-                  ],
+                _ChatTile(
+                  name: "Emily Rodriguez",
+                  role: "Hiring Manager",
+                  message: "That sounds great! When would be a good ...",
+                  time: "1h ago",
+                  unreadCount: 0,
+                  color: Colors.pinkAccent,
+                  isOnline: true,
+                  onTap: () {},
                 ),
-              ),
+                _ChatTile(
+                  name: "David Park",
+                  role: "Connection",
+                  message: "I saw your recent post about AI trends...",
+                  time: "3h ago",
+                  unreadCount: 1,
+                  color: Colors.deepPurpleAccent,
+                  isOnline: false,
+                  onTap: () {},
+                ),
+                _ChatTile(
+                  name: "Jessica Williams",
+                  role: "Talent Acquisition",
+                  message: "Happy to help with that project!",
+                  time: "1d ago",
+                  unreadCount: 0,
+                  color: Colors.greenAccent,
+                  isOnline: false,
+                  onTap: () {},
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            // 💬 Messages List
-            Expanded(
-              child: ListView(
-                children: [
-                  _ChatTile(
-                    name: "Michael Chen",
-                    role: "Recruiter",
-                    message: "Thanks for connecting! Looking forwar...",
-                    time: "2m ago",
-                    unreadCount: 2,
-                    color: Colors.blueAccent,
-                    isOnline: true,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalChatScreen(name: "Michael Chen", role: "Recruiter", color: Colors.blueAccent))),
-                  ),
-                  _ChatTile(
-                    name: "Emily Rodriguez",
-                    role: "Hiring Manager",
-                    message: "That sounds great! When would be a good ...",
-                    time: "1h ago",
-                    unreadCount: 0,
-                    color: Colors.pinkAccent,
-                    isOnline: true,
-                    onTap: () {},
-                  ),
-                  _ChatTile(
-                    name: "David Park",
-                    role: "Connection",
-                    message: "I saw your recent post about AI trends...",
-                    time: "3h ago",
-                    unreadCount: 1,
-                    color: Colors.deepPurpleAccent,
-                    isOnline: false,
-                    onTap: () {},
-                  ),
-                  _ChatTile(
-                    name: "Jessica Williams",
-                    role: "Talent Acquisition",
-                    message: "Happy to help with that project!",
-                    time: "1d ago",
-                    unreadCount: 0,
-                    color: Colors.greenAccent,
-                    isOnline: false,
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 0),
     );
