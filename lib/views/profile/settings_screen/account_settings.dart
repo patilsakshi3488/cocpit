@@ -5,46 +5,43 @@ class AccountSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "ACCOUNT",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          "MANAGE YOUR PERSONAL INFORMATION AND ACCOUNT PREFERENCES.",
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.3),
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 48),
-        _buildAccountItem("PERSONAL INFO", "Name, email, and phone number"),
-        _buildAccountItem("PASSWORD", "Change your account password"),
-        _buildAccountItem("LANGUAGE", "English (US)"),
-        _buildAccountItem("DELETE ACCOUNT", "Permanently remove your data", isDanger: true),
-      ],
+    final Color textColor = Colors.white;
+    final Color subTextColor = Colors.white.withValues(alpha: 0.5);
+    final Color cardBg = const Color(0xFF111827);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1220),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildAccountItem("Personal Info", "Name, email, and phone number", Icons.person_outline, textColor, subTextColor, cardBg),
+          const SizedBox(height: 12),
+          _buildAccountItem("Password", "Change your account password", Icons.lock_outline, textColor, subTextColor, cardBg),
+          const SizedBox(height: 12),
+          _buildAccountItem("Language", "English (US)", Icons.language, textColor, subTextColor, cardBg),
+          const SizedBox(height: 12),
+          _buildAccountItem("Delete Account", "Permanently remove your data", Icons.delete_outline, Colors.redAccent, subTextColor, cardBg, isDanger: true),
+        ],
+      ),
     );
   }
 
-  Widget _buildAccountItem(String title, String subtitle, {bool isDanger = false}) {
+  Widget _buildAccountItem(String title, String subtitle, IconData icon, Color textColor, Color subTextColor, Color cardBg, {bool isDanger = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white10, width: 1)),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Icon(icon, color: isDanger ? Colors.redAccent : Colors.white, size: 24),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,25 +49,23 @@ class AccountSettings extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: isDanger ? Colors.redAccent : Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
+                    color: subTextColor,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.arrow_forward_ios, color: Colors.white10, size: 16),
+          Icon(Icons.arrow_forward_ios, color: subTextColor.withValues(alpha: 0.3), size: 14),
         ],
       ),
     );

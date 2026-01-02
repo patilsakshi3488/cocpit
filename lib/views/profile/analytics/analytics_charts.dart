@@ -1,99 +1,233 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class RadarChartPainter extends CustomPainter {
+  final List<String> labels;
+  final List<double> values;
+  final List<double> targetValues;
   final Color primary;
   final Color textColor;
-  RadarChartPainter({required this.primary, required this.textColor});
+
+  RadarChartPainter({
+    required this.labels,
+    required this.values,
+    required this.targetValues,
+    required this.primary,
+    required this.textColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    final radius = math.min(size.width, size.height) / 2;
+    final angleStep = (2 * math.pi) / labels.length;
+
     final paintGrid = Paint()
-      ..color = textColor.withValues(alpha: 0.05)
+      ..color = textColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke;
-    
+
+    // Draw background hexagons
     for (var i = 1; i <= 5; i++) {
-      canvas.drawCircle(center, radius * (i / 5), paintGrid);
+      final r = radius * (i / 5);
+      final path = Path();
+      for (var j = 0; j < labels.length; j++) {
+        final angle = j * angleStep - math.pi / 2;
+        final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
+        if (j == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, paintGrid);
     }
 
-    final paintFill = Paint()..color = primary.withValues(alpha: 0.2)..style = PaintingStyle.fill;
-    final paintBorder = Paint()..color = primary..style = PaintingStyle.stroke..strokeWidth = 2;
+    // Draw axis lines
+    for (var j = 0; j < labels.length; j++) {
+      final angle = j * angleStep - math.pi / 2;
+      canvas.drawLine(center, Offset(center.dx + radius * math.cos(angle), center.dy + radius * math.sin(angle)), paintGrid);
+      
+      // Draw labels
+      final labelRadius = radius + 25;
+      final labelPos = Offset(center.dx + labelRadius * math.cos(angle), center.dy + labelRadius * math.sin(angle));
+      
+      final textPainter = TextPainter(
+        text: TextSpan(text: labels[j], style: TextStyle(color: textColor.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w500)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      
+      textPainter.paint(canvas, Offset(labelPos.dx - textPainter.width / 2, labelPos.dy - textPainter.height / 2));
+    }
 
-    final path = Path();
-    path.moveTo(center.dx, center.dy - radius * 0.8);
-    path.lineTo(center.dx + radius * 0.7, center.dy - radius * 0.3);
-    path.lineTo(center.dx + radius * 0.6, center.dy + radius * 0.5);
-    path.lineTo(center.dx, center.dy + radius * 0.9);
-    path.lineTo(center.dx - radius * 0.7, center.dy + radius * 0.4);
-    path.lineTo(center.dx - radius * 0.6, center.dy - radius * 0.4);
-    path.close();
+    // Draw Target values (Dashed line)
+    final targetPath = Path();
+    final paintTarget = Paint()
+      ..color = Colors.greenAccent.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
 
-    canvas.drawPath(path, paintFill);
-    canvas.drawPath(path, paintBorder);
+    for (var j = 0; j < labels.length; j++) {
+      final angle = j * angleStep - math.pi / 2;
+      final r = radius * targetValues[j];
+      final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
+      if (j == 0) {
+        targetPath.moveTo(point.dx, point.dy);
+      } else {
+        targetPath.lineTo(point.dx, point.dy);
+      }
+    }
+    targetPath.close();
+    _drawDashedPath(canvas, targetPath, paintTarget);
+
+    // Draw User values
+    final userPath = Path();
+    for (var j = 0; j < labels.length; j++) {
+      final angle = j * angleStep - math.pi / 2;
+      final r = radius * values[j];
+      final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
+      if (j == 0) {
+        userPath.moveTo(point.dx, point.dy);
+      } else {
+        userPath.lineTo(point.dx, point.dy);
+      }
+    }
+    userPath.close();
+
+    final paintFill = Paint()..color = primary.withValues(alpha: 0.3)..style = PaintingStyle.fill;
+    final paintBorder = Paint()..color = primary..style = PaintingStyle.stroke..strokeWidth = 2.5;
+
+    canvas.drawPath(userPath, paintFill);
+    canvas.drawPath(userPath, paintBorder);
+    
+    // Draw Legend points in chart? No, usually done in widget.
+  }
+
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+    const dashWidth = 4.0;
+    const dashSpace = 4.0;
+    for (final pathMetric in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < pathMetric.length) {
+        canvas.drawPath(
+          pathMetric.extractPath(distance, distance + dashWidth),
+          paint,
+        );
+        distance += dashWidth + dashSpace;
+      }
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant RadarChartPainter oldDelegate) {
+    return true;
+  }
 }
 
 class LineChartPainter extends CustomPainter {
+  final List<double> interactions;
+  final List<double> profileViews;
   final Color primary;
   final Color accent;
   final Color textColor;
-  LineChartPainter({required this.primary, required this.accent, required this.textColor});
+  final int? selectedIndex;
+
+  LineChartPainter({
+    required this.interactions,
+    required this.profileViews,
+    required this.primary,
+    required this.accent,
+    required this.textColor,
+    this.selectedIndex,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paintGrid = Paint()..color = textColor.withValues(alpha: 0.1)..style = PaintingStyle.stroke;
+    
     for (var i = 0; i < 5; i++) {
       double y = size.height - (size.height / 4 * i);
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paintGrid);
     }
 
-    final p1 = Path();
-    p1.moveTo(0, size.height * 0.6);
-    p1.quadraticBezierTo(size.width * 0.2, size.height * 0.7, size.width * 0.4, size.height * 0.4);
-    p1.quadraticBezierTo(size.width * 0.6, size.height * 0.2, size.width * 0.8, size.height * 0.5);
-    p1.lineTo(size.width, size.height * 0.3);
+    if (interactions.isEmpty || profileViews.isEmpty) return;
 
-    final paint1 = Paint()..color = primary..style = PaintingStyle.stroke..strokeWidth = 3;
-    canvas.drawPath(p1, paint1);
+    final double stepX = size.width / (interactions.length - 1);
+    final double maxY = 200.0;
 
-    final p2 = Path();
-    p2.moveTo(0, size.height * 0.9);
-    p2.lineTo(size.width * 0.3, size.height * 0.85);
-    p2.lineTo(size.width * 0.6, size.height * 0.88);
-    p2.lineTo(size.width, size.height * 0.8);
+    Offset getOffset(int index, double value) {
+      return Offset(index * stepX, size.height - (value / maxY * size.height));
+    }
 
-    final paint2 = Paint()..color = accent..style = PaintingStyle.stroke..strokeWidth = 3;
-    canvas.drawPath(p2, paint2);
+    // Profile Views Path
+    final pViewsPath = Path();
+    final pViewsAreaPath = Path();
+    pViewsAreaPath.moveTo(0, size.height);
+    
+    for (var i = 0; i < profileViews.length; i++) {
+      final point = getOffset(i, profileViews[i]);
+      if (i == 0) {
+        pViewsPath.moveTo(point.dx, point.dy);
+      } else {
+        pViewsPath.lineTo(point.dx, point.dy);
+      }
+      pViewsAreaPath.lineTo(point.dx, point.dy);
+    }
+    pViewsAreaPath.lineTo(size.width, size.height);
+    pViewsAreaPath.close();
+
+    final paintAreaViews = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [primary.withValues(alpha: 0.4), primary.withValues(alpha: 0.0)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    
+    canvas.drawPath(pViewsAreaPath, paintAreaViews);
+    canvas.drawPath(pViewsPath, Paint()..color = primary..style = PaintingStyle.stroke..strokeWidth = 3);
+
+    // Interactions Path
+    final interactionsPath = Path();
+    final interactionsAreaPath = Path();
+    interactionsAreaPath.moveTo(0, size.height);
+
+    for (var i = 0; i < interactions.length; i++) {
+      final point = getOffset(i, interactions[i]);
+      if (i == 0) {
+        interactionsPath.moveTo(point.dx, point.dy);
+      } else {
+        interactionsPath.lineTo(point.dx, point.dy);
+      }
+      interactionsAreaPath.lineTo(point.dx, point.dy);
+    }
+    interactionsAreaPath.lineTo(size.width, size.height);
+    interactionsAreaPath.close();
+
+    final paintAreaInteractions = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [accent.withValues(alpha: 0.3), accent.withValues(alpha: 0.0)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawPath(interactionsAreaPath, paintAreaInteractions);
+    canvas.drawPath(interactionsPath, Paint()..color = accent..style = PaintingStyle.stroke..strokeWidth = 3);
+
+    if (selectedIndex != null && selectedIndex! < interactions.length) {
+      final x = selectedIndex! * stepX;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), Paint()..color = Colors.white54..strokeWidth = 1);
+      
+      final p1 = getOffset(selectedIndex!, profileViews[selectedIndex!]);
+      final p2 = getOffset(selectedIndex!, interactions[selectedIndex!]);
+      
+      canvas.drawCircle(p1, 6, Paint()..color = Colors.white);
+      canvas.drawCircle(p1, 4, Paint()..color = primary);
+      
+      canvas.drawCircle(p2, 6, Paint()..color = Colors.white);
+      canvas.drawCircle(p2, 4, Paint()..color = accent);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class DonutChartPainter extends CustomPainter {
-  final Color primary;
-  final Color textColor;
-  DonutChartPainter({required this.primary, required this.textColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 12;
-
-    paint.color = primary;
-    canvas.drawArc(rect, -1.5, 2.5, false, paint);
-    paint.color = Colors.tealAccent;
-    canvas.drawArc(rect, 1.1, 1.8, false, paint);
-    paint.color = Colors.orangeAccent;
-    canvas.drawArc(rect, 3.0, 0.8, false, paint);
-    paint.color = Colors.redAccent;
-    canvas.drawArc(rect, 3.9, 0.6, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant LineChartPainter oldDelegate) => true;
 }

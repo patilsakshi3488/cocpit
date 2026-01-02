@@ -5,8 +5,11 @@ class CreateCareerMomentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -17,18 +20,18 @@ class CreateCareerMomentScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     "Create Story",
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                    icon: Icon(Icons.close, color: colorScheme.onSurface, size: 28),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
               const SizedBox(height: 40),
-              const Text("Upload Image", style: TextStyle(color: Colors.white70, fontSize: 16)),
+              Text("Upload Image", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _uploadBox(
                 context,
@@ -37,7 +40,7 @@ class CreateCareerMomentScreen extends StatelessWidget {
                 icon: Icons.image_outlined,
               ),
               const SizedBox(height: 32),
-              const Text("Upload Video", style: TextStyle(color: Colors.white70, fontSize: 16)),
+              Text("Upload Video", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _uploadBox(
                 context,
@@ -46,24 +49,24 @@ class CreateCareerMomentScreen extends StatelessWidget {
                 icon: Icons.videocam_outlined,
               ),
               const SizedBox(height: 32),
-              const Text("Description", style: TextStyle(color: Colors.white70, fontSize: 16)),
+              Text("Description", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1F2937).withOpacity(0.5),
+                    color: colorScheme.surfaceContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    border: Border.all(color: theme.dividerColor),
                   ),
-                  child: const TextField(
+                  child: TextField(
                     maxLines: null,
-                    style: TextStyle(color: Colors.white),
+                    style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
                       hintText: "Add a description to your story...",
-                      hintStyle: TextStyle(color: Colors.white38),
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.4)),
                       border: InputBorder.none,
-                      icon: Icon(Icons.description_outlined, color: Colors.white38),
+                      icon: Icon(Icons.description_outlined, color: colorScheme.onSurface.withValues(alpha: 0.4)),
                     ),
                   ),
                 ),
@@ -76,10 +79,10 @@ class CreateCareerMomentScreen extends StatelessWidget {
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Colors.white10),
+                        side: BorderSide(color: theme.dividerColor),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text("Cancel", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                      child: Text("Cancel", style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -88,11 +91,12 @@ class CreateCareerMomentScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F70F0),
+                        backgroundColor: theme.primaryColor,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text("Create Story", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text("Create Story", style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -106,34 +110,37 @@ class CreateCareerMomentScreen extends StatelessWidget {
   }
 
   Widget _uploadBox(BuildContext context, {required String title, required String btnText, required IconData icon}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1F2937).withOpacity(0.5),
+        color: colorScheme.surfaceContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(color: Colors.white38, fontSize: 14),
+              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.4)),
             ),
           ),
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF4F70F0).withOpacity(0.5), style: BorderStyle.solid),
+              border: Border.all(color: theme.primaryColor.withValues(alpha: 0.5)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: const Color(0xFF4F70F0), size: 20),
+                Icon(icon, color: theme.primaryColor, size: 20),
                 const SizedBox(width: 8),
-                Text(btnText, style: const TextStyle(color: Color(0xFF4F70F0), fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(btnText, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13)),
               ],
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../bottom_navigation.dart';
-import '../offers_screen.dart';
+import 'offers_screen.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -12,10 +12,6 @@ class JobsScreen extends StatefulWidget {
 class _JobsScreenState extends State<JobsScreen> {
   int mainTab = 0; // 0: View Jobs, 1: My Jobs, 2: Offers
   int subTab = 0; // 0: In Progress, 1: Applied, 2: In Past, 3: Saved, 4: Hiring
-
-  final Color bg = const Color(0xFF0B1220);
-  final Color cardColor = const Color(0xFF111827);
-  final Color primary = const Color(0xFF6366F1);
 
   final List<Map<String, dynamic>> _allViewJobs = [
     {
@@ -161,35 +157,36 @@ class _JobsScreenState extends State<JobsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: theme.scaffoldBackgroundColor,
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 1),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _header(),
-            _searchSection(),
-            _tabs(),
-            _metaRow(),
-            Expanded(child: _contentArea()),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _header(theme)),
+            SliverToBoxAdapter(child: _searchSection(theme)),
+            SliverToBoxAdapter(child: _tabs(theme)),
+            SliverToBoxAdapter(child: _metaRow(theme)),
+            _contentArea(theme),
           ],
         ),
       ),
     );
   }
 
-  Widget _header() {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+  Widget _header(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       child: Text(
         "Jobs",
-        style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+        style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _searchSection() {
+  Widget _searchSection(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -202,14 +199,15 @@ class _JobsScreenState extends State<JobsScreen> {
                 height: 52,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B).withValues(alpha: 0.5),
+                  color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: theme.dividerColor),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.search, color: Colors.white38, size: 24),
-                    SizedBox(width: 12),
-                    Text("Search jobs...", style: TextStyle(color: Colors.white38, fontSize: 16)),
+                    Icon(Icons.search, color: theme.textTheme.bodySmall?.color, size: 24),
+                    const SizedBox(width: 12),
+                    Text("Search jobs...", style: theme.textTheme.bodyLarge?.copyWith(color: theme.textTheme.bodySmall?.color)),
                   ],
                 ),
               ),
@@ -220,7 +218,7 @@ class _JobsScreenState extends State<JobsScreen> {
             onTap: () => _showPostJobModal(context),
             child: Container(
               height: 52, width: 52,
-              decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(color: theme.primaryColor, borderRadius: BorderRadius.circular(16)),
               child: const Icon(Icons.add, color: Colors.white, size: 28),
             ),
           ),
@@ -229,7 +227,7 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _tabs() {
+  Widget _tabs(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       child: Column(
@@ -239,9 +237,9 @@ class _JobsScreenState extends State<JobsScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _tabPill("View Jobs", 0),
-                _tabPill("My Jobs", 1),
-                _tabPill("Offers", 2, badge: "2"),
+                _tabPill(theme, "View Jobs", 0),
+                _tabPill(theme, "My Jobs", 1),
+                _tabPill(theme, "Offers", 2, badge: "2"),
               ],
             ),
           ),
@@ -251,11 +249,11 @@ class _JobsScreenState extends State<JobsScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _subTabPill("In Progress", 0),
-                  _subTabPill("Applied", 1),
-                  _subTabPill("In Past", 2),
-                  _subTabPill("Saved", 3),
-                  _subTabPill("Hiring", 4),
+                  _subTabPill(theme, "In Progress", 0),
+                  _subTabPill(theme, "Applied", 1),
+                  _subTabPill(theme, "In Past", 2),
+                  _subTabPill(theme, "Saved", 3),
+                  _subTabPill(theme, "Hiring", 4),
                 ],
               ),
             ),
@@ -265,7 +263,7 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _tabPill(String text, int index, {String? badge}) {
+  Widget _tabPill(ThemeData theme, String text, int index, {String? badge}) {
     bool active = mainTab == index;
     return GestureDetector(
       onTap: () {
@@ -275,19 +273,19 @@ class _JobsScreenState extends State<JobsScreen> {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: active ? null : const Color(0xFF1E293B).withValues(alpha: 0.5),
-          gradient: active ? const LinearGradient(colors: [Color(0xFF7C83FF), Color(0xFFEC4899)]) : null,
+          color: active ? theme.primaryColor : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(24),
+          border: active ? null : Border.all(color: theme.dividerColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(text, style: TextStyle(color: active ? Colors.white : Colors.white54, fontWeight: FontWeight.bold, fontSize: 15)),
+            Text(text, style: theme.textTheme.titleSmall?.copyWith(color: active ? Colors.white : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.bold)),
             if (badge != null) ...[
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(color: Color(0xFFEC4899), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: active ? Colors.white.withValues(alpha: 0.2) : theme.primaryColor, shape: BoxShape.circle),
                 child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             ]
@@ -297,7 +295,7 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _subTabPill(String text, int index) {
+  Widget _subTabPill(ThemeData theme, String text, int index) {
     bool active = subTab == index;
     return GestureDetector(
       onTap: () => setState(() => subTab = index),
@@ -305,25 +303,33 @@ class _JobsScreenState extends State<JobsScreen> {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? null : const Color(0xFF1E293B).withValues(alpha: 0.5),
-          gradient: active ? const LinearGradient(colors: [Color(0xFF7C83FF), Color(0xFFEC4899)]) : null,
+          color: active ? theme.primaryColor : theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(20),
+          border: active ? null : Border.all(color: theme.dividerColor),
         ),
-        child: Text(text, style: TextStyle(color: active ? Colors.white : Colors.white54, fontSize: 14, fontWeight: FontWeight.w500)),
+        child: Text(text, style: theme.textTheme.bodyMedium?.copyWith(color: active ? Colors.white : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.w500)),
       ),
     );
   }
 
-  Widget _metaRow() {
+  Widget _metaRow(ThemeData theme) {
     int count = 0;
-    if (mainTab == 0) count = viewJobs.length;
-    else if (mainTab == 1) {
-      if (subTab == 0) count = myJobsInProgress.length;
-      else if (subTab == 1) count = myJobsApplied.length;
-      else if (subTab == 2) count = myJobsInPast.length;
-      else if (subTab == 3) count = myJobsSaved.length;
-      else if (subTab == 4) count = myJobsHiring.length;
-      else count = 0;
+    if (mainTab == 0) {
+      count = viewJobs.length;
+    } else if (mainTab == 1) {
+      if (subTab == 0) {
+        count = myJobsInProgress.length;
+      } else if (subTab == 1) {
+        count = myJobsApplied.length;
+      } else if (subTab == 2) {
+        count = myJobsInPast.length;
+      } else if (subTab == 3) {
+        count = myJobsSaved.length;
+      } else if (subTab == 4) {
+        count = myJobsHiring.length;
+      } else {
+        count = 0;
+      }
     } else if (mainTab == 2) {
       count = offers.length;
     }
@@ -332,21 +338,21 @@ class _JobsScreenState extends State<JobsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("$count jobs found", style: const TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w400)),
+          Text("$count jobs found", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w400)),
           GestureDetector(
             onTap: () => _showFilterModal(context),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B).withValues(alpha: 0.3),
+                color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                border: Border.all(color: theme.dividerColor),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.filter_list, size: 20, color: Colors.white70),
-                  SizedBox(width: 8),
-                  Text("Filters", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500)),
+                  Icon(Icons.filter_list, size: 20, color: theme.textTheme.bodyLarge?.color),
+                  const SizedBox(width: 8),
+                  Text("Filters", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -356,46 +362,56 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _contentArea() {
-    if (mainTab == 0) return _jobList(viewJobs);
-    if (mainTab == 1) {
-      if (subTab == 0) return _jobList(myJobsInProgress);
-      if (subTab == 1) return _jobList(myJobsApplied);
-      if (subTab == 2) return _jobList(myJobsInPast);
-      if (subTab == 3) return myJobsSaved.isEmpty ? _emptyState() : _jobList(myJobsSaved);
-      if (subTab == 4) return myJobsHiring.isEmpty ? _emptyState() : _jobList(myJobsHiring, isHiringView: true);
-    }
-    if (mainTab == 2) return _jobList(offers);
-    return Container();
-  }
+  Widget _contentArea(ThemeData theme) {
+    List<Map<String, dynamic>> list = [];
+    bool isHiringView = false;
 
-  Widget _jobList(List<Map<String, dynamic>> list, {bool isHiringView = false}) {
-    return ListView.builder(
+    if (mainTab == 0) list = viewJobs;
+    else if (mainTab == 1) {
+      if (subTab == 0) list = myJobsInProgress;
+      else if (subTab == 1) list = myJobsApplied;
+      else if (subTab == 2) list = myJobsInPast;
+      else if (subTab == 3) list = myJobsSaved;
+      else if (subTab == 4) {
+        list = myJobsHiring;
+        isHiringView = true;
+      }
+    } else if (mainTab == 2) list = offers;
+
+    if (list.isEmpty) {
+      return SliverToBoxAdapter(child: _emptyState(theme));
+    }
+
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: list.length,
-      itemBuilder: (context, index) => _jobCard(list[index], isHiringView: isHiringView),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => _jobCard(theme, list[index], isHiringView: isHiringView),
+          childCount: list.length,
+        ),
+      ),
     );
   }
 
-  Widget _emptyState() {
+  Widget _emptyState(ThemeData theme) {
     return Center(
       child: Container(
         margin: const EdgeInsets.all(20),
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: cardColor,
+          color: theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 20),
-            const Text(
+            Text(
               "No jobs found matching your criteria.",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w500),
+              style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             TextButton(
@@ -404,7 +420,7 @@ class _JobsScreenState extends State<JobsScreen> {
                   viewJobs = List.from(_allViewJobs);
                 });
               },
-              child: const Text("Clear filters", style: TextStyle(color: Color(0xFF6366F1), fontSize: 16)),
+              child: Text("Clear filters", style: TextStyle(color: theme.primaryColor, fontSize: 16)),
             ),
           ],
         ),
@@ -412,7 +428,7 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _jobCard(Map<String, dynamic> job, {bool isHiringView = false}) {
+  Widget _jobCard(ThemeData theme, Map<String, dynamic> job, {bool isHiringView = false}) {
     bool isMyJob = mainTab == 1;
     bool isSaved = job['isSaved'] ?? false;
 
@@ -420,9 +436,9 @@ class _JobsScreenState extends State<JobsScreen> {
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,14 +449,14 @@ class _JobsScreenState extends State<JobsScreen> {
               Container(
                 width: 48, height: 48,
                 alignment: Alignment.center,
-                child: Text(job['initial'], style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                child: Text(job['initial'], style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(job['title'], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(job['title'], style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     if (isMyJob && job.containsKey('status') && !isHiringView) ...[
                       Container(
@@ -452,11 +468,11 @@ class _JobsScreenState extends State<JobsScreen> {
                     ],
                     Row(
                       children: [
-                        Text(job['company'], style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                        Text(job['company'], style: theme.textTheme.bodyLarge),
                         const SizedBox(width: 8),
-                        const Icon(Icons.circle, size: 4, color: Colors.white38),
+                        Icon(Icons.circle, size: 4, color: theme.textTheme.bodySmall?.color),
                         const SizedBox(width: 8),
-                        Text(job['location'], style: const TextStyle(color: Colors.white38, fontSize: 15)),
+                        Text(job['location'], style: theme.textTheme.bodyMedium),
                         if (job['isHiring'] == true) ...[
                           const SizedBox(width: 10),
                           Container(
@@ -471,25 +487,25 @@ class _JobsScreenState extends State<JobsScreen> {
                 ),
               ),
               IconButton(
-                icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? Colors.pinkAccent : Colors.white70),
+                icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? Colors.pinkAccent : theme.textTheme.bodySmall?.color),
                 onPressed: () => _toggleSaveJob(job),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          _infoRow(job),
+          _infoRow(theme, job),
           const SizedBox(height: 12),
-          _matchPill(job['match']),
-          const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Divider(color: Colors.white10, height: 1)),
-          _footerInfo(job),
+          _matchPill(theme, job['match']),
+          Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Divider(color: theme.dividerColor, height: 1)),
+          _footerInfo(theme, job),
           const SizedBox(height: 24),
           if (isHiringView)
-            _hiringActionButtons(job)
+            _hiringActionButtons(theme, job)
           else
-            _actionButtons(job),
+            _actionButtons(theme, job),
           if (isMyJob && job.containsKey('timelineStep') && !isHiringView) ...[
-            const Padding(padding: EdgeInsets.only(top: 24, bottom: 16), child: Text("Application Timeline", style: TextStyle(color: Colors.white70, fontSize: 14))),
-            _timeline(job['timelineStep']),
+            Padding(padding: const EdgeInsets.only(top: 24, bottom: 16), child: Text("Application Timeline", style: theme.textTheme.bodyMedium)),
+            _timeline(theme, job['timelineStep']),
           ]
         ],
       ),
@@ -521,36 +537,36 @@ class _JobsScreenState extends State<JobsScreen> {
     });
   }
 
-  Widget _infoRow(Map<String, dynamic> job) {
+  Widget _infoRow(ThemeData theme, Map<String, dynamic> job) {
     return Wrap(
       spacing: 8, runSpacing: 8,
       children: [
-        _pill(Icons.work_outline, job['type']),
-        _pill(Icons.attach_money, job['salary']),
-        _pill(Icons.access_time, job['time']),
+        _pill(theme, Icons.work_outline, job['type']),
+        _pill(theme, Icons.attach_money, job['salary']),
+        _pill(theme, Icons.access_time, job['time']),
       ],
     );
   }
 
-  Widget _pill(IconData icon, String text) {
+  Widget _pill(ThemeData theme, IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B).withValues(alpha: 0.4), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(10)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white38, size: 18),
+          Icon(icon, color: theme.textTheme.bodySmall?.color, size: 18),
           const SizedBox(width: 8),
-          Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+          Text(text, style: theme.textTheme.bodyMedium),
         ],
       ),
     );
   }
 
-  Widget _matchPill(String match) {
+  Widget _matchPill(ThemeData theme, String match) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF6366F1).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: theme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -562,7 +578,7 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _footerInfo(Map<String, dynamic> job) {
+  Widget _footerInfo(ThemeData theme, Map<String, dynamic> job) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -570,38 +586,38 @@ class _JobsScreenState extends State<JobsScreen> {
           children: [
             const Icon(Icons.circle, color: Colors.greenAccent, size: 8),
             const SizedBox(width: 10),
-            Text(job['response'], style: const TextStyle(color: Colors.white60, fontSize: 14)),
+            Text(job['response'], style: theme.textTheme.bodyMedium),
           ],
         ),
         const SizedBox(height: 8),
-        Text(job['applicants'], style: const TextStyle(color: Colors.white38, fontSize: 14)),
+        Text(job['applicants'], style: theme.textTheme.bodySmall),
       ],
     );
   }
 
-  Widget _actionButtons(Map<String, dynamic> job) {
+  Widget _actionButtons(ThemeData theme, Map<String, dynamic> job) {
     if (mainTab == 1 && subTab == 1) {
       return Row(
         children: [
-          Expanded(child: _detailsBtn(job)),
+          Expanded(child: _detailsBtn(theme, job)),
           const SizedBox(width: 16),
-          _appliedStatusBtn(),
+          _appliedStatusBtn(theme),
         ],
       );
     }
     if (mainTab == 1 && (subTab == 0 || subTab == 2)) {
-      return _detailsBtn(job, fullWidth: true);
+      return _detailsBtn(theme, job, fullWidth: true);
     }
     return Row(
       children: [
-        Expanded(child: _detailsBtn(job)),
+        Expanded(child: _detailsBtn(theme, job)),
         const SizedBox(width: 16),
-        Expanded(child: _quickApplyBtn(job)),
+        Expanded(child: _quickApplyBtn(theme, job)),
       ],
     );
   }
 
-  Widget _hiringActionButtons(Map<String, dynamic> job) {
+  Widget _hiringActionButtons(ThemeData theme, Map<String, dynamic> job) {
     return Row(
       children: [
         Expanded(
@@ -609,10 +625,10 @@ class _JobsScreenState extends State<JobsScreen> {
             onPressed: () => _showJobDetails(context, job),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              side: const BorderSide(color: Colors.white10),
+              side: BorderSide(color: theme.dividerColor),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text("Details", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            child: Text("Details", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(width: 16),
@@ -620,7 +636,7 @@ class _JobsScreenState extends State<JobsScreen> {
           child: ElevatedButton(
             onPressed: () => _showAnalyticsModal(context, job),
             style: ElevatedButton.styleFrom(
-              backgroundColor: primary,
+              backgroundColor: theme.primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               elevation: 0,
@@ -632,37 +648,37 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _detailsBtn(Map<String, dynamic> job, {bool fullWidth = false}) {
+  Widget _detailsBtn(ThemeData theme, Map<String, dynamic> job, {bool fullWidth = false}) {
     var btn = OutlinedButton(
       onPressed: () => _showJobDetails(context, job),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        side: const BorderSide(color: Colors.white10),
+        side: BorderSide(color: theme.dividerColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      child: const Text("Details", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+      child: Text("Details", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
     );
     return fullWidth ? SizedBox(width: double.infinity, child: btn) : btn;
   }
 
-  Widget _appliedStatusBtn() {
+  Widget _appliedStatusBtn(ThemeData theme) {
     return Expanded(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 20),
           const SizedBox(width: 8),
-          const Text("Applied", style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text("Applied", style: theme.textTheme.bodyLarge?.copyWith(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget _quickApplyBtn(Map<String, dynamic> job) {
+  Widget _quickApplyBtn(ThemeData theme, Map<String, dynamic> job) {
     return ElevatedButton(
       onPressed: () => _showApplyModal(context, job),
       style: ElevatedButton.styleFrom(
-        backgroundColor: primary,
+        backgroundColor: theme.primaryColor,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
@@ -678,7 +694,7 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _timeline(int step) {
+  Widget _timeline(ThemeData theme, int step) {
     final stages = ["Applied", "Under Review", "Interview", "Offer"];
     return Column(
       children: [
@@ -690,9 +706,9 @@ class _JobsScreenState extends State<JobsScreen> {
                 children: [
                   Container(
                     width: 12, height: 12,
-                    decoration: BoxDecoration(color: done ? primary : Colors.white24, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: done ? theme.primaryColor : theme.dividerColor, shape: BoxShape.circle),
                   ),
-                  if (i < 3) Expanded(child: Container(height: 2, color: i < step ? primary : Colors.white24)),
+                  if (i < 3) Expanded(child: Container(height: 2, color: i < step ? theme.primaryColor : theme.dividerColor)),
                 ],
               ),
             );
@@ -703,7 +719,7 @@ class _JobsScreenState extends State<JobsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(4, (i) {
             bool active = i == step;
-            return Text(stages[i], style: TextStyle(color: active ? primary : Colors.white38, fontSize: 11, fontWeight: active ? FontWeight.bold : FontWeight.normal));
+            return Text(stages[i], style: TextStyle(color: active ? theme.primaryColor : theme.textTheme.bodySmall?.color, fontSize: 11, fontWeight: active ? FontWeight.bold : FontWeight.normal));
           }),
         ),
       ],
@@ -711,11 +727,13 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   void _showFilterModal(BuildContext context) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _FilterModal(
+        theme: theme,
         onApply: (filters) {
           setState(() {
             viewJobs = _allViewJobs.where((job) {
@@ -742,11 +760,13 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   void _showApplyModal(BuildContext context, Map<String, dynamic> job) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _ApplyModal(
+        theme: theme,
         job: job,
         onApplied: (appliedJob) {
           setState(() {
@@ -768,11 +788,13 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   void _showSearchModal(BuildContext context) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _SearchModal(
+        theme: theme,
         onSearch: (keywords, location) {
           setState(() {
             viewJobs = _allViewJobs.where((job) {
@@ -799,11 +821,13 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   void _showPostJobModal(BuildContext context) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _PostJobModal(
+        theme: theme,
         onJobPosted: (newJob) {
           setState(() {
             _allViewJobs.insert(0, newJob);
@@ -818,11 +842,12 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   void _showAnalyticsModal(BuildContext context, Map<String, dynamic> job) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _AnalyticsModal(job: job),
+      builder: (context) => _AnalyticsModal(theme: theme, job: job),
     );
   }
 
@@ -836,8 +861,9 @@ class _JobsScreenState extends State<JobsScreen> {
 }
 
 class _FilterModal extends StatefulWidget {
+  final ThemeData theme;
   final Function(Map<String, dynamic>) onApply;
-  const _FilterModal({required this.onApply});
+  const _FilterModal({required this.theme, required this.onApply});
   @override
   State<_FilterModal> createState() => _FilterModalState();
 }
@@ -850,18 +876,15 @@ class _FilterModalState extends State<_FilterModal> {
   String jobType = "Full-time";
   RangeValues salaryRange = const RangeValues(50, 200);
 
-  final Color cardColor = const Color(0xFF111827);
-  final Color primary = const Color(0xFF6366F1);
-
   @override
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      decoration: BoxDecoration(color: widget.theme.scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(2))),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.dividerColor, borderRadius: BorderRadius.circular(2))),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -871,7 +894,7 @@ class _FilterModalState extends State<_FilterModal> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Filters", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      Text("Filters", style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                       TextButton(onPressed: () {
                         setState(() {
                           easyApply = false;
@@ -881,41 +904,41 @@ class _FilterModalState extends State<_FilterModal> {
                           jobType = "Full-time";
                           salaryRange = const RangeValues(50, 200);
                         });
-                      }, child: const Text("Clear all", style: TextStyle(color: Color(0xFF7C83FF)))),
+                      }, child: Text("Clear all", style: TextStyle(color: widget.theme.primaryColor))),
                     ],
                   ),
                   const SizedBox(height: 24),
                   _switchOption("Easy Apply", easyApply, (v) => setState(() => easyApply = v)),
                   _switchOption("Actively Hiring", activelyHiring, (v) => setState(() => activelyHiring = v)),
                   _switchOption("Remote Only", remoteOnly, (v) => setState(() => remoteOnly = v)),
-                  const Divider(color: Colors.white10, height: 40),
-                  const Text("Location", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Divider(color: widget.theme.dividerColor, height: 40),
+                  Text("Location", style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
-                    child: const TextField(style: TextStyle(color: Colors.white), decoration: InputDecoration(hintText: "Add city...", hintStyle: TextStyle(color: Colors.white38), border: InputBorder.none)),
+                    decoration: BoxDecoration(color: widget.theme.colorScheme.surfaceContainer.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(12), border: Border.all(color: widget.theme.dividerColor)),
+                    child: TextField(style: widget.theme.textTheme.bodyLarge, decoration: InputDecoration(hintText: "Add city...", hintStyle: widget.theme.textTheme.bodySmall, border: InputBorder.none)),
                   ),
-                  const Divider(color: Colors.white10, height: 40),
-                  const Text("Salary Range (k/year)", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Divider(color: widget.theme.dividerColor, height: 40),
+                  Text("Salary Range (k/year)", style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   RangeSlider(
                     values: salaryRange,
                     min: 0, max: 500,
                     divisions: 50,
                     labels: RangeLabels("${salaryRange.start.round()}k", "${salaryRange.end.round()}k"),
-                    activeColor: primary,
+                    activeColor: widget.theme.primaryColor,
                     onChanged: (v) => setState(() => salaryRange = v),
                   ),
-                  const Divider(color: Colors.white10, height: 40),
-                  const Text("Experience Level", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Divider(color: widget.theme.dividerColor, height: 40),
+                  Text("Experience Level", style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Wrap(
                     spacing: 10,
                     children: ["All Levels", "Entry Level", "Mid Level", "Senior"].map((e) => _choiceChip(e, experienceLevel == e, (s) => setState(() => experienceLevel = e))).toList(),
                   ),
-                  const Divider(color: Colors.white10, height: 40),
-                  const Text("Job Type", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Divider(color: widget.theme.dividerColor, height: 40),
+                  Text("Job Type", style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Wrap(
                     spacing: 10,
@@ -939,7 +962,7 @@ class _FilterModalState extends State<_FilterModal> {
                 });
                 Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
+              style: ElevatedButton.styleFrom(backgroundColor: widget.theme.primaryColor, minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
               child: const Text("Show Results", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ),
@@ -954,8 +977,8 @@ class _FilterModalState extends State<_FilterModal> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-          Switch(value: val, onChanged: onChanged, activeColor: primary, inactiveThumbColor: Colors.white, inactiveTrackColor: Colors.white10),
+          Text(title, style: widget.theme.textTheme.bodyLarge),
+          Switch(value: val, onChanged: onChanged, activeColor: widget.theme.primaryColor),
         ],
       ),
     );
@@ -966,17 +989,18 @@ class _FilterModalState extends State<_FilterModal> {
       label: Text(label),
       selected: selected,
       onSelected: onSelected,
-      selectedColor: primary,
-      backgroundColor: cardColor,
-      labelStyle: TextStyle(color: selected ? Colors.white : Colors.white70),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: selected ? primary : Colors.white10)),
+      selectedColor: widget.theme.primaryColor,
+      backgroundColor: widget.theme.colorScheme.surfaceContainer,
+      labelStyle: TextStyle(color: selected ? Colors.white : widget.theme.textTheme.bodyMedium?.color),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: selected ? widget.theme.primaryColor : widget.theme.dividerColor)),
     );
   }
 }
 
 class _SearchModal extends StatefulWidget {
+  final ThemeData theme;
   final Function(String keywords, String location) onSearch;
-  const _SearchModal({required this.onSearch});
+  const _SearchModal({required this.theme, required this.onSearch});
   @override
   State<_SearchModal> createState() => _SearchModalState();
 }
@@ -988,18 +1012,18 @@ class _SearchModalState extends State<_SearchModal> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(color: Color(0xFF0B1220), borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      decoration: BoxDecoration(color: widget.theme.scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: widget.theme.iconTheme.color),
             onPressed: () => Navigator.pop(context),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            child: Text("Search Jobs", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: Text("Search Jobs", style: widget.theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -1007,15 +1031,15 @@ class _SearchModalState extends State<_SearchModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Keywords", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Keywords", style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   _searchInput(Icons.search, "Job title, keywords, or company", keywordsController),
                   const SizedBox(height: 32),
-                  const Text("Locations", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Locations", style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   _searchInput(Icons.location_on_outlined, "Type city & hit Enter...", locationController),
                   const SizedBox(height: 12),
-                  const Text("Type a city name and press Enter to add it", style: TextStyle(color: Colors.white38, fontSize: 14)),
+                  Text("Type a city name and press Enter to add it", style: widget.theme.textTheme.bodySmall),
                   const SizedBox(height: 40),
                   ElevatedButton(
                     onPressed: () {
@@ -1023,7 +1047,7 @@ class _SearchModalState extends State<_SearchModal> {
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6366F1),
+                      backgroundColor: widget.theme.primaryColor,
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
@@ -1041,14 +1065,14 @@ class _SearchModalState extends State<_SearchModal> {
   Widget _searchInput(IconData icon, String hint, TextEditingController controller) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: widget.theme.colorScheme.surfaceContainer.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(16), border: Border.all(color: widget.theme.dividerColor)),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.white),
+        style: widget.theme.textTheme.bodyLarge,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white24),
-          prefixIcon: Icon(icon, color: Colors.white38),
+          hintStyle: widget.theme.textTheme.bodySmall,
+          prefixIcon: Icon(icon, color: widget.theme.textTheme.bodySmall?.color),
           border: InputBorder.none,
         ),
       ),
@@ -1057,24 +1081,25 @@ class _SearchModalState extends State<_SearchModal> {
 }
 
 class _ApplyModal extends StatelessWidget {
+  final ThemeData theme;
   final Map<String, dynamic> job;
   final Function(Map<String, dynamic>) onApplied;
   
-  const _ApplyModal({required this.job, required this.onApplied});
+  const _ApplyModal({required this.theme, required this.job, required this.onApplied});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(color: Color(0xFF0B1220), borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      decoration: BoxDecoration(color: theme.scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: Text("Apply to ${job['title']}", style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-              IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
+              Expanded(child: Text("Apply to ${job['title']}", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+              IconButton(icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const SizedBox(height: 24),
@@ -1083,23 +1108,23 @@ class _ApplyModal extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Full Name", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  Text("Full Name", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   _field("Alex Doe"),
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("Email", style: TextStyle(color: Colors.white70, fontSize: 16)), const SizedBox(height: 10), _field("alex@example.com")])),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Email", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), const SizedBox(height: 10), _field("alex@example.com")])),
                       const SizedBox(width: 16),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("Phone (Optional)", style: TextStyle(color: Colors.white70, fontSize: 16)), const SizedBox(height: 10), _field("")])),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Phone (Optional)", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), const SizedBox(height: 10), _field("")])),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text("Resume", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  Text("Resume", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   _resumeUpload(),
                   const SizedBox(height: 24),
-                  const Text("Cover Note (Optional)", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  Text("Cover Note (Optional)", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   _field("", maxLines: 4),
                   const SizedBox(height: 40),
@@ -1115,7 +1140,7 @@ class _ApplyModal extends StatelessWidget {
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                    style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor, minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                     child: const Text("Submit Application", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 24),
@@ -1131,13 +1156,14 @@ class _ApplyModal extends StatelessWidget {
   Widget _field(String hint, {int maxLines = 1}) {
     return TextField(
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white), 
+      style: theme.textTheme.bodyLarge, 
       decoration: InputDecoration(
         hintText: hint, 
-        hintStyle: const TextStyle(color: Colors.white24), 
+        hintStyle: theme.textTheme.bodySmall, 
         filled: true, 
-        fillColor: const Color(0xFF1E293B), 
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), 
+        fillColor: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5), 
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)), 
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)
       ),
     );
@@ -1148,17 +1174,17 @@ class _ApplyModal extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withValues(alpha: 0.3),
+        color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10, style: BorderStyle.solid), 
+        border: Border.all(color: theme.dividerColor), 
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.upload_outlined, color: Colors.white54, size: 40),
-          SizedBox(height: 16),
-          Text("Upload Resume", style: TextStyle(color: Color(0xFF6366F1), fontSize: 16, fontWeight: FontWeight.bold)),
-          SizedBox(height: 8),
-          Text("PDF, DOCX up to 5MB", style: TextStyle(color: Colors.white38, fontSize: 12)),
+          Icon(Icons.upload_outlined, color: theme.textTheme.bodySmall?.color, size: 40),
+          const SizedBox(height: 16),
+          Text("Upload Resume", style: TextStyle(color: theme.primaryColor, fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text("PDF, DOCX up to 5MB", style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12)),
         ],
       ),
     );
@@ -1166,8 +1192,9 @@ class _ApplyModal extends StatelessWidget {
 }
 
 class _PostJobModal extends StatefulWidget {
+  final ThemeData theme;
   final Function(Map<String, dynamic>) onJobPosted;
-  const _PostJobModal({required this.onJobPosted});
+  const _PostJobModal({required this.theme, required this.onJobPosted});
   @override
   State<_PostJobModal> createState() => _PostJobModalState();
 }
@@ -1188,19 +1215,19 @@ class _PostJobModalState extends State<_PostJobModal> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(color: Color(0xFF0B1220), borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      decoration: BoxDecoration(color: widget.theme.scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Post a Job", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
+              Text("Post a Job", style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              IconButton(icon: Icon(Icons.close, color: widget.theme.textTheme.bodySmall?.color), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const SizedBox(height: 8),
-          const Text("Create a new job listing to find the best talent.", style: TextStyle(color: Colors.white38, fontSize: 14)),
+          Text("Create a new job listing to find the best talent.", style: widget.theme.textTheme.bodySmall),
           const SizedBox(height: 24),
           Expanded(
             child: SingleChildScrollView(
@@ -1240,10 +1267,10 @@ class _PostJobModalState extends State<_PostJobModal> {
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: Colors.white10),
+                            side: BorderSide(color: widget.theme.dividerColor),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text("Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          child: Text("Cancel", style: TextStyle(color: widget.theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -1273,7 +1300,7 @@ class _PostJobModalState extends State<_PostJobModal> {
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
+                            backgroundColor: widget.theme.primaryColor,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -1298,29 +1325,29 @@ class _PostJobModalState extends State<_PostJobModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(text, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          const Divider(color: Colors.white10, height: 24),
+          Text(text, style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          Divider(color: widget.theme.dividerColor, height: 24),
         ],
       ),
     );
   }
 
   Widget _inputLabel(String text) {
-    return Padding(padding: const EdgeInsets.only(bottom: 8, top: 16), child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14)));
+    return Padding(padding: const EdgeInsets.only(bottom: 8, top: 16), child: Text(text, style: widget.theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)));
   }
 
   Widget _textField(TextEditingController controller, String hint, {int maxLines = 1}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
+      style: widget.theme.textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white24),
+        hintStyle: widget.theme.textTheme.bodySmall,
         filled: true,
-        fillColor: const Color(0xFF1E293B).withValues(alpha: 0.5),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.white10)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.white10)),
+        fillColor: widget.theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: widget.theme.dividerColor)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: widget.theme.dividerColor)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
@@ -1330,17 +1357,17 @@ class _PostJobModalState extends State<_PostJobModal> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withValues(alpha: 0.5),
+        color: widget.theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: widget.theme.dividerColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: widget.theme.textTheme.bodyLarge))).toList(),
           onChanged: onChanged,
-          dropdownColor: const Color(0xFF1E293B),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+          dropdownColor: widget.theme.cardColor,
+          icon: Icon(Icons.keyboard_arrow_down, color: widget.theme.textTheme.bodySmall?.color),
           isExpanded: true,
         ),
       ),
@@ -1350,13 +1377,13 @@ class _PostJobModalState extends State<_PostJobModal> {
   Widget _checkboxOption(String title, String sub, bool value, Function(bool?) onChanged) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B).withValues(alpha: 0.3), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white10)),
+      decoration: BoxDecoration(color: widget.theme.colorScheme.surfaceContainer.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(12), border: Border.all(color: widget.theme.dividerColor)),
       child: CheckboxListTile(
         value: value,
         onChanged: onChanged,
-        title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        subtitle: Text(sub, style: const TextStyle(color: Colors.white38, fontSize: 12)),
-        activeColor: const Color(0xFF6366F1),
+        title: Text(title, style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        subtitle: Text(sub, style: widget.theme.textTheme.bodySmall),
+        activeColor: widget.theme.primaryColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -1364,21 +1391,22 @@ class _PostJobModalState extends State<_PostJobModal> {
 }
 
 class _AnalyticsModal extends StatelessWidget {
+  final ThemeData theme;
   final Map<String, dynamic> job;
-  const _AnalyticsModal({required this.job});
+  const _AnalyticsModal({required this.theme, required this.job});
   @override
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: const BoxDecoration(color: Color(0xFF0B1220), borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      decoration: BoxDecoration(color: theme.scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Job Analytics", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
+              Text("Job Analytics", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              IconButton(icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const SizedBox(height: 24),
@@ -1390,7 +1418,7 @@ class _AnalyticsModal extends StatelessWidget {
           const Spacer(),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+            style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor, minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
             child: const Text("View Applicants List", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -1401,12 +1429,12 @@ class _AnalyticsModal extends StatelessWidget {
   Widget _statCard(String label, String val) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF111827), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+      decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.dividerColor)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-          Text(val, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(label, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+          Text(val, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -1425,16 +1453,17 @@ class _JobDetailsPage extends StatefulWidget {
 class _JobDetailsPageState extends State<_JobDetailsPage> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     bool isSaved = widget.job['isSaved'] ?? false;
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
-        title: Text(widget.job['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: theme.iconTheme.color), onPressed: () => Navigator.pop(context)),
+        title: Text(widget.job['title'], style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.share_outlined, color: Colors.white), onPressed: () {}),
+          IconButton(icon: Icon(Icons.share_outlined, color: theme.iconTheme.color), onPressed: () {}),
         ],
       ),
       body: SingleChildScrollView(
@@ -1445,54 +1474,54 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: const Color(0xFF111827), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+              decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: theme.dividerColor)),
               child: Column(
                 children: [
                   Container(
                     width: 64, height: 64,
                     alignment: Alignment.center,
-                    child: Text(widget.job['initial'], style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                    child: Text(widget.job['initial'], style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 20),
-                  Text(widget.job['title'], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(widget.job['title'], style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.business, color: Colors.white54, size: 18),
+                      Icon(Icons.business, color: theme.textTheme.bodySmall?.color, size: 18),
                       const SizedBox(width: 8),
-                      Text(widget.job['company'], style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                      Text(widget.job['company'], style: theme.textTheme.bodyLarge),
                       const SizedBox(width: 16),
-                      const Icon(Icons.location_on_outlined, color: Colors.white54, size: 18),
+                      Icon(Icons.location_on_outlined, color: theme.textTheme.bodySmall?.color, size: 18),
                       const SizedBox(width: 8),
-                      Text(widget.job['location'], style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                      Text(widget.job['location'], style: theme.textTheme.bodyLarge),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.access_time, color: Colors.white38, size: 16),
+                      Icon(Icons.access_time, color: theme.textTheme.bodySmall?.color, size: 16),
                       const SizedBox(width: 6),
-                      Text(widget.job['time'], style: const TextStyle(color: Colors.white38, fontSize: 14)),
+                      Text(widget.job['time'], style: theme.textTheme.bodySmall),
                     ],
                   ),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _tag(widget.job['type']),
+                      _tag(theme, widget.job['type']),
                       const SizedBox(width: 8),
-                      _tag("Hybrid"),
+                      _tag(theme, "Hybrid"),
                       const SizedBox(width: 8),
-                      _tag(widget.job['salary'], isGreen: true),
+                      _tag(theme, widget.job['salary'], isGreen: true),
                     ],
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: widget.onApply,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6366F1),
+                      backgroundColor: theme.primaryColor,
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
@@ -1513,15 +1542,15 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
                     },
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 56),
-                      side: BorderSide(color: isSaved ? Colors.pinkAccent : Colors.white10),
+                      side: BorderSide(color: isSaved ? Colors.pinkAccent : theme.dividerColor),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? Colors.pinkAccent : Colors.white),
+                        Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? Colors.pinkAccent : theme.iconTheme.color),
                         const SizedBox(width: 8),
-                        Text(isSaved ? "Saved" : "Save Job", style: TextStyle(color: isSaved ? Colors.pinkAccent : Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(isSaved ? "Saved" : "Save Job", style: TextStyle(color: isSaved ? Colors.pinkAccent : theme.textTheme.bodyLarge?.color, fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -1529,44 +1558,44 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
               ),
             ),
             const SizedBox(height: 24),
-            _section("About the Job", "We are looking for a talented individual to join our growing team. You will be working on cutting-edge technologies and solving complex problems."),
+            _section(theme, "About the Job", "We are looking for a talented individual to join our growing team. You will be working on cutting-edge technologies and solving complex problems."),
             const SizedBox(height: 24),
-            const Text("Skills Required", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Skills Required", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Wrap(
               spacing: 10,
-              children: ["React", "TypeScript", "Node.js", "Design Systems"].map((s) => _skillTag(s)).toList(),
+              children: ["React", "TypeScript", "Node.js", "Design Systems"].map((s) => _skillTag(theme, s)).toList(),
             ),
             const SizedBox(height: 24),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: const Color(0xFF111827), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+              decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: theme.dividerColor)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.bolt, color: Color(0xFFA855F7), size: 20),
-                      SizedBox(width: 8),
-                      Text("Recruiter Insights", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Icon(Icons.bolt, color: Color(0xFFA855F7), size: 20),
+                      const SizedBox(width: 8),
+                      Text("Recruiter Insights", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(widget.job['response'], style: const TextStyle(color: Colors.white54, fontSize: 14)),
+                  Text(widget.job['response'], style: theme.textTheme.bodyMedium),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Your Match", style: TextStyle(color: Colors.white70, fontSize: 16)),
-                      Text(widget.job['match'], style: const TextStyle(color: Color(0xFF6366F1), fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text("Your Match", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(widget.job['match'], style: TextStyle(color: theme.primaryColor, fontSize: 16, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
                     value: double.parse(widget.job['match'].replaceAll('%', '')) / 100,
-                    backgroundColor: Colors.white10,
-                    color: const Color(0xFF6366F1),
+                    backgroundColor: theme.dividerColor,
+                    color: theme.primaryColor,
                     minHeight: 6,
                     borderRadius: BorderRadius.circular(3),
                   ),
@@ -1574,11 +1603,11 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
               ),
             ),
             const SizedBox(height: 24),
-            _section("About ${widget.job['company']}", "We are a leading company in our industry, dedicated to innovation and excellence."),
+            _section(theme, "About ${widget.job['company']}", "We are a leading company in our industry, dedicated to innovation and excellence."),
             const SizedBox(height: 16),
-            _companyInfoRow("Industry", "Technology"),
-            _companyInfoRow("Type", "MNC"),
-            _companyInfoRow("Headquarters", widget.job['location']),
+            _companyInfoRow(theme, "Industry", "Technology"),
+            _companyInfoRow(theme, "Type", "MNC"),
+            _companyInfoRow(theme, "Headquarters", widget.job['location']),
             const SizedBox(height: 40),
           ],
         ),
@@ -1586,41 +1615,41 @@ class _JobDetailsPageState extends State<_JobDetailsPage> {
     );
   }
 
-  Widget _tag(String text, {bool isGreen = false}) {
+  Widget _tag(ThemeData theme, String text, {bool isGreen = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: isGreen ? Colors.green.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)),
-      child: Text(text, style: TextStyle(color: isGreen ? Colors.greenAccent : Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+      decoration: BoxDecoration(color: isGreen ? Colors.green.withValues(alpha: 0.1) : theme.dividerColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Text(text, style: TextStyle(color: isGreen ? Colors.greenAccent : theme.textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w500)),
     );
   }
 
-  Widget _skillTag(String text) {
+  Widget _skillTag(ThemeData theme, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(20)),
-      child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20), border: Border.all(color: theme.dividerColor)),
+      child: Text(text, style: theme.textTheme.bodyLarge),
     );
   }
 
-  Widget _section(String title, String content) {
+  Widget _section(ThemeData theme, String title, String content) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        Text(content, style: const TextStyle(color: Colors.white54, fontSize: 15, height: 1.6)),
+        Text(content, style: theme.textTheme.bodyMedium?.copyWith(height: 1.6)),
       ],
     );
   }
 
-  Widget _companyInfoRow(String label, String value) {
+  Widget _companyInfoRow(ThemeData theme, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 15)),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
+          Text(label, style: theme.textTheme.bodySmall),
+          Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
         ],
       ),
     );

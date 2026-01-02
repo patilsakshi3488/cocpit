@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../views/create_post_screen.dart';
+import 'post/create_post_screen.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
@@ -40,10 +40,12 @@ class AppBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        border: Border(top: BorderSide(color: Colors.white10, width: 0.5)),
+      decoration: BoxDecoration(
+        color: theme.bottomNavigationBarTheme.backgroundColor,
+        border: Border(top: BorderSide(color: theme.dividerColor, width: 0.5)),
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -55,17 +57,17 @@ class AppBottomNavigation extends StatelessWidget {
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.transparent,
             elevation: 0,
-            selectedItemColor: const Color(0xFF6366F1),
-            unselectedItemColor: Colors.white38,
+            selectedItemColor: theme.bottomNavigationBarTheme.selectedItemColor,
+            unselectedItemColor: theme.bottomNavigationBarTheme.unselectedItemColor,
             selectedFontSize: 12,
             unselectedFontSize: 12,
             showUnselectedLabels: true,
-            items: [
-              const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Feed'),
-              const BottomNavigationBarItem(icon: Icon(Icons.business_center_outlined), activeIcon: Icon(Icons.business_center), label: 'Jobs'),
-              const BottomNavigationBarItem(icon: SizedBox(height: 30), label: ''),
-              const BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Events'),
-              const BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Feed'),
+              BottomNavigationBarItem(icon: Icon(Icons.business_center_outlined), activeIcon: Icon(Icons.business_center), label: 'Jobs'),
+              BottomNavigationBarItem(icon: SizedBox(height: 30), label: ''),
+              BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Events'),
+              BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
             ],
           ),
           Positioned(
@@ -76,15 +78,15 @@ class AppBottomNavigation extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                  gradient: LinearGradient(
+                    colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                      color: theme.primaryColor.withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../chat_screen.dart';
-import '../notification_screen.dart';
+import 'chat_screen.dart';
+import 'notification_screen.dart';
 import '../bottom_navigation.dart';
 import 'create_career_moment_screen.dart';
 import 'career_moment_viewer.dart';
@@ -18,10 +18,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
-
-  final LinearGradient gradient = const LinearGradient(
-    colors: [Color(0xFF7C83FF), Color(0xFFEC4899)],
-  );
 
   final List<Map<String, dynamic>> careerMoments = [
     {
@@ -217,6 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   OverlayEntry _createOverlayEntry(List<Map<String, dynamic>> results) {
+    final theme = Theme.of(context);
     return OverlayEntry(
       builder: (context) => Positioned(
         width: 300,
@@ -230,19 +227,19 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF1F2937),
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
                       "PEOPLE",
-                      style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2),
                     ),
                   ),
                   ...results.take(3).map((person) => InkWell(
@@ -264,9 +261,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(person['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                Text(person['role'], style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                                Text(person['mutual'], style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                                Text(person['name'], style: theme.textTheme.titleSmall),
+                                Text(person['role'], style: theme.textTheme.bodySmall),
+                                Text(person['mutual'], style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)),
                               ],
                             ),
                           ),
@@ -292,25 +289,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            _topBar(),
+            _topBar(theme),
             Expanded(
               child: ListView(
                 children: [
-                  _storiesHeader(),
-                  _careerMomentsBar(),
+                  _storiesHeader(theme),
+                  _careerMomentsBar(theme),
                   const SizedBox(height: 20),
-                  _topRecentToggle(),
-                  const Divider(color: Colors.white10, height: 1),
+                  _topRecentToggle(theme),
+                  Divider(color: theme.dividerColor, height: 1),
                   ..._posts.map((post) {
                     if (post['type'] == 'suggested') {
-                      return _suggestedForYouSection();
+                      return _suggestedForYouSection(theme);
                     }
-                    return _postView(post);
+                    return _postView(post, theme);
                   }),
                 ],
               ),
@@ -322,15 +320,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _topBar() {
+  Widget _topBar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: const Color(0xFF1F2937), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.logo_dev, color: Colors.white, size: 24),
+            decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(8)),
+            child: Icon(Icons.logo_dev, color: theme.primaryColor, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -339,19 +337,19 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(color: const Color(0xFF1F2937), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(10)),
                 child: Row(
                   children: [
-                    const Icon(Icons.search, color: Colors.white54, size: 20),
+                    Icon(Icons.search, color: theme.textTheme.bodySmall?.color, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
                         onChanged: _updateOverlay,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(
+                        style: theme.textTheme.bodyLarge,
+                        decoration: InputDecoration(
                           hintText: "Search...",
-                          hintStyle: TextStyle(color: Colors.white54),
+                          hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
                           border: InputBorder.none,
                           isDense: true,
                         ),
@@ -364,11 +362,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            icon: Icon(Icons.notifications_none, color: theme.iconTheme.color),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())),
           ),
           IconButton(
-            icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+            icon: Icon(Icons.chat_bubble_outline, color: theme.iconTheme.color),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())),
           ),
         ],
@@ -376,20 +374,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _storiesHeader() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  Widget _storiesHeader(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("Stories", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          Text("View All", style: TextStyle(color: Color(0xFF7C83FF), fontSize: 14)),
+          Text("Stories", style: theme.textTheme.titleLarge),
+          Text("View All", style: TextStyle(color: theme.primaryColor, fontSize: 14)),
         ],
       ),
     );
   }
 
-  Widget _careerMomentsBar() {
+  Widget _careerMomentsBar(ThemeData theme) {
     double screenWidth = MediaQuery.of(context).size.width;
     double itemWidth = screenWidth > 600 ? 150 : 120;
 
@@ -415,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: !m['isMine'] ? DecorationImage(image: AssetImage(m['image']), fit: BoxFit.cover) : null,
-                color: m['isMine'] ? const Color(0xFF4F70F0) : const Color(0xFF1F2937),
+                color: m['isMine'] ? theme.primaryColor : theme.cardColor,
               ),
               child: Stack(
                 children: [
@@ -439,7 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       bottom: 8, left: 0, right: 0,
                       child: Column(
                         children: [
-                          CircleAvatar(radius: 18, backgroundColor: const Color(0xFF7C83FF), child: CircleAvatar(radius: 16, backgroundImage: AssetImage(m['profile']))),
+                          CircleAvatar(radius: 18, backgroundColor: theme.primaryColor, child: CircleAvatar(radius: 16, backgroundImage: AssetImage(m['profile']))),
                           const SizedBox(height: 4),
                           Text(m['name'], style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                         ],
@@ -454,40 +452,40 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _topRecentToggle() {
+  Widget _topRecentToggle(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          _togglePill("Top", showTop, () => setState(() => showTop = true)),
+          _togglePill("Top", showTop, theme, () => setState(() => showTop = true)),
           const SizedBox(width: 12),
-          _togglePill("Recent", !showTop, () => setState(() => showTop = false)),
+          _togglePill("Recent", !showTop, theme, () => setState(() => showTop = false)),
         ],
       ),
     );
   }
 
-  Widget _togglePill(String text, bool selected, VoidCallback onTap) {
+  Widget _togglePill(String text, bool selected, ThemeData theme, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        decoration: BoxDecoration(color: selected ? const Color(0xFF4F70F0) : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-        child: Text(text, style: TextStyle(color: selected ? Colors.white : Colors.white54, fontWeight: FontWeight.bold)),
+        decoration: BoxDecoration(color: selected ? theme.primaryColor : Colors.transparent, borderRadius: BorderRadius.circular(10)),
+        child: Text(text, style: TextStyle(color: selected ? Colors.white : theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  Widget _suggestedForYouSection() {
+  Widget _suggestedForYouSection(ThemeData theme) {
     double screenWidth = MediaQuery.of(context).size.width;
     double cardWidth = screenWidth > 600 ? 250 : 180;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text("Suggested for you", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text("Suggested for you", style: theme.textTheme.titleLarge),
         ),
         SizedBox(
           height: 240,
@@ -502,9 +500,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937),
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: Column(
                   children: [
@@ -512,27 +510,27 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         CircleAvatar(radius: 40, backgroundImage: AssetImage(user['profile'])),
                         if (user['isVerified'])
-                          const Positioned(
+                          Positioned(
                             bottom: 0,
                             right: 0,
                             child: CircleAvatar(
                               radius: 10,
-                              backgroundColor: Color(0xFF4F70F0),
-                              child: Icon(Icons.check, color: Colors.white, size: 12),
+                              backgroundColor: theme.primaryColor,
+                              child: const Icon(Icons.check, color: Colors.white, size: 12),
                             ),
                           ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(user['role'], style: const TextStyle(color: Colors.white54, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(user['name'], style: theme.textTheme.titleSmall, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(user['role'], style: theme.textTheme.bodySmall, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
-                    Text("${user['followers']} followers", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                    Text("${user['followers']} followers", style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)),
                     const Spacer(),
                     ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F70F0),
+                        backgroundColor: theme.primaryColor,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         minimumSize: const Size(double.infinity, 32),
                       ),
@@ -544,12 +542,12 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        const Divider(color: Colors.white10, height: 8, thickness: 8),
+        Divider(color: theme.dividerColor, height: 8, thickness: 8),
       ],
     );
   }
 
-  Widget _postView(Map<String, dynamic> post) {
+  Widget _postView(Map<String, dynamic> post, ThemeData theme) {
     String likesText = post['likes'] >= 1000 ? "${(post['likes'] / 1000).toStringAsFixed(1)}k" : "${post['likes']}";
     bool isLiked = post['isLiked'] ?? false;
     bool isPrivate = post['isPrivate'] ?? false;
@@ -569,14 +567,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(post['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text(post['title'], style: const TextStyle(color: Colors.white54, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(post['name'], style: theme.textTheme.titleMedium),
+                      Text(post['title'], style: theme.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                       Row(
                         children: [
-                          Text(post['time'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                          Text(post['time'], style: theme.textTheme.bodySmall?.copyWith(fontSize: 12)),
                           if (isPrivate) ...[
                             const SizedBox(width: 4),
-                            const Icon(Icons.visibility_off_outlined, color: Colors.white38, size: 12),
+                            Icon(Icons.visibility_off_outlined, color: theme.textTheme.bodySmall?.color, size: 12),
                           ],
                         ],
                       ),
@@ -584,14 +582,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Theme(
-                  data: Theme.of(context).copyWith(
+                  data: theme.copyWith(
                     popupMenuTheme: PopupMenuThemeData(
-                      color: const Color(0xFF1F2937),
+                      color: theme.colorScheme.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                   child: PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_horiz, color: Colors.white54),
+                    icon: Icon(Icons.more_horiz, color: theme.textTheme.bodySmall?.color),
                     padding: EdgeInsets.zero,
                     onSelected: (value) {
                       if (value == 'private') {
@@ -613,9 +611,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         value: 'private',
                         child: Row(
                           children: [
-                            Icon(post['isPrivate'] == true ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white, size: 20),
+                            Icon(post['isPrivate'] == true ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: theme.iconTheme.color, size: 20),
                             const SizedBox(width: 12),
-                            Text(post['isPrivate'] == true ? "Make Public" : "Make Private", style: const TextStyle(color: Colors.white)),
+                            Text(post['isPrivate'] == true ? "Make Public" : "Make Private", style: theme.textTheme.bodyLarge),
                           ],
                         ),
                       ),
@@ -638,7 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(post['text'], style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.5)),
+            child: Text(post['text'], style: theme.textTheme.bodyLarge?.copyWith(height: 1.5)),
           ),
           const SizedBox(height: 16),
           if (post['image'] != null) Image.asset(post['image'], width: double.infinity, fit: BoxFit.cover),
@@ -653,14 +651,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         const Icon(Icons.favorite, color: Colors.pinkAccent, size: 16),
                         const SizedBox(width: 4),
-                        Text("$likesText likes", style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                        Text("$likesText likes", style: theme.textTheme.bodySmall),
                       ],
                     ),
-                    Text("${post['comments_count']} comments • ${post['shares']} shares", style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                    Text("${post['comments_count']} comments • ${post['shares']} shares", style: theme.textTheme.bodySmall),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Divider(color: Colors.white10, height: 1),
+                Divider(color: theme.dividerColor, height: 1),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -668,7 +666,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _actionBtn(
                       isLiked ? Icons.favorite : Icons.favorite_border, 
                       "Like", 
-                      isLiked ? Colors.pinkAccent : Colors.white54,
+                      isLiked ? Colors.pinkAccent : theme.textTheme.bodySmall?.color ?? Colors.grey,
                       () {
                         setState(() {
                           post['isLiked'] = !isLiked;
@@ -676,14 +674,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       }
                     ),
-                    _actionBtn(Icons.chat_bubble_outline, "Comment", Colors.white54, () => _showCommentSheet(context, post)),
-                    _actionBtn(Icons.share_outlined, "Share", Colors.white54, () => _showShareSheet(context)),
+                    _actionBtn(Icons.chat_bubble_outline, "Comment", theme.textTheme.bodySmall?.color ?? Colors.grey, () => _showCommentSheet(context, post, theme)),
+                    _actionBtn(Icons.share_outlined, "Share", theme.textTheme.bodySmall?.color ?? Colors.grey, () => _showShareSheet(context, theme)),
                   ],
                 ),
               ],
             ),
           ),
-          const Divider(color: Colors.white10, height: 8, thickness: 8),
+          Divider(color: theme.dividerColor, height: 8, thickness: 8),
         ],
       ),
     );
@@ -702,16 +700,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showCommentSheet(BuildContext context, Map<String, dynamic> post) {
+  void _showCommentSheet(BuildContext context, Map<String, dynamic> post, ThemeData theme) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _CommentSheet(post: post),
+      builder: (context) => _CommentSheet(post: post, theme: theme),
     );
   }
 
-  void _showShareSheet(BuildContext context) {
+  void _showShareSheet(BuildContext context, ThemeData theme) {
     int selectedIndex = 0;
 
     showModalBottomSheet(
@@ -723,37 +721,37 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, setSheetState) {
             return Container(
               height: MediaQuery.of(context).size.height * 0.75,
-              decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
                       "Share to",
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleLarge,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Divider(color: Colors.white10, height: 1),
+                  Divider(color: theme.dividerColor, height: 1),
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: theme.scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const TextField(
-                        style: TextStyle(color: Colors.white),
+                      child: TextField(
+                        style: theme.textTheme.bodyLarge,
                         decoration: InputDecoration(
                           hintText: "Search",
-                          hintStyle: TextStyle(color: Colors.white38),
-                          icon: Icon(Icons.search, color: Colors.white38, size: 20),
+                          hintStyle: theme.textTheme.bodySmall,
+                          icon: Icon(Icons.search, color: theme.textTheme.bodySmall?.color, size: 20),
                           border: InputBorder.none,
                         ),
                       ),
@@ -770,7 +768,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+                              color: isSelected ? theme.primaryColor.withValues(alpha: 0.05) : Colors.transparent,
                             ),
                             child: Row(
                               children: [
@@ -787,8 +785,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(user['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                      Text(user['role'], style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                                      Text(user['name'], style: theme.textTheme.titleSmall),
+                                      Text(user['role'], style: theme.textTheme.bodySmall),
                                     ],
                                   ),
                                 ),
@@ -797,8 +795,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   height: 24,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: isSelected ? const Color(0xFF6366F1) : Colors.white24, width: 2),
-                                    color: isSelected ? const Color(0xFF6366F1) : Colors.transparent,
+                                    border: Border.all(color: isSelected ? theme.primaryColor : theme.dividerColor, width: 2),
+                                    color: isSelected ? theme.primaryColor : Colors.transparent,
                                   ),
                                   child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
                                 ),
@@ -811,8 +809,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: Colors.white10)),
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: theme.dividerColor)),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -820,14 +818,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: theme.scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const TextField(
-                            style: TextStyle(color: Colors.white),
+                          child: TextField(
+                            style: theme.textTheme.bodyLarge,
                             decoration: InputDecoration(
                               hintText: "Write a message...",
-                              hintStyle: TextStyle(color: Colors.white38),
+                              hintStyle: theme.textTheme.bodySmall,
                               border: InputBorder.none,
                             ),
                           ),
@@ -837,15 +835,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: () {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Shared successfully"),
-                                backgroundColor: Color(0xFF6366F1),
+                              SnackBar(
+                                content: const Text("Shared successfully"),
+                                backgroundColor: theme.primaryColor,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
+                            backgroundColor: theme.primaryColor,
                             minimumSize: const Size(double.infinity, 50),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -874,7 +872,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _CommentSheet extends StatefulWidget {
   final Map<String, dynamic> post;
-  const _CommentSheet({required this.post});
+  final ThemeData theme;
+  const _CommentSheet({required this.post, required this.theme});
 
   @override
   State<_CommentSheet> createState() => _CommentSheetState();
@@ -889,25 +888,25 @@ class _CommentSheetState extends State<_CommentSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        decoration: BoxDecoration(color: widget.theme.colorScheme.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(2))),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.dividerColor, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
-            const Text("Comments", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Comments", style: widget.theme.textTheme.titleLarge),
             const SizedBox(height: 16),
-            const Divider(color: Colors.white10, height: 1),
+            Divider(color: widget.theme.dividerColor, height: 1),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: widget.post['comments'].length,
-                itemBuilder: (context, index) => _CommentItem(comment: widget.post['comments'][index]),
+                itemBuilder: (context, index) => _CommentItem(comment: widget.post['comments'][index], theme: widget.theme),
               ),
             ),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white10))),
+              decoration: BoxDecoration(border: Border(top: BorderSide(color: widget.theme.dividerColor))),
               child: Row(
                 children: [
                   const CircleAvatar(radius: 18, backgroundImage: AssetImage('lib/images/profile.png')),
@@ -915,11 +914,11 @@ class _CommentSheetState extends State<_CommentSheet> {
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(24)),
+                      decoration: BoxDecoration(color: widget.theme.scaffoldBackgroundColor, borderRadius: BorderRadius.circular(24)),
                       child: TextField(
                         controller: _controller,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(hintText: "Add a comment...", hintStyle: TextStyle(color: Colors.white38, fontSize: 14), border: InputBorder.none),
+                        style: widget.theme.textTheme.bodyLarge,
+                        decoration: InputDecoration(hintText: "Add a comment...", hintStyle: widget.theme.textTheme.bodySmall, border: InputBorder.none),
                       ),
                     ),
                   ),
@@ -934,7 +933,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                         _controller.clear();
                       }
                     },
-                    child: const Text("Post", style: TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.bold)),
+                    child: Text("Post", style: TextStyle(color: widget.theme.primaryColor, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -948,7 +947,8 @@ class _CommentSheetState extends State<_CommentSheet> {
 
 class _CommentItem extends StatefulWidget {
   final Map<String, dynamic> comment;
-  const _CommentItem({required this.comment});
+  final ThemeData theme;
+  const _CommentItem({required this.comment, required this.theme});
 
   @override
   State<_CommentItem> createState() => _CommentItemState();
@@ -971,19 +971,19 @@ class _CommentItemState extends State<_CommentItem> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: widget.theme.scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(widget.comment['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                          Text(widget.comment['time'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                          Text(widget.comment['name'], style: widget.theme.textTheme.titleSmall),
+                          Text(widget.comment['time'], style: widget.theme.textTheme.bodySmall),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(widget.comment['text'], style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4)),
+                      Text(widget.comment['text'], style: widget.theme.textTheme.bodyMedium, ),
                     ],
                   ),
                 ),
@@ -995,13 +995,13 @@ class _CommentItemState extends State<_CommentItem> {
                         widget.comment['isLiked'] = !isLiked;
                         widget.comment['likes'] += isLiked ? -1 : 1;
                       }),
-                      child: Text("Like", style: TextStyle(color: isLiked ? Colors.pinkAccent : Colors.white54, fontSize: 12, fontWeight: isLiked ? FontWeight.bold : FontWeight.normal)),
+                      child: Text("Like", style: TextStyle(color: isLiked ? Colors.pinkAccent : widget.theme.textTheme.bodySmall?.color, fontSize: 12, fontWeight: isLiked ? FontWeight.bold : FontWeight.normal)),
                     ),
                     const SizedBox(width: 16),
-                    const Text("Reply", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    Text("Reply", style: widget.theme.textTheme.bodySmall?.copyWith(fontSize: 12)),
                     const SizedBox(width: 16),
                     if (widget.comment['likes'] > 0)
-                      Text("${widget.comment['likes']} likes", style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                      Text("${widget.comment['likes']} likes", style: widget.theme.textTheme.bodySmall?.copyWith(fontSize: 12)),
                   ],
                 ),
               ],

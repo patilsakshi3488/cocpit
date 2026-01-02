@@ -4,13 +4,13 @@ import 'package:provider/provider.dart';
 import 'services/theme_service.dart';
 import 'services/secure_storage.dart';
 
-import 'views/home_screen.dart';
-import 'views/jobs_screen.dart';
-import 'views/create_post_screen.dart';
-import 'views/events_screen.dart';
+import 'views/feed/home_screen.dart';
+import 'views/jobs/jobs_screen.dart';
+import 'views/post/create_post_screen.dart';
+import 'views/events/events_screen.dart';
 import 'views/profile/profile_screen.dart';
-import 'views/notification_screen.dart';
-import 'views/signin_screen.dart';
+import 'views/feed/notification_screen.dart';
+import 'views/login/signin_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,8 +30,8 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             themeMode: themeService.themeMode,
             theme: themeService.lightTheme,
-            darkTheme: themeService.currentTheme == AppTheme.navy 
-                ? themeService.navyTheme 
+            darkTheme: themeService.currentTheme == AppTheme.navy
+                ? themeService.navyTheme
                 : themeService.darkTheme,
             home: const _RootDecider(),
             routes: {

@@ -21,14 +21,17 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 24),
         decoration: BoxDecoration(
-          color: const Color(0xFF111827),
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withAlpha(13)),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,8 +47,8 @@ class EventCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       height: 200,
-                      color: Colors.grey[900],
-                      child: const Icon(Icons.image, color: Colors.white24, size: 50),
+                      color: theme.dividerColor,
+                      child: Icon(Icons.image, color: colorScheme.onSurface.withValues(alpha: 0.2), size: 50),
                     ),
                   ),
                 ),
@@ -55,7 +58,7 @@ class EventCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(180),
+                      color: Colors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.white12),
                     ),
@@ -75,13 +78,13 @@ class EventCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.primaryColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      event.isFree ? 'Free' : '\$50',
-                      style: const TextStyle(
-                        color: Colors.black,
+                    child: const Text(
+                      '\$50',
+                      style: TextStyle(
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -121,27 +124,23 @@ class EventCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1F2937),
+                          color: colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: theme.dividerColor),
                         ),
                         child: Column(
                           children: [
                             Text(
                               event.startDate.split(' ').length > 1 ? event.startDate.split(' ')[1].toUpperCase() : 'MAR',
-                              style: const TextStyle(
-                                color: Color(0xFF6366F1),
+                              style: TextStyle(
+                                color: theme.primaryColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
                               event.startDate.split(' ')[0],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -155,21 +154,14 @@ class EventCard extends StatelessWidget {
                               event.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               event.description,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 14,
-                              ),
+                              style: theme.textTheme.bodyMedium,
                             ),
                           ],
                         ),
@@ -179,27 +171,27 @@ class EventCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF6366F1)),
+                      Icon(Icons.location_on_outlined, size: 18, color: theme.primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         event.location,
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        style: theme.textTheme.bodyMedium,
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.people_outline, size: 18, color: Color(0xFF6366F1)),
+                      Icon(Icons.people_outline, size: 18, color: theme.primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         '${event.totalRegistrations} attendees',
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        style: theme.textTheme.bodyMedium,
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Divider(color: Colors.white10),
+                  Divider(color: theme.dividerColor),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -213,7 +205,7 @@ class EventCard extends StatelessWidget {
                               left: index * 18.0,
                               child: CircleAvatar(
                                 radius: 14,
-                                backgroundColor: const Color(0xFF111827),
+                                backgroundColor: colorScheme.surface,
                                 child: CircleAvatar(
                                   radius: 12,
                                   backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=${event.title.length + index}'),
@@ -226,12 +218,12 @@ class EventCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1F2937),
+                          color: colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '+${event.totalRegistrations}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: theme.textTheme.bodySmall,
                         ),
                       ),
                       const Spacer(),
@@ -241,7 +233,7 @@ class EventCard extends StatelessWidget {
                             onPressed: onSaveToggle,
                             icon: Icon(
                               isSaved ? Icons.bookmark : Icons.bookmark_border,
-                              color: isSaved ? const Color(0xFF6366F1) : Colors.white54,
+                              color: isSaved ? theme.primaryColor : colorScheme.onSurface.withValues(alpha: 0.5),
                               size: 20,
                             ),
                             padding: EdgeInsets.zero,
@@ -252,8 +244,8 @@ class EventCard extends StatelessWidget {
                             onTap: onTap,
                             child: Text(
                               isRegistered ? 'View Ticket' : 'View Details',
-                              style: const TextStyle(
-                                color: Color(0xFF6366F1),
+                              style: TextStyle(
+                                color: theme.primaryColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),

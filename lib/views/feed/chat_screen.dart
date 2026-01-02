@@ -6,21 +6,20 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Text(
                 "Messages",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             // 🔍 Search Bar
@@ -30,16 +29,17 @@ class ChatScreen extends StatelessWidget {
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937),
+                  color: colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.dividerColor),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.search, color: Colors.white54, size: 20),
-                    SizedBox(width: 12),
+                    Icon(Icons.search, color: colorScheme.onSurface.withValues(alpha: 0.4), size: 20),
+                    const SizedBox(width: 12),
                     Text(
                       "Search messages...",
-                      style: TextStyle(color: Colors.white54, fontSize: 15),
+                      style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.4)),
                     ),
                   ],
                 ),
@@ -124,12 +124,15 @@ class _ChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.white10, width: 0.5)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: theme.dividerColor, width: 0.5)),
         ),
         child: Row(
           children: [
@@ -149,7 +152,7 @@ class _ChatTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.green,
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF0B1220), width: 2),
+                        border: Border.all(color: theme.scaffoldBackgroundColor, width: 2),
                       ),
                     ),
                   ),
@@ -165,11 +168,11 @@ class _ChatTile extends StatelessWidget {
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       Text(
                         time,
-                        style: const TextStyle(color: Colors.white38, fontSize: 12),
+                        style: theme.textTheme.bodySmall,
                       ),
                     ],
                   ),
@@ -177,12 +180,12 @@ class _ChatTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1F2937),
+                      color: theme.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       role,
-                      style: const TextStyle(color: Color(0xFF7C83FF), fontSize: 11, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: theme.primaryColor, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -193,13 +196,13 @@ class _ChatTile extends StatelessWidget {
                           message,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white54, fontSize: 14),
+                          style: theme.textTheme.bodyMedium,
                         ),
                       ),
                       if (unreadCount > 0)
                         Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(color: Color(0xFF4F70F0), shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: theme.primaryColor, shape: BoxShape.circle),
                           child: Text(
                             unreadCount.toString(),
                             style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
@@ -253,15 +256,15 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: BackButton(color: colorScheme.onSurface),
         title: Row(
           children: [
             Stack(
@@ -273,7 +276,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                   child: Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(color: Colors.green, shape: BoxShape.circle, border: Border.all(color: const Color(0xFF0B1220), width: 1.5)),
+                    decoration: BoxDecoration(color: Colors.green, shape: BoxShape.circle, border: Border.all(color: theme.scaffoldBackgroundColor, width: 1.5)),
                   ),
                 ),
               ],
@@ -282,15 +285,15 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                Text(widget.role, style: const TextStyle(color: Color(0xFF7C83FF), fontSize: 12)),
+                Text(widget.name, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(widget.role, style: TextStyle(color: theme.primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
               ],
             ),
           ],
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.call_outlined, color: Colors.white), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
+          IconButton(icon: Icon(Icons.call_outlined, color: colorScheme.onSurface), onPressed: () {}),
+          IconButton(icon: Icon(Icons.more_vert, color: colorScheme.onSurface), onPressed: () {}),
         ],
       ),
       body: Column(
@@ -298,11 +301,11 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8),
-            color: const Color(0xFF1F2937).withOpacity(0.5),
-            child: const Text(
+            color: theme.primaryColor.withValues(alpha: 0.05),
+            child: Text(
               "Context: Senior React Developer Role",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF7C83FF), fontSize: 13, fontWeight: FontWeight.w500),
+              style: TextStyle(color: theme.primaryColor, fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
@@ -320,12 +323,16 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                       margin: const EdgeInsets.only(bottom: 4),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: msg['isMe'] ? const Color(0xFF4F70F0) : const Color(0xFF1F2937),
+                        color: msg['isMe'] ? theme.primaryColor : colorScheme.surfaceContainer,
                         borderRadius: BorderRadius.circular(16),
+                        border: msg['isMe'] ? null : Border.all(color: theme.dividerColor),
                       ),
                       child: Text(
                         msg['text'],
-                        style: const TextStyle(color: Colors.white, fontSize: 15),
+                        style: TextStyle(
+                          color: msg['isMe'] ? Colors.white : colorScheme.onSurface,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                     if (showTime)
@@ -333,7 +340,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
                         padding: const EdgeInsets.only(bottom: 12, left: 4, right: 4),
                         child: Text(
                           msg['time'],
-                          style: const TextStyle(color: Colors.white38, fontSize: 11),
+                          style: theme.textTheme.bodySmall,
                         ),
                       ),
                   ],
@@ -341,35 +348,37 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
               },
             ),
           ),
-          _buildMessageInput(),
+          _buildMessageInput(theme),
         ],
       ),
     );
   }
 
-  Widget _buildMessageInput() {
+  Widget _buildMessageInput(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        border: Border(top: BorderSide(color: Colors.white10)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
       child: Row(
         children: [
-          IconButton(icon: const Icon(Icons.add, color: Color(0xFF7C83FF)), onPressed: () {}),
+          IconButton(icon: Icon(Icons.add, color: theme.primaryColor), onPressed: () {}),
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1F2937),
+                color: colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: TextField(
                 controller: _messageController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                style: theme.textTheme.bodyLarge,
+                decoration: InputDecoration(
                   hintText: "Write a message...",
-                  hintStyle: TextStyle(color: Colors.white38, fontSize: 14),
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.4)),
                   border: InputBorder.none,
                 ),
               ),
@@ -377,7 +386,7 @@ class _PersonalChatScreenState extends State<PersonalChatScreen> {
           ),
           const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.send, color: Color(0xFF6366F1)),
+            icon: Icon(Icons.send, color: theme.primaryColor),
             onPressed: _sendMessage,
           ),
         ],

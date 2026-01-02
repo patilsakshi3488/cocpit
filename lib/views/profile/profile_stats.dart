@@ -5,27 +5,38 @@ class ProfileStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _statItem("500+", "Connections"),
-          Container(height: 40, width: 1, color: Colors.white10),
-          _statItem("1,234", "Profile Views"),
-          Container(height: 40, width: 1, color: Colors.white10),
-          _statItem("87", "Posts"),
+          _statItem(context, "500+", "Connections"),
+          Container(height: 40, width: 1, color: theme.dividerColor),
+          _statItem(context, "1,234", "Profile Views"),
+          Container(height: 40, width: 1, color: theme.dividerColor),
+          _statItem(context, "87", "Posts"),
         ],
       ),
     );
   }
 
-  Widget _statItem(String value, String label) {
+  Widget _statItem(BuildContext context, String value, String label) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Column(
       children: [
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(value, style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: colorScheme.onBackground,
+        )),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 14)),
+        Text(label, style: theme.textTheme.bodyMedium?.copyWith(
+          color: colorScheme.onBackground.withValues(alpha: 0.4),
+        )),
       ],
     );
   }

@@ -48,12 +48,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Create Event'),
+        title: Text('Create Event', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: BackButton(color: colorScheme.onSurface),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -63,22 +67,23 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _bannerPicker(),
+                _bannerPicker(theme),
 
-                _section('Basic Info'),
-                _card([
-                  _field('Event Title', titleCtrl),
-                  _field('Description', descCtrl, maxLines: 3),
-                  _field('Location', locationCtrl),
+                _section(theme, 'Basic Info'),
+                _card(theme, [
+                  _field(theme, 'Event Title', titleCtrl),
+                  _field(theme, 'Description', descCtrl, maxLines: 3),
+                  _field(theme, 'Location', locationCtrl),
                 ]),
 
-                _section('Category'),
-                _card([
+                _section(theme, 'Category'),
+                _card(theme, [
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
                     children: categories
                         .map((c) => _chip(
+                      theme,
                       c,
                       selectedCategory == c,
                           () => setState(() => selectedCategory = c),
@@ -87,17 +92,19 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                 ]),
 
-                _section('Event Type'),
-                _card([
+                _section(theme, 'Event Type'),
+                _card(theme, [
                   Row(
                     children: [
                       _chip(
+                        theme,
                         'Online',
                         selectedEventType == 'Online',
                             () => setState(() => selectedEventType = 'Online'),
                       ),
                       const SizedBox(width: 12),
                       _chip(
+                        theme,
                         'In-person',
                         selectedEventType == 'In-person',
                             () => setState(() => selectedEventType = 'In-person'),
@@ -106,9 +113,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                 ]),
 
-                _section('Date & Time'),
-                _card([
+                _section(theme, 'Date & Time'),
+                _card(theme, [
                   _dateTimeRow(
+                    theme,
                     'Start',
                     startDate,
                     startTime,
@@ -123,6 +131,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                   const SizedBox(height: 12),
                   _dateTimeRow(
+                    theme,
                     'End',
                     endDate,
                     endTime,
@@ -137,17 +146,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                 ]),
 
-                _section('Pricing'),
-                _card([
+                _section(theme, 'Pricing'),
+                _card(theme, [
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     value: isFreeEvent,
                     onChanged: (v) => setState(() => isFreeEvent = v),
-                    title: const Text(
+                    title: Text(
                       'Free Event',
-                      style: TextStyle(color: Colors.white),
+                      style: theme.textTheme.bodyLarge,
                     ),
-                    activeColor: const Color(0xFF6366F1),
+                    activeColor: theme.primaryColor,
                   ),
                 ]),
 
@@ -158,7 +167,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   height: 54,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6366F1),
+                      backgroundColor: theme.primaryColor,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -181,7 +191,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   // ================= BANNER PICKER =================
 
-  Widget _bannerPicker() {
+  Widget _bannerPicker(ThemeData theme) {
     return GestureDetector(
       onTap: _pickBanner,
       child: Container(
@@ -204,7 +214,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
               colors: [
-                Colors.black.withOpacity(0.6),
+                Colors.black.withValues(alpha: 0.6),
                 Colors.transparent,
               ],
             ),
@@ -244,29 +254,27 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   // ================= HELPERS =================
 
-  Widget _section(String title) => Padding(
+  Widget _section(ThemeData theme, String title) => Padding(
     padding: const EdgeInsets.only(bottom: 10, top: 16),
     child: Text(
       title,
-      style: const TextStyle(
-        color: Colors.white70,
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
       ),
     ),
   );
 
-  Widget _card(List<Widget> children) => Container(
+  Widget _card(ThemeData theme, List<Widget> children) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xFF111827),
+      color: theme.colorScheme.surfaceContainer,
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.white10),
+      border: Border.all(color: theme.dividerColor),
     ),
     child: Column(children: children),
   );
 
-  Widget _field(String label, TextEditingController controller,
+  Widget _field(ThemeData theme, String label, TextEditingController controller,
       {int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -274,37 +282,43 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         controller: controller,
         maxLines: maxLines,
         validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-        style: const TextStyle(color: Colors.white),
+        style: theme.textTheme.bodyLarge,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.white70),
+          labelStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
           filled: true,
-          fillColor: const Color(0xFF1F2937),
+          fillColor: theme.scaffoldBackgroundColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: theme.dividerColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: theme.dividerColor),
           ),
         ),
       ),
     );
   }
 
-  Widget _chip(String label, bool selected, VoidCallback onTap) {
+  Widget _chip(ThemeData theme, String label, bool selected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF6366F1) : const Color(0xFF1F2937),
+          color: selected ? theme.primaryColor : theme.scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(30),
+          border: selected ? null : Border.all(color: theme.dividerColor),
         ),
-        child: Text(label, style: const TextStyle(color: Colors.white)),
+        child: Text(label, style: TextStyle(color: selected ? Colors.white : theme.textTheme.bodyMedium?.color)),
       ),
     );
   }
 
   Widget _dateTimeRow(
+      ThemeData theme,
       String label,
       DateTime? date,
       TimeOfDay? time, {
@@ -315,6 +329,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       children: [
         Expanded(
           child: _dateTimeBox(
+            theme,
             date == null
                 ? '$label Date'
                 : '${date.day}/${date.month}/${date.year}',
@@ -325,6 +340,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _dateTimeBox(
+            theme,
             time == null ? 'Time' : time.format(context),
             Icons.access_time,
             onTimeTap,
@@ -335,20 +351,22 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   Widget _dateTimeBox(
+      ThemeData theme,
       String value, IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF1F2937),
+          color: theme.scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white70, size: 18),
+            Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.6), size: 18),
             const SizedBox(width: 10),
-            Text(value, style: const TextStyle(color: Colors.white)),
+            Text(value, style: theme.textTheme.bodyMedium),
           ],
         ),
       ),

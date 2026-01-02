@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../edit_profile_screen.dart';
+import 'edit_profile_screen.dart';
 import '../bottom_navigation.dart';
 import 'settings_screen/settings_screen.dart';
 import 'analytics/analytics_dashboard_screen.dart';
@@ -27,9 +27,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final Color bg = const Color(0xFF0B1220);
-  final Color primary = const Color(0xFF6366F1);
-  final Color dividerColor = Colors.white.withValues(alpha: 0.05);
 
   // Profile Data
   String name = "Sally Liang";
@@ -283,10 +280,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: bg,
-      endDrawer: _buildMenuDrawer(),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      endDrawer: _buildMenuDrawer(theme),
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 4),
       body: SingleChildScrollView(
         child: Column(
@@ -298,7 +296,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
               onCameraPressed: _handleProfilePhotoActions,
               onCoverCameraPressed: _handleCoverPhotoActions,
-              backgroundColor: bg,
+              backgroundColor: theme.scaffoldBackgroundColor,
             ),
             const SizedBox(height: 80),
             ProfileInfoIdentity(
@@ -311,9 +309,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onEditProfile: _navigateToEditProfile,
               onEditIdentity: _showEditIdentityModal,
             ),
-            _buildDivider(),
+            _buildDivider(theme),
             const ProfileStats(),
-            _buildDivider(),
+            _buildDivider(theme),
             ProfileLivingResume(
               isOverviewSelected: isOverviewSelected,
               onTabChanged: (selected) => setState(() => isOverviewSelected = selected),
@@ -331,24 +329,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
-            _buildDivider(),
+            _buildDivider(theme),
             ProfileAboutSection(about: about),
-            _buildDivider(),
+            _buildDivider(theme),
             ProfileExperienceSection(
               experiences: experiences,
               onAddEditExperience: _showExperienceModal,
             ),
-            _buildDivider(),
+            _buildDivider(theme),
             ProfileEducationSection(
               educations: educations,
               onAddEditEducation: _showEducationModal,
             ),
-            _buildDivider(),
+            _buildDivider(theme),
             ProfileSkillsSection(
               skills: skills,
               onAddSkill: _showSkillsModal,
             ),
-            _buildDivider(),
+            _buildDivider(theme),
             ProfileLatestPostsSection(
               posts: posts,
               userName: name,
@@ -359,7 +357,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            _buildDivider(),
+            _buildDivider(theme),
             ProfileSuggestedSection(suggestedUsers: suggestedUsers),
             const SizedBox(height: 80),
           ],
@@ -368,24 +366,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMenuDrawer() {
+  Widget _buildMenuDrawer(ThemeData theme) {
     return Drawer(
       width: 200,
-      backgroundColor: const Color(0xFF1E293B).withValues(alpha: 0.95),
+      backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.95),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            _buildDrawerItem(null, "Settings", () {
+            _buildDrawerItem(theme, Icons.settings_outlined, "Settings", () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             }),
-            _buildDrawerItem(null, "Analytics", () {
+            _buildDrawerItem(theme, Icons.analytics_outlined, "Analytics", () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const AnalyticsDashboardScreen()));
             }),
-            _buildDrawerItem(Icons.logout, "Log out", () {
+            _buildDrawerItem(theme, Icons.logout, "Log out", () {
               Navigator.pop(context);
             }),
           ],
@@ -394,20 +392,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDrawerItem(IconData? icon, String title, VoidCallback onTap) {
+  Widget _buildDrawerItem(ThemeData theme, IconData? icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: icon != null ? Icon(icon, color: Colors.white, size: 20) : null,
-      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w400)),
+      leading: icon != null ? Icon(icon, color: theme.iconTheme.color, size: 20) : null,
+      title: Text(title, style: theme.textTheme.bodyLarge),
       onTap: onTap,
       dense: true,
       visualDensity: VisualDensity.compact,
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Divider(color: dividerColor, thickness: 1, height: 80),
+      child: Divider(color: theme.dividerColor, thickness: 1, height: 80),
     );
   }
 }

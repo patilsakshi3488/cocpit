@@ -6,19 +6,20 @@ class NotificationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Text(
                 "Notifications",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
+                style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -27,37 +28,37 @@ class NotificationScreen extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937).withOpacity(0.5),
+                  color: colorScheme.surfaceContainer.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
                   child: ListView(
                     padding: EdgeInsets.zero,
-                    children: const [
-                      _NotificationTile(
+                    children: [
+                      const _NotificationTile(
                         title: "Sarah Chen liked your story",
                         time: "2m ago",
                         color: Color(0xFF60A5FA),
                         unread: true,
                       ),
-                      Divider(color: Colors.white10, height: 1),
-                      _NotificationTile(
+                      Divider(color: theme.dividerColor, height: 1),
+                      const _NotificationTile(
                         title: "Michael Torres commented on your post",
                         time: "1h ago",
                         color: Color(0xFFC084FC),
                         unread: true,
                       ),
-                      Divider(color: Colors.white10, height: 1),
-                      _NotificationTile(
+                      Divider(color: theme.dividerColor, height: 1),
+                      const _NotificationTile(
                         title: "New job alert: Product Designer",
                         time: "3h ago",
                         color: Color(0xFF34D399),
                         unread: false,
                       ),
-                      Divider(color: Colors.white10, height: 1),
-                      _NotificationTile(
+                      Divider(color: theme.dividerColor, height: 1),
+                      const _NotificationTile(
                         title: "Jessica Williams viewed your profile",
                         time: "5h ago",
                         color: Color(0xFFFACC15),
@@ -92,9 +93,12 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(20),
-      color: unread ? Colors.white.withOpacity(0.02) : Colors.transparent,
+      color: unread ? colorScheme.onSurface.withValues(alpha: 0.02) : Colors.transparent,
       child: Row(
         children: [
           CircleAvatar(
@@ -108,27 +112,22 @@ class _NotificationTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   time,
-                  style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 13,
-                  ),
+                  style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
           ),
           if (unread)
-            const CircleAvatar(
+            CircleAvatar(
               radius: 4,
-              backgroundColor: Color(0xFF4F70F0),
+              backgroundColor: theme.primaryColor,
             ),
         ],
       ),

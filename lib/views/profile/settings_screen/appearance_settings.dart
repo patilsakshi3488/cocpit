@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../services/theme_service.dart';
 
 class AppearanceSettings extends StatelessWidget {
-  final String selectedTheme;
+  final AppTheme selectedTheme;
   final bool isCompactMode;
-  final ValueChanged<String> onThemeChanged;
+  final ValueChanged<AppTheme> onThemeChanged;
   final ValueChanged<bool> onCompactModeChanged;
 
   const AppearanceSettings({
@@ -16,126 +17,148 @@ class AppearanceSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color textColor = isDark ? Colors.white : Colors.black;
-    final Color subTextColor = isDark ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.4);
-    final Color primary = const Color(0xFF6366F1);
+    final theme = Theme.of(context);
+    final primary = theme.primaryColor;
+    final cardBg = theme.colorScheme.surfaceContainer;
+    final subTextColor = theme.textTheme.bodySmall?.color ?? Colors.grey;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "APPEARANCE",
-          style: TextStyle(
-            color: textColor,
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1,
+        // Theme Card
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Theme",
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 20),
+              _buildThemeOption(context, AppTheme.navy, "Navy Mode", "The classic experience", Icons.bolt, primary, subTextColor),
+              const SizedBox(height: 12),
+              _buildThemeOption(context, AppTheme.light, "Light Mode", "Clean and bright interface", Icons.light_mode_outlined, primary, subTextColor),
+              const SizedBox(height: 12),
+              _buildThemeOption(context, AppTheme.dark, "Dark Mode", "Easy on the eyes, perfect for night", Icons.nightlight_outlined, primary, subTextColor),
+              const SizedBox(height: 12),
+              _buildThemeOption(context, AppTheme.system, "System", "Follow your device's setting", Icons.desktop_windows_outlined, primary, subTextColor),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
-          "CHOOSE A THEME THAT SUITS YOUR READING STYLE.",
-          style: TextStyle(
-            color: subTextColor,
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.5,
+        const SizedBox(height: 24),
+        
+        // Display Card
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
           ),
-        ),
-        const SizedBox(height: 48),
-        _buildThemeOption("NAVY MODE", "The classic experience", primary, textColor, subTextColor),
-        _buildThemeOption("LIGHT MODE", "Clean and bright interface", primary, textColor, subTextColor),
-        _buildThemeOption("DARK MODE", "Easy on the eyes, perfect for night", primary, textColor, subTextColor),
-        _buildThemeOption("SYSTEM", "Follow your device's setting", primary, textColor, subTextColor),
-        const SizedBox(height: 64),
-        Text(
-          "DISPLAY",
-          style: TextStyle(
-            color: textColor,
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1,
-          ),
-        ),
-        const SizedBox(height: 32),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "COMPACT MODE",
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Display",
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Compact mode",
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Show more content in less space",
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Show more content in less space",
-                  style: TextStyle(
-                    color: subTextColor.withOpacity(0.5),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
+                  Switch(
+                    value: isCompactMode,
+                    onChanged: onCompactModeChanged,
+                    activeColor: Colors.white,
+                    activeTrackColor: primary,
                   ),
-                ),
-              ],
-            ),
-            Switch(
-              value: isCompactMode,
-              onChanged: onCompactModeChanged,
-              activeColor: primary,
-              activeTrackColor: primary.withOpacity(0.2),
-              inactiveThumbColor: isDark ? Colors.white24 : Colors.grey[400],
-              inactiveTrackColor: isDark ? Colors.white10 : Colors.grey[200],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildThemeOption(String title, String subtitle, Color primary, Color textColor, Color subTextColor) {
-    bool isSelected = selectedTheme.toUpperCase() == title;
+  Widget _buildThemeOption(BuildContext context, AppTheme theme, String title, String subtitle, IconData icon, Color primary, Color subTextColor) {
+    final appTheme = Theme.of(context);
+    bool isSelected = selectedTheme == theme;
     return GestureDetector(
-      onTap: () => onThemeChanged(title),
+      onTap: () => onThemeChanged(theme),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: subTextColor.withOpacity(0.1), width: 1)),
+          color: appTheme.scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? primary : appTheme.dividerColor,
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
+            Icon(icon, color: isSelected ? primary : subTextColor, size: 24),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      color: isSelected ? primary : textColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
-                    ),
+                    style: appTheme.textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w300,
-                    ),
+                    style: appTheme.textTheme.bodySmall,
                   ),
                 ],
               ),
             ),
-            if (isSelected) Icon(Icons.check, color: primary, size: 24),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? primary : subTextColor.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              child: isSelected 
+                ? Center(
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ) 
+                : null,
+            ),
           ],
         ),
       ),

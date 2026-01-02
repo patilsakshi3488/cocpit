@@ -15,146 +15,147 @@ class AnalyticsDashboardScreen extends StatefulWidget {
 }
 
 class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
-  String selectedRange = "LAST 30 DAYS";
+  String selectedRange = "Last 7 Days";
+
+  // Mock data for stat cards based on range
+  final Map<String, List<Map<String, dynamic>>> rangeStats = {
+    "Last 7 Days": [
+      {"label": "Profile Views", "value": "1,240", "trend": "+12.5%", "positive": true, "icon": Icons.visibility_outlined},
+      {"label": "Search Appearances", "value": "450", "trend": "+5.2%", "positive": true, "icon": Icons.search},
+      {"label": "Connection Requests", "value": "28", "trend": "-2.1%", "positive": false, "icon": Icons.person_add_outlined},
+      {"label": "Direct Messages", "value": "12", "trend": "+18.0%", "positive": true, "icon": Icons.chat_bubble_outline},
+    ],
+    "Last 30 Days": [
+      {"label": "Profile Views", "value": "4,340", "trend": "+15.2%", "positive": true, "icon": Icons.visibility_outlined},
+      {"label": "Search Appearances", "value": "1,575", "trend": "+8.4%", "positive": true, "icon": Icons.search},
+      {"label": "Connection Requests", "value": "112", "trend": "+4.1%", "positive": true, "icon": Icons.person_add_outlined},
+      {"label": "Direct Messages", "value": "84", "trend": "+22.0%", "positive": true, "icon": Icons.chat_bubble_outline},
+    ],
+    "Last 90 Days": [
+      {"label": "Profile Views", "value": "12,850", "trend": "+24.5%", "positive": true, "icon": Icons.visibility_outlined},
+      {"label": "Search Appearances", "value": "5,420", "trend": "+12.2%", "positive": true, "icon": Icons.search},
+      {"label": "Connection Requests", "value": "450", "trend": "+15.1%", "positive": true, "icon": Icons.person_add_outlined},
+      {"label": "Direct Messages", "value": "310", "trend": "+30.0%", "positive": true, "icon": Icons.chat_bubble_outline},
+    ],
+    "All Time": [
+      {"label": "Profile Views", "value": "45.2K", "trend": "+140%", "positive": true, "icon": Icons.visibility_outlined},
+      {"label": "Search Appearances", "value": "18.5K", "trend": "+85%", "positive": true, "icon": Icons.search},
+      {"label": "Connection Requests", "value": "2.1K", "trend": "+60%", "positive": true, "icon": Icons.person_add_outlined},
+      {"label": "Direct Messages", "value": "1.2K", "trend": "+95%", "positive": true, "icon": Icons.chat_bubble_outline},
+    ],
+  };
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.primaryColor;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.4);
-    final dividerColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05);
+    final textColor = theme.textTheme.displaySmall?.color ?? (isDark ? Colors.white : const Color(0xFF111827));
+    final subTextColor = theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white54 : Colors.black54);
+
+    final stats = rangeStats[selectedRange] ?? rangeStats["Last 7 Days"]!;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: 100,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor, size: 28),
+          icon: Icon(Icons.arrow_back_ios_new, color: textColor, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          "ANALYTICS",
-          style: TextStyle(
-            color: textColor, 
-            fontSize: 40, 
-            fontWeight: FontWeight.w900, 
-            letterSpacing: -2,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.more_horiz, color: textColor),
+            onPressed: () {},
           ),
-        ),
+        ],
       ),
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 4),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                "TRACK YOUR PROFESSIONAL GROWTH AND REACH.",
-                style: TextStyle(color: subTextColor, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Analytics Dashboard",
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w800, 
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Track your professional growth and reach",
+                    style: theme.textTheme.bodyLarge?.copyWith(color: subTextColor),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 48),
+            
+            const SizedBox(height: 32),
             
             AnalyticsTimeRange(
               selectedRange: selectedRange,
               onRangeSelected: (range) => setState(() => selectedRange = range),
             ),
             
+            const SizedBox(height: 32),
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: stats.map((stat) => AnalyticsStatCard(
+                  icon: stat["icon"],
+                  label: stat["label"],
+                  value: stat["value"],
+                  trend: stat["trend"],
+                  isPositive: stat["positive"],
+                )).toList(),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: EngagementSection(
+                primary: primary, 
+                textColor: textColor,
+                selectedRange: selectedRange,
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TrajectorySection(primary: primary, textColor: textColor),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: FunnelSection(textColor: textColor, subTextColor: subTextColor, primary: primary),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: DemographicsSection(primary: primary, textColor: textColor),
+            ),
+            
             const SizedBox(height: 48),
-            
-            AnalyticsStatCard(
-              icon: Icons.visibility_outlined,
-              label: "PROFILE VIEWS",
-              value: "4,340",
-              trend: "+12.5%",
-              isPositive: true,
-            ),
-            _buildDivider(dividerColor),
-            AnalyticsStatCard(
-              icon: Icons.search,
-              label: "SEARCH APPEARANCES",
-              value: "1,575",
-              trend: "+5.2%",
-              isPositive: true,
-            ),
-            _buildDivider(dividerColor),
-            AnalyticsStatCard(
-              icon: Icons.person_add_outlined,
-              label: "CONNECTION REQUESTS",
-              value: "297.5",
-              trend: "-2.1%",
-              isPositive: false,
-            ),
-            _buildDivider(dividerColor),
-            AnalyticsStatCard(
-              icon: Icons.chat_bubble_outline,
-              label: "DIRECT MESSAGES",
-              value: "84",
-              trend: "+18.0%",
-              isPositive: true,
-            ),
-            
-            _buildHeavyDivider(dividerColor),
-            
-            _buildSectionHeader("CAREER TRAJECTORY", "COMPARE YOUR SKILLS AGAINST YOUR TARGET ROLE.", textColor, subTextColor),
-            const SizedBox(height: 32),
-            TrajectorySection(primary: primary, textColor: textColor),
-            
-            _buildHeavyDivider(dividerColor),
-            
-            _buildSectionHeader("ENGAGEMENT", "PROFILE INTERACTIONS OVER TIME.", textColor, subTextColor),
-            const SizedBox(height: 32),
-            EngagementSection(primary: primary, textColor: textColor),
-            
-            _buildHeavyDivider(dividerColor),
-            
-            _buildSectionHeader("RECRUITER FUNNEL", "FROM SEARCH TO CONVERSATION.", textColor, subTextColor),
-            const SizedBox(height: 32),
-            FunnelSection(textColor: textColor, subTextColor: subTextColor, primary: primary),
-            
-            _buildHeavyDivider(dividerColor),
-            
-            _buildSectionHeader("DEMOGRAPHICS", "WHO IS VIEWING YOUR PROFILE.", textColor, subTextColor),
-            const SizedBox(height: 32),
-            DemographicsSection(primary: primary, textColor: textColor),
-            
-            const SizedBox(height: 100),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, String subtitle, Color textColor, Color subTextColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-          const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: subTextColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDivider(Color dividerColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Divider(color: dividerColor, thickness: 1),
-    );
-  }
-
-  Widget _buildHeavyDivider(Color dividerColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 64),
-      child: Divider(color: dividerColor, thickness: 8),
     );
   }
 }

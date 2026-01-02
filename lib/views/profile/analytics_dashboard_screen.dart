@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../bottom_navigation.dart';
+import 'dart:math' as math;
 
 class AnalyticsDashboardScreen extends StatefulWidget {
   const AnalyticsDashboardScreen({super.key});
@@ -9,101 +10,153 @@ class AnalyticsDashboardScreen extends StatefulWidget {
 }
 
 class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
-  String selectedRange = "Last 30 Days";
+  String selectedRange = "Last 7 Days";
+  String selectedRole = "Senior Product Designer";
+
+  final List<String> roles = [
+    "Senior Product Designer",
+    "Frontend Architect",
+    "Marketing Manager",
+    "Full Stack Engineer"
+  ];
+
+  final Map<String, List<String>> roleSkills = {
+    "Senior Product Designer": ["UI Design", "UX Research", "Prototyping", "Design Systems", "Leadership", "Strategy"],
+    "Frontend Architect": ["React/Next.js", "System Architecture", "Performance", "Testing", "DevOps", "Mentoring"],
+    "Marketing Manager": ["SEO/SEM", "Content Strategy", "Data Analytics", "Campaign Management", "Public Relations", "Brand Design"],
+    "Full Stack Engineer": ["API Design", "Database Mgmt", "Frontend Frameworks", "Backend Systems", "Security", "Cloud Arch"]
+  };
+
+  final Map<String, List<double>> roleTargetValues = {
+    "Senior Product Designer": [0.9, 0.85, 0.8, 0.9, 0.75, 0.8],
+    "Frontend Architect": [0.95, 0.9, 0.85, 0.8, 0.75, 0.85],
+    "Marketing Manager": [0.85, 0.9, 0.8, 0.85, 0.7, 0.75],
+    "Full Stack Engineer": [0.9, 0.85, 0.95, 0.9, 0.8, 0.85]
+  };
+
+  final Map<String, List<double>> roleYouValues = {
+    "Senior Product Designer": [0.8, 0.7, 0.6, 0.85, 0.5, 0.6],
+    "Frontend Architect": [0.85, 0.75, 0.65, 0.7, 0.6, 0.7],
+    "Marketing Manager": [0.75, 0.8, 0.7, 0.75, 0.6, 0.65],
+    "Full Stack Engineer": [0.8, 0.7, 0.85, 0.75, 0.65, 0.7]
+  };
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.primaryColor;
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final cardBg = theme.cardColor;
+    const Color primaryBlue = Color(0xFF6366F1);
+    const Color backgroundNavy = Color(0xFF0B1220);
+    const Color cardBackground = Color(0xFF111827);
+    final Color subTextColor = Colors.white.withValues(alpha: 0.6);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: backgroundNavy,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text("Analytics Dashboard", style: TextStyle(color: textColor)),
       ),
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 4),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Track your professional growth and reach",
-              style: TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: 14),
-            ),
-            const SizedBox(height: 20),
-
-            // Time Range Selector
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _rangePill("Last 7 Days", cardBg, primary),
-                  _rangePill("Last 30 Days", cardBg, primary),
-                  _rangePill("Last 90 Days", cardBg, primary),
-                  _rangePill("All Time", cardBg, primary),
+                  const Text(
+                    "Analytics Dashboard",
+                    style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Track your professional growth and reach",
+                    style: TextStyle(color: subTextColor, fontSize: 16),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
+            // Time Range Selector
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: cardBackground,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  _buildRangeButton("Last 7 Days"),
+                  _buildRangeButton("Last 30 Days"),
+                  _buildRangeButton("Last 90 Days"),
+                  _buildRangeButton("All Time"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
             // Stats Section
-            _buildStatCard(
-              icon: Icons.visibility_outlined,
-              label: "Profile Views",
-              value: "4,340",
-              trend: "+12.5%",
-              isPositive: true,
-              textColor: textColor,
-              cardBg: cardBg,
-            ),
-            _buildStatCard(
-              icon: Icons.search,
-              label: "Search Appearances",
-              value: "1,575",
-              trend: "+5.2%",
-              isPositive: true,
-              textColor: textColor,
-              cardBg: cardBg,
-            ),
-            _buildStatCard(
-              icon: Icons.person_add_outlined,
-              label: "Connection Requests",
-              value: "297.5",
-              trend: "-2.1%",
-              isPositive: false,
-              textColor: textColor,
-              cardBg: cardBg,
-            ),
-            _buildStatCard(
-              icon: Icons.chat_bubble_outline,
-              label: "Direct Messages",
-              value: "84",
-              trend: "+18.0%",
-              isPositive: true,
-              textColor: textColor,
-              cardBg: cardBg,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  _buildStatCard(
+                    icon: Icons.visibility_outlined,
+                    label: "Profile Views",
+                    value: _getStatValue("Profile Views"),
+                    trend: "+12.5%",
+                    isPositive: true,
+                    cardBg: cardBackground,
+                  ),
+                  _buildStatCard(
+                    icon: Icons.search,
+                    label: "Search Appearances",
+                    value: _getStatValue("Search Appearances"),
+                    trend: "+5.2%",
+                    isPositive: true,
+                    cardBg: cardBackground,
+                  ),
+                  _buildStatCard(
+                    icon: Icons.person_add_outlined,
+                    label: "Connection Requests",
+                    value: "297.5",
+                    trend: "-2.1%",
+                    isPositive: false,
+                    cardBg: cardBackground,
+                  ),
+                  _buildStatCard(
+                    icon: Icons.chat_bubble_outline,
+                    label: "Direct Messages",
+                    value: "84",
+                    trend: "+18.0%",
+                    isPositive: true,
+                    cardBg: cardBackground,
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 24),
 
-            // UI Sections matching App Theme
-            _buildTrajectoryCard(primary, textColor, cardBg, isDark),
+            // Career Trajectory Section
+            _buildTrajectoryCard(primaryBlue),
+            
             const SizedBox(height: 24),
-            _buildEngagementCard(primary, textColor, cardBg),
+            
+            // Engagement Overview Section
+            _buildEngagementCard(primaryBlue, cardBackground),
+            
             const SizedBox(height: 24),
-            _buildFunnelCard(primary, textColor, cardBg),
-            const SizedBox(height: 24),
-            _buildDemographicsCard(primary, textColor, cardBg),
+            
+            // Recruiter Funnel Section
+            _buildFunnelCard(primaryBlue, cardBackground),
+            
             const SizedBox(height: 40),
           ],
         ),
@@ -111,23 +164,32 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     );
   }
 
-  Widget _rangePill(String label, Color cardBg, Color primary) {
+  String _getStatValue(String label) {
+    if (selectedRange == "Last 7 Days") {
+      return label == "Profile Views" ? "1,240" : "450";
+    }
+    return label == "Profile Views" ? "4,340" : "1,575";
+  }
+
+  Widget _buildRangeButton(String label) {
     bool isSelected = selectedRange == label;
-    return GestureDetector(
-      onTap: () => setState(() => selectedRange = label),
-      child: Container(
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? primary : cardBg,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white54,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => selectedRange = label),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF6366F1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label.split(" ").join("\n"),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
           ),
         ),
       ),
@@ -140,335 +202,292 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     required String value,
     required String trend,
     required bool isPositive,
-    required Color textColor,
     required Color cardBg,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F2937),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: const Color(0xFF9CA3AF), size: 24),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                value,
+                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
+              ),
+            ],
+          ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isPositive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isPositive ? Icons.trending_up : Icons.trending_down,
+                    color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    trend,
+                    style: TextStyle(
+                      color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrajectoryCard(Color primary) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.track_changes, color: Color(0xFF6366F1), size: 28),
+              const SizedBox(width: 12),
+              const Text(
+                "Career Trajectory & Skill Gap",
+                style: TextStyle(color: Color(0xFF111827), fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Compare your current skills against your dream role.",
+            style: TextStyle(color: Color(0xFF6B7280), fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          
+          // Dropdown for Role Selection
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedRole,
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedRole = newValue!;
+                  });
+                },
+                items: roles.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value, style: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500, fontSize: 16)),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          Center(
+            child: SizedBox(
+              height: 280,
+              width: 280,
+              child: CustomPaint(
+                painter: RadarChartPainter(
+                  skills: roleSkills[selectedRole]!,
+                  targetValues: roleTargetValues[selectedRole]!,
+                  youValues: roleYouValues[selectedRole]!,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Role Readiness", style: TextStyle(color: Color(0xFF6B7280), fontSize: 16, fontWeight: FontWeight.w500)),
+              Text("${(roleYouValues[selectedRole]!.reduce((a, b) => a + b) / roleTargetValues[selectedRole]!.reduce((a, b) => a + b) * 100).toInt()}%", style: TextStyle(color: primary, fontSize: 28, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: roleYouValues[selectedRole]!.reduce((a, b) => a + b) / roleTargetValues[selectedRole]!.reduce((a, b) => a + b),
+              backgroundColor: primary.withValues(alpha: 0.1),
+              color: primary,
+              minHeight: 10,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "You are on track for this role.",
+            style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEngagementCard(Color primary, Color cardBg) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Engagement Overview",
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Profile interactions over time",
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildLegendItem("Interactions", const Color(0xFF10B981)),
+              const SizedBox(width: 16),
+              _buildLegendItem("Profile Views", const Color(0xFF6366F1)),
+            ],
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 200,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: LineChartPainter(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
+      ],
+    );
+  }
+
+  Widget _buildFunnelCard(Color primary, Color cardBg) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Recruiter Funnel",
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "From search to conversation",
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          _funnelStep("SEARCH APPEARANCES", "15,750", "100%", Icons.filter_alt, const Color(0xFF3B82F6)),
+          _funnelStep("PROFILE CLICKS", "4,340", "27.5%", Icons.mouse, const Color(0xFF6366F1)),
+          _funnelStep("CONNECTED/FOLLOWED", "630", "14.5%", Icons.person_add, const Color(0xFF8B5CF6)),
+          _funnelStep("MESSAGE/INQUIRY", "84", "13.3%", Icons.chat_bubble, const Color(0xFFA855F7)),
+        ],
+      ),
+    );
+  }
+
+  Widget _funnelStep(String label, String value, String percentage, IconData icon, Color iconColor) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: textColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
+              color: iconColor,
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: textColor.withValues(alpha: 0.5), size: 24),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  style: TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  label,
-                  style: TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: 14),
-                ),
+                Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isPositive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  isPositive ? Icons.trending_up : Icons.trending_down,
-                  color: isPositive ? Colors.greenAccent : Colors.redAccent,
-                  size: 14,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  trend,
-                  style: TextStyle(
-                    color: isPositive ? Colors.greenAccent : Colors.redAccent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTrajectoryCard(Color primary, Color textColor, Color cardBg, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.track_changes, color: primary, size: 24),
-              const SizedBox(width: 12),
-              Text(
-                "Career Trajectory & Skill Gap",
-                style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Compare your current skills against your dream role.",
-            style: TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: 14),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: textColor.withValues(alpha: 0.05),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: textColor.withValues(alpha: 0.1)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Senior Product Designer", style: TextStyle(color: textColor, fontWeight: FontWeight.w500)),
-                Icon(Icons.keyboard_arrow_down, color: textColor.withValues(alpha: 0.5)),
-              ],
-            ),
+            child: Text(percentage, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(height: 32),
-          Center(
-            child: SizedBox(
-              height: 200,
-              width: 200,
-              child: CustomPaint(
-                painter: RadarChartPainter(primary: primary, textColor: textColor.withValues(alpha: 0.5)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Role Readiness", style: TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: 16, fontWeight: FontWeight.w500)),
-              Text("82%", style: TextStyle(color: primary, fontSize: 24, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: 0.82,
-              backgroundColor: primary.withValues(alpha: 0.1),
-              color: primary,
-              minHeight: 8,
-            ),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.orange, size: 20),
-              const SizedBox(width: 8),
-              Text("Priority Focus Areas", style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _skillProgress("Leadership", "+30% needed", 0.7, primary, textColor),
-          _skillProgress("Design Systems", "+25% needed", 0.75, primary, textColor),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: primary.withValues(alpha: 0.3)),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text("View Recommended Courses", style: TextStyle(color: primary, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _skillProgress(String label, String needed, double progress, Color primary, Color textColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.w500)),
-              Text(needed, style: TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: 12)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: textColor.withValues(alpha: 0.05),
-              color: primary,
-              minHeight: 6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEngagementCard(Color primary, Color textColor, Color cardBg) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Engagement Overview",
-            style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 150,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: LineChartPainter(primary: primary, accent: Colors.tealAccent, textColor: textColor.withValues(alpha: 0.2)),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _legendItem("Likes", primary, textColor),
-              _legendItem("Comments", Colors.tealAccent, textColor),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFunnelCard(Color primary, Color textColor, Color cardBg) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Recruiter Funnel",
-            style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-          _funnelStep("Appearances", "15,750", 1.0, primary, textColor),
-          _funnelStep("Profile Clicks", "4,340", 0.7, Colors.tealAccent, textColor),
-          _funnelStep("Applications", "630", 0.4, Colors.orangeAccent, textColor),
-        ],
-      ),
-    );
-  }
-
-  Widget _funnelStep(String label, String value, double widthFactor, Color color, Color textColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(label, style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 14)),
-          ),
-          Expanded(
-            flex: 7,
-            child: Row(
-              children: [
-                Container(
-                  height: 12,
-                  width: 150 * widthFactor,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(value, style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDemographicsCard(Color primary, Color textColor, Color cardBg) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Audience Demographics",
-            style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              SizedBox(
-                height: 120,
-                width: 120,
-                child: CustomPaint(
-                  painter: DonutChartPainter(primary: primary, textColor: textColor.withValues(alpha: 0.2)),
-                ),
-              ),
-              const SizedBox(width: 32),
-              Expanded(
-                child: Column(
-                  children: [
-                    _legendItem("Tech", primary, textColor),
-                    _legendItem("Finance", Colors.tealAccent, textColor),
-                    _legendItem("Healthcare", Colors.orangeAccent, textColor),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _legendItem(String label, Color color, Color textColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 8),
-          Text(label, style: TextStyle(color: textColor.withValues(alpha: 0.5), fontSize: 12)),
         ],
       ),
     );
@@ -476,84 +495,176 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 }
 
 class RadarChartPainter extends CustomPainter {
-  final Color primary;
-  final Color textColor;
-  RadarChartPainter({required this.primary, required this.textColor});
+  final List<String> skills;
+  final List<double> targetValues;
+  final List<double> youValues;
+
+  RadarChartPainter({
+    required this.skills,
+    required this.targetValues,
+    required this.youValues,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    final paintGrid = Paint()..color = textColor.withValues(alpha: 0.1)..style = PaintingStyle.stroke;
-    for (var i = 1; i <= 5; i++) {
-      canvas.drawCircle(center, radius * (i / 5), paintGrid);
+    final radius = size.width / 2 * 0.8;
+    
+    final gridPaint = Paint()
+      ..color = const Color(0xFFE5E7EB)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    // Draw web
+    for (var i = 1; i <= 4; i++) {
+      final r = radius * (i / 4);
+      final path = Path();
+      for (var j = 0; j < 6; j++) {
+        final angle = (j * 60) * math.pi / 180;
+        final x = center.dx + r * math.cos(angle);
+        final y = center.dy + r * math.sin(angle);
+        if (j == 0) path.moveTo(x, y); else path.lineTo(x, y);
+      }
+      path.close();
+      canvas.drawPath(path, gridPaint);
     }
-    final paintFill = Paint()..color = primary.withValues(alpha: 0.2)..style = PaintingStyle.fill;
-    final paintBorder = Paint()..color = primary..style = PaintingStyle.stroke..strokeWidth = 2;
-    final path = Path();
-    path.moveTo(center.dx, center.dy - radius * 0.8);
-    path.lineTo(center.dx + radius * 0.7, center.dy - radius * 0.3);
-    path.lineTo(center.dx + radius * 0.6, center.dy + radius * 0.5);
-    path.lineTo(center.dx, center.dy + radius * 0.9);
-    path.lineTo(center.dx - radius * 0.7, center.dy + radius * 0.4);
-    path.lineTo(center.dx - radius * 0.6, center.dy - radius * 0.4);
-    path.close();
-    canvas.drawPath(path, paintFill);
-    canvas.drawPath(path, paintBorder);
+
+    // Draw axes
+    for (var i = 0; i < 6; i++) {
+      final angle = (i * 60) * math.pi / 180;
+      canvas.drawLine(center, Offset(center.dx + radius * math.cos(angle), center.dy + radius * math.sin(angle)), gridPaint);
+    }
+
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    
+    for (var i = 0; i < 6; i++) {
+      final angle = (i * 60 - 90) * math.pi / 180;
+      final x = center.dx + (radius + 25) * math.cos(angle);
+      final y = center.dy + (radius + 20) * math.sin(angle);
+      
+      textPainter.text = TextSpan(text: skills[i], style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 10));
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
+    }
+
+    // Target Area (Green dashed)
+    final targetPaint = Paint()
+      ..color = const Color(0xFF10B981)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final targetPath = Path();
+    for (var i = 0; i < 6; i++) {
+      final angle = (i * 60 - 90) * math.pi / 180;
+      final r = radius * targetValues[i];
+      final x = center.dx + r * math.cos(angle);
+      final y = center.dy + r * math.sin(angle);
+      if (i == 0) targetPath.moveTo(x, y); else targetPath.lineTo(x, y);
+    }
+    targetPath.close();
+    canvas.drawPath(targetPath, targetPaint);
+
+    // You Area (Blue filled)
+    final youPaint = Paint()
+      ..color = const Color(0xFF6366F1).withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+    final youBorderPaint = Paint()
+      ..color = const Color(0xFF6366F1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+      
+    final youPath = Path();
+    for (var i = 0; i < 6; i++) {
+      final angle = (i * 60 - 90) * math.pi / 180;
+      final r = radius * youValues[i];
+      final x = center.dx + r * math.cos(angle);
+      final y = center.dy + r * math.sin(angle);
+      if (i == 0) youPath.moveTo(x, y); else youPath.lineTo(x, y);
+    }
+    youPath.close();
+    canvas.drawPath(youPath, youPaint);
+    canvas.drawPath(youPath, youBorderPaint);
+    
+    // Legend
+    final legendX = size.width - 60;
+    canvas.drawCircle(Offset(legendX, 20), 4, Paint()..color = const Color(0xFF6366F1).withValues(alpha: 0.5));
+    textPainter.text = const TextSpan(text: "You", style: TextStyle(color: Color(0xFF6B7280), fontSize: 10));
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(legendX + 10, 14));
+    
+    canvas.drawCircle(Offset(legendX, 40), 4, Paint()..color = const Color(0xFF10B981)..style = PaintingStyle.stroke..strokeWidth = 2);
+    textPainter.text = const TextSpan(text: "Target", style: TextStyle(color: Color(0xFF6B7280), fontSize: 10));
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(legendX + 10, 34));
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant RadarChartPainter oldDelegate) {
+    return oldDelegate.selectedRole != selectedRole;
+  }
+}
+
+extension on RadarChartPainter {
+  get selectedRole => null;
 }
 
 class LineChartPainter extends CustomPainter {
-  final Color primary;
-  final Color accent;
-  final Color textColor;
-  LineChartPainter({required this.primary, required this.accent, required this.textColor});
-
   @override
   void paint(Canvas canvas, Size size) {
-    final paintGrid = Paint()..color = textColor..style = PaintingStyle.stroke;
-    for (var i = 0; i < 5; i++) {
-      double y = size.height - (size.height / 4 * i);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paintGrid);
+    final gridPaint = Paint()..color = Colors.white.withValues(alpha: 0.05)..strokeWidth = 1;
+    for (var i = 0; i <= 4; i++) {
+      final y = size.height - (size.height / 4 * i);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      
+      final textPainter = TextPainter(
+        text: TextSpan(text: "${50 * i}", style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(-25, y - 5));
     }
-    final p1 = Path();
-    p1.moveTo(0, size.height * 0.6);
-    p1.quadraticBezierTo(size.width * 0.2, size.height * 0.7, size.width * 0.4, size.height * 0.4);
-    p1.quadraticBezierTo(size.width * 0.6, size.height * 0.2, size.width * 0.8, size.height * 0.5);
-    p1.lineTo(size.width, size.height * 0.3);
-    final paint1 = Paint()..color = primary..style = PaintingStyle.stroke..strokeWidth = 3;
-    canvas.drawPath(p1, paint1);
-    final p2 = Path();
-    p2.moveTo(0, size.height * 0.9);
-    p2.lineTo(size.width * 0.3, size.height * 0.85);
-    p2.lineTo(size.width * 0.6, size.height * 0.88);
-    p2.lineTo(size.width, size.height * 0.8);
-    final paint2 = Paint()..color = accent..style = PaintingStyle.stroke..strokeWidth = 3;
-    canvas.drawPath(p2, paint2);
-  }
+    
+    final dates = ["Dec 8", "Dec 16", "Dec 24", "Jan 1"];
+    for (var i = 0; i < dates.length; i++) {
+      final x = (size.width / (dates.length - 1)) * i;
+      final textPainter = TextPainter(
+        text: TextSpan(text: dates[i], style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(x - textPainter.width / 2, size.height + 10));
+    }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+    // Profile Views Path (Blue)
+    final bluePath = Path();
+    final bluePoints = [0.5, 0.65, 0.6, 0.75, 0.72, 0.6, 0.8, 0.65, 0.9, 0.75, 0.85, 0.78, 0.88, 0.92];
+    for (var i = 0; i < bluePoints.length; i++) {
+      final x = (size.width / (bluePoints.length - 1)) * i;
+      final y = size.height * (1 - bluePoints[i]);
+      if (i == 0) bluePath.moveTo(x, y); else bluePath.lineTo(x, y);
+    }
+    
+    final blueFillPath = Path.from(bluePath);
+    blueFillPath.lineTo(size.width, size.height);
+    blueFillPath.lineTo(0, size.height);
+    blueFillPath.close();
+    
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [const Color(0xFF6366F1).withValues(alpha: 0.3), const Color(0xFF6366F1).withValues(alpha: 0.0)],
+    ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    
+    canvas.drawPath(blueFillPath, Paint()..shader = gradient);
+    canvas.drawPath(bluePath, Paint()..color = const Color(0xFF6366F1)..style = PaintingStyle.stroke..strokeWidth = 2);
 
-class DonutChartPainter extends CustomPainter {
-  final Color primary;
-  final Color textColor;
-  DonutChartPainter({required this.primary, required this.textColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 12;
-    paint.color = primary;
-    canvas.drawArc(rect, -1.5, 2.5, false, paint);
-    paint.color = Colors.tealAccent;
-    canvas.drawArc(rect, 1.1, 1.8, false, paint);
-    paint.color = Colors.orangeAccent;
-    canvas.drawArc(rect, 3.0, 0.8, false, paint);
+    // Interactions Path (Green)
+    final greenPath = Path();
+    final greenPoints = [0.1, 0.12, 0.11, 0.13, 0.12, 0.14, 0.12, 0.15, 0.13, 0.16, 0.14, 0.15, 0.16, 0.17];
+    for (var i = 0; i < greenPoints.length; i++) {
+      final x = (size.width / (greenPoints.length - 1)) * i;
+      final y = size.height * (1 - greenPoints[i]);
+      if (i == 0) greenPath.moveTo(x, y); else greenPath.lineTo(x, y);
+    }
+    
+    canvas.drawPath(greenPath, Paint()..color = const Color(0xFF10B981)..style = PaintingStyle.stroke..strokeWidth = 2);
   }
 
   @override
