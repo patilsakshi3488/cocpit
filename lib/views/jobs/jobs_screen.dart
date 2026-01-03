@@ -192,9 +192,9 @@ class _JobsScreenState extends State<JobsScreen> {
           child: Row(
             children: [
               CircleAvatar(
-                radius: 14,
+                radius: 12,
                 backgroundColor: theme.primaryColor,
-                child: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 16),
+                child: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 14),
               ),
               const SizedBox(width: 16),
               Expanded(

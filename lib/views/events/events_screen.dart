@@ -313,7 +313,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
             });
           }
         },
-        icon: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 16),
+        icon: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 14),
         label: Text('Create Event', style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,

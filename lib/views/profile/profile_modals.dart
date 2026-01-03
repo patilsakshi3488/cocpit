@@ -759,9 +759,12 @@ class _SkillsModalState extends State<SkillsModal> {
   }
 
   void _addSkill() {
-    if (_skillController.text.trim().isNotEmpty) {
+    final text = _skillController.text.trim();
+    if (text.isNotEmpty) {
       setState(() {
-        _currentSkills.add(_skillController.text.trim());
+        if (!_currentSkills.contains(text)) {
+          _currentSkills.add(text);
+        }
         _skillController.clear();
       });
     }
@@ -792,7 +795,7 @@ class _SkillsModalState extends State<SkillsModal> {
               ),
               IconButton(
                 icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color),
-                onPressed: () => Navigator.pop(context, widget.initialSkills),
+                onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
@@ -855,7 +858,13 @@ class _SkillsModalState extends State<SkillsModal> {
           ),
           const SizedBox(height: 48),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, _currentSkills),
+            onPressed: () {
+              final text = _skillController.text.trim();
+              if (text.isNotEmpty && !_currentSkills.contains(text)) {
+                _currentSkills.add(text);
+              }
+              Navigator.pop(context, List<String>.from(_currentSkills));
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.primaryColor,
               foregroundColor: colorScheme.onPrimary,

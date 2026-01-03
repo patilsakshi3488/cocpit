@@ -3,6 +3,8 @@ import 'edit_profile_screen.dart';
 import '../bottom_navigation.dart';
 import 'settings_screen/settings_screen.dart';
 import 'analytics/analytics_dashboard_screen.dart';
+import '../../services/secure_storage.dart';
+import '../login/signin_screen.dart';
 
 import 'profile_models.dart';
 import 'profile_header.dart';
@@ -278,6 +280,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _logout() async {
+    await SecureStorage.clearAll(); // ✅ correct method
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const SignInScreen()),
+          (route) => false,
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -383,9 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const AnalyticsDashboardScreen()));
             }),
-            _buildDrawerItem(theme, Icons.logout, "Log out", () {
-              Navigator.pop(context);
-            }),
+            _buildDrawerItem(theme, Icons.logout, "Log out", _logout),
           ],
         ),
       ),

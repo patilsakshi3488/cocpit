@@ -7,12 +7,12 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    await Future.delayed(const Duration(seconds: 1)); // simulate network
+    await Future.delayed(const Duration(seconds: 1));
 
-    // save dummy token
-    await SecureStorage.saveToken("TEMP_TOKEN");
+    await SecureStorage.saveAccessToken("TEMP_ACCESS_TOKEN");
+    await SecureStorage.saveRefreshToken("TEMP_REFRESH_TOKEN");
 
-    return true; // always success
+    return true;
   }
 
   /// TEMP SIGNUP (MOCK)
@@ -20,17 +20,17 @@ class AuthService {
     required String fullName,
     required String email,
     required String password,
-    required String accountType,
   }) async {
     await Future.delayed(const Duration(seconds: 1));
 
-    await SecureStorage.saveToken("TEMP_TOKEN");
+    await SecureStorage.saveAccessToken("TEMP_ACCESS_TOKEN");
+    await SecureStorage.saveRefreshToken("TEMP_REFRESH_TOKEN");
 
     return true;
   }
 
   /// LOGOUT
   Future<void> logout() async {
-    await SecureStorage.deleteToken();
+    await SecureStorage.clearAll();
   }
 }
