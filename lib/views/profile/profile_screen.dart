@@ -4,6 +4,7 @@ import '../bottom_navigation.dart';
 import 'settings_screen/settings_screen.dart';
 import 'analytics/analytics_dashboard_screen.dart';
 import '../../services/secure_storage.dart';
+import '../../services/auth_service.dart';
 import '../login/signin_screen.dart';
 
 import 'profile_models.dart';
@@ -29,6 +30,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  final AuthService authService = AuthService();
 
   // Profile Data
   String name = "Sally Liang";
@@ -281,12 +284,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout() async {
-    await SecureStorage.clearAll(); // ✅ correct method
+    try {
+      await authService.logout();
+    } catch (_) {
+      // Even if API fails, still logout locally
+      await AppSecureStorage.clearAll();
+    }
+
     if (!mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const SignInScreen()),
-          (route) => false,
+      (_) => false,
     );
   }
 

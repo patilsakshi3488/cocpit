@@ -55,7 +55,7 @@ class _RootDecider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-      future: SecureStorage.getAccessToken(),
+      future: AppSecureStorage.getAccessToken(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
