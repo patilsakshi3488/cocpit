@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../config/api_config.dart';
-
-
+import '../../services/auth_service.dart';
 import 'signin_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -17,6 +13,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final nameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
+  
+  final authService = AuthService();
 
   String selectedRole = 'Select your role';
 
@@ -31,6 +29,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool isLoading = false;
   bool isPasswordVisible = false;
+
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    emailCtrl.dispose();
+    passCtrl.dispose();
+    super.dispose();
+  }
 
   String _mapAccountType(String role) {
     if (role.toLowerCase() == 'employer') {
@@ -55,26 +61,16 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       setState(() => isLoading = true);
 
-      final url = Uri.parse("ApiConfig.register");
-
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "fullName": nameCtrl.text.trim(),
-          "email": emailCtrl.text.trim().toLowerCase(),
-          "password": passCtrl.text.trim(),
-          "accountType": _mapAccountType(selectedRole),
-        }),
+      final success = await authService.register(
+        fullName: nameCtrl.text.trim(),
+        email: emailCtrl.text.trim().toLowerCase(),
+        password: passCtrl.text.trim(),
+        accountType: _mapAccountType(selectedRole),
       );
 
-      // 🔹 Debugging: Print response status + body
-      debugPrint("SIGNUP STATUS: ${response.statusCode}");
-      debugPrint("SIGNUP BODY: ${response.body}");
+      if (mounted) setState(() => isLoading = false);
 
-      final body = response.body.isNotEmpty ? jsonDecode(response.body) : null;
-
-      if (response.statusCode == 201) {
+      if (success) {
         _showMsg("Account created successfully. Please login.");
 
         if (!mounted) return;
@@ -86,12 +82,11 @@ class _SignupScreenState extends State<SignupScreen> {
         return;
       }
 
-      _showMsg(body?['message'] ?? "Signup failed");
+      _showMsg("Signup failed");
     } catch (e) {
       debugPrint("Signup error: $e");
-      _showMsg("Server error. Please try again later.");
-    } finally {
       if (mounted) setState(() => isLoading = false);
+      _showMsg("Server error. Please try again later.");
     }
   }
 

@@ -5,6 +5,7 @@ import 'settings_screen/settings_screen.dart';
 import 'analytics/analytics_dashboard_screen.dart';
 import '../../services/secure_storage.dart';
 import '../../services/auth_service.dart';
+import '../../services/profile_service.dart';
 import '../login/signin_screen.dart';
 
 import 'profile_models.dart';
@@ -32,8 +33,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final AuthService authService = AuthService();
+  final ProfileService profileService = ProfileService();
 
-  // Profile Data
+  Map<String, dynamic>? profile;
+  bool isLoading = true;
+
+  // Profile Data State
   String name = "Sally Liang";
   String headline = "Senior Financial Analyst at Johnson & Johnson";
   String jobTitle = "Senior Financial Analyst";
@@ -49,40 +54,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String profileImage = 'lib/images/profile.jpg';
   String? coverImage;
 
-  List<Experience> experiences = [
-    Experience(
-      title: "Senior Product Manager",
-      company: "TechCorp Inc.",
-      startDate: "01-01-2021",
-      endDate: "",
-      currentlyWorking: true,
-      location: "San Francisco, CA",
-      description: "Leading product strategy and roadmap for core platform features. Managing cross-functional teams and driving product vision.",
-    ),
-    Experience(
-      title: "Product Manager",
-      company: "StartupXYZ",
-      startDate: "01-01-2018",
-      endDate: "31-12-2021",
-      currentlyWorking: false,
-      location: "San Francisco, CA",
-      description: "Launched 10+ features from concept to market. Collaborated with engineering and design teams to deliver user-centric solutions.",
-    ),
-  ];
-
-  List<Education> educations = [
-    Education(
-      school: "Stanford University",
-      degree: "MBA",
-      fieldOfStudy: "Business Administration",
-      startYear: "2016",
-      endYear: "2018",
-      currentlyStudying: false,
-      description: "Focus on Product Management and Entrepreneurship",
-    ),
-  ];
-
-  List<String> skills = ["Product Management", "Financial Analysis", "Agile Development", "User Research", "Data Strategy"];
+  List<Experience> experiences = [];
+  List<Education> educations = [];
+  List<String> skills = [];
 
   final List<UserPost> posts = [
     UserPost(
@@ -92,24 +66,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       likes: 1200,
       comments: 15,
       shares: 8,
-      category: "Professional",
-    ),
-    UserPost(
-      title: "Great session on Product Strategy today.",
-      content: "Great session on Product Strategy today. Always learning! 📚",
-      date: "3d ago",
-      likes: 850,
-      comments: 12,
-      shares: 3,
-      category: "Personal",
-    ),
-    UserPost(
-      title: "Honored to be recognized as Top Contributor of the Month!",
-      content: "Honored to be recognized as Top Contributor of the Month! 🏆 Thanks to my amazing team.",
-      date: "1w ago",
-      likes: 2100,
-      comments: 45,
-      shares: 12,
       category: "Professional",
     ),
   ];
@@ -122,23 +78,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'profile': 'lib/images/profile3.jpg',
       'isVerified': true,
     },
-    {
-      'name': 'Michael Jordan',
-      'role': 'Software Engineer',
-      'followers': '1.8k',
-      'profile': 'lib/images/profile2.jpg',
-      'isVerified': false,
-    },
-    {
-      'name': 'Alex Johnson',
-      'role': 'Product Manager',
-      'followers': '3.5k',
-      'profile': 'lib/images/profile4.jpg',
-      'isVerified': true,
-    },
   ];
 
   bool isOverviewSelected = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final data = await profileService.getMyProfile();
+
+      if (data != null) {
+        setState(() {
+          profile = data;
+          
+          final user = data['user'];
+          if (user != null) {
+            name = user['full_name'] ?? name;
+            headline = user['headline'] ?? headline;
+            location = user['location'] ?? location;
+            profileImage = user['avatar_url'] ?? profileImage;
+            about = user['about_text'] ?? about;
+          }
+          
+          // data level fallbacks
+          about = data['about'] ?? about;
+          openTo = data['openTo'] ?? openTo;
+          availability = data['availability'] ?? availability;
+          preference = data['preference'] ?? preference;
+          
+          if (data['skills'] != null) {
+            skills = (data['skills'] as List)
+                .map((s) => s is String ? s : s['name'].toString())
+                .toList();
+          }
+
+          if (data['experiences'] != null) {
+            experiences = (data['experiences'] as List)
+                .map((e) => Experience.fromJson(e))
+                .toList();
+          }
+
+          if (data['educations'] != null) {
+            educations = (data['educations'] as List)
+                .map((e) => Education.fromJson(e))
+                .toList();
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Profile load error: $e");
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   void _handleProfilePhotoActions() {
     PhotoActionHelper.showPhotoActions(
@@ -146,13 +143,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: "Profile Photo",
       imagePath: profileImage,
       heroTag: 'profile_hero',
-      onUpdate: () {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile photo update coming soon")));
-      },
-      onDelete: () {
-        setState(() => profileImage = '');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile photo deleted")));
-      },
+      onUpdate: () {},
+      onDelete: () => setState(() => profileImage = ''),
     );
   }
 
@@ -162,13 +154,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: "Cover Photo",
       imagePath: coverImage,
       heroTag: 'cover_hero',
-      onUpdate: () {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cover photo update coming soon")));
-      },
-      onDelete: () {
-        setState(() => coverImage = null);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cover photo deleted")));
-      },
+      onUpdate: () {},
+      onDelete: () => setState(() => coverImage = null),
     );
   }
 
@@ -287,7 +274,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await authService.logout();
     } catch (_) {
-      // Even if API fails, still logout locally
       await AppSecureStorage.clearAll();
     }
 
@@ -300,10 +286,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -314,6 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ProfileHeader(
+              user: profile!['user'], // 🔥 BACKEND USER
               profileImage: profileImage,
               coverImage: coverImage,
               onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
@@ -346,11 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   builder: (context) => const UploadResumeModal(),
                 );
               },
-              onDownloadPDF: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Resume download will be available soon.")),
-                );
-              },
+              onDownloadPDF: () {},
             ),
             _buildDivider(theme),
             ProfileAboutSection(about: about),
@@ -392,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildMenuDrawer(ThemeData theme) {
     return Drawer(
       width: 200,
-      backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.95),
+      backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

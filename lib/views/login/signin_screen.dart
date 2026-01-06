@@ -35,7 +35,6 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
-    FocusScope.of(context).unfocus();
     setState(() => isLoading = true);
 
     try {
@@ -44,16 +43,25 @@ class _SignInScreenState extends State<SignInScreen> {
         password: passCtrl.text,
       );
 
-      if (success) {
-        if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (_) => false,
-        );
-      } else {
+      if (!success) {
         _showSnack("Invalid email or password");
+        return;
       }
+
+      // 🔥 VERIFY SESSION FROM BACKEND
+      final me = await authService.getMe();
+
+      if (me == null) {
+        _showSnack("Session error. Please login again.");
+        return;
+      }
+
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (_) => false,
+      );
     } catch (e) {
       _showSnack("Server error. Try again.");
     } finally {

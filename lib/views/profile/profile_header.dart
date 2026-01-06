@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../fullscreen_image.dart';
 
 class ProfileHeader extends StatelessWidget {
+  final Map<String, dynamic>? user;
+
   final String profileImage;
   final String? coverImage;
   final VoidCallback onMenuPressed;
@@ -11,6 +13,7 @@ class ProfileHeader extends StatelessWidget {
 
   const ProfileHeader({
     super.key,
+    this.user,
     required this.profileImage,
     this.coverImage,
     required this.onMenuPressed,
@@ -19,23 +22,44 @@ class ProfileHeader extends StatelessWidget {
     required this.backgroundColor,
   });
 
+  bool _isNetworkImage(String path) {
+    return path.startsWith('http');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final String resolvedProfileImage =
+    user?['avatar_url']?.toString().isNotEmpty == true
+        ? user!['avatar_url']
+        : profileImage;
+
+    final String? resolvedCoverImage =
+    user?['cover_url']?.toString().isNotEmpty == true
+        ? user!['cover_url']
+        : coverImage;
+
+    ImageProvider? _imageProvider(String path) {
+      if (path.isEmpty) return null;
+      return _isNetworkImage(path)
+          ? NetworkImage(path)
+          : AssetImage(path) as ImageProvider;
+    }
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Cover Photo / Header Background
+        // ================= COVER PHOTO =================
         GestureDetector(
           onTap: () {
-            if (coverImage != null && coverImage!.isNotEmpty) {
+            if (resolvedCoverImage != null && resolvedCoverImage.isNotEmpty) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => FullScreenImage(
-                    imagePath: coverImage!,
+                    imagePath: resolvedCoverImage!,
                     tag: 'cover_hero',
                   ),
                 ),
@@ -47,15 +71,20 @@ class ProfileHeader extends StatelessWidget {
             child: Container(
               height: 160,
               decoration: BoxDecoration(
-                gradient: coverImage == null || coverImage!.isEmpty
+                gradient: resolvedCoverImage == null || resolvedCoverImage.isEmpty
                     ? LinearGradient(
-                        colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
+                  colors: [
+                    theme.primaryColor,
+                    theme.primaryColor.withValues(alpha: 0.7),
+                  ],
+                )
                     : null,
-                image: coverImage != null && coverImage!.isNotEmpty
-                    ? DecorationImage(image: AssetImage(coverImage!), fit: BoxFit.cover)
+                image: resolvedCoverImage != null &&
+                    resolvedCoverImage.isNotEmpty
+                    ? DecorationImage(
+                  image: _imageProvider(resolvedCoverImage)!,
+                  fit: BoxFit.cover,
+                )
                     : null,
               ),
               child: SafeArea(
@@ -66,17 +95,15 @@ class ProfileHeader extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Cover Camera Icon
                         IconButton(
-                          icon: Icon(Icons.camera_alt_outlined, color: colorScheme.onPrimary, size: 28),
+                          icon: Icon(Icons.camera_alt_outlined,
+                              color: colorScheme.onPrimary),
                           onPressed: onCoverCameraPressed,
-                          tooltip: 'Edit Cover Photo',
                         ),
-                        // Menu Icon
                         IconButton(
-                          icon: Icon(Icons.menu, color: colorScheme.onPrimary, size: 32),
+                          icon: Icon(Icons.menu,
+                              color: colorScheme.onPrimary),
                           onPressed: onMenuPressed,
-                          tooltip: 'Open Menu',
                         ),
                       ],
                     ),
@@ -86,21 +113,21 @@ class ProfileHeader extends StatelessWidget {
             ),
           ),
         ),
-        // Profile Photo
+
+        // ================= PROFILE PHOTO =================
         Positioned(
           bottom: -50,
           left: 20,
           child: Stack(
-            clipBehavior: Clip.none,
             children: [
               GestureDetector(
                 onTap: () {
-                  if (profileImage.isNotEmpty) {
+                  if (resolvedProfileImage.isNotEmpty) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => FullScreenImage(
-                          imagePath: profileImage,
+                          imagePath: resolvedProfileImage,
                           tag: 'profile_hero',
                         ),
                       ),
@@ -111,12 +138,22 @@ class ProfileHeader extends StatelessWidget {
                   tag: 'profile_hero',
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      shape: BoxShape.circle,
+                    ),
                     child: CircleAvatar(
                       radius: 65,
-                      backgroundImage: profileImage.isNotEmpty ? AssetImage(profileImage) : null,
-                      backgroundColor: colorScheme.surfaceContainer,
-                      child: profileImage.isEmpty ? Icon(Icons.person, color: colorScheme.onSurface.withValues(alpha: 0.5), size: 60) : null,
+                      backgroundImage:
+                      _imageProvider(resolvedProfileImage),
+                      backgroundColor:
+                      colorScheme.surfaceContainerHighest,
+                      child: resolvedProfileImage.isEmpty
+                          ? Icon(Icons.person,
+                          size: 60,
+                          color: colorScheme.onSurface
+                              .withValues(alpha: 0.5))
+                          : null,
                     ),
                   ),
                 ),
@@ -130,11 +167,18 @@ class ProfileHeader extends StatelessWidget {
                     height: 44,
                     width: 44,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.8)]),
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.primaryColor,
+                          theme.primaryColor.withValues(alpha: 0.8),
+                        ],
+                      ),
                       shape: BoxShape.circle,
-                      border: Border.all(color: backgroundColor, width: 3),
+                      border:
+                      Border.all(color: backgroundColor, width: 3),
                     ),
-                    child: Icon(Icons.camera_alt_outlined, color: colorScheme.onPrimary, size: 22),
+                    child: Icon(Icons.camera_alt_outlined,
+                        color: colorScheme.onPrimary),
                   ),
                 ),
               ),

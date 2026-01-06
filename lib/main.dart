@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'services/theme_service.dart';
+import 'services/auth_service.dart';
 import 'services/secure_storage.dart';
 
 import 'views/feed/home_screen.dart';
@@ -33,7 +34,10 @@ class MyApp extends StatelessWidget {
             darkTheme: themeService.currentTheme == AppTheme.navy
                 ? themeService.navyTheme
                 : themeService.darkTheme,
-            home: const _RootDecider(),
+
+            // 🔥 IMPORTANT CHANGE
+            home: const AuthGate(),
+
             routes: {
               '/feed': (_) => const HomeScreen(),
               '/jobs': (_) => const JobsScreen(),
@@ -49,28 +53,74 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class _RootDecider extends StatelessWidget {
-  const _RootDecider();
+/// =======================================================
+/// 🔐 AUTH GATE – REAL AUTO LOGIN (MATCHES WEBSITE)
+/// =======================================================
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
+  }
+
+  Future<void> _checkAuthentication() async {
+    // 1️⃣ Check access token
+    final accessToken = await AppSecureStorage.getAccessToken();
+
+    if (accessToken == null || accessToken.isEmpty) {
+      _goToLogin();
+      return;
+    }
+
+    // 2️⃣ Validate session using /auth/me
+    final me = await _authService.getMe();
+
+    if (me != null) {
+      _goToHome();
+      return;
+    }
+
+    // 3️⃣ Try refresh token
+    final refreshed = await _authService.refreshAccessToken();
+
+    if (refreshed != null) {
+      _goToHome();
+    } else {
+      _goToLogin();
+    }
+  }
+
+  void _goToHome() {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
+  }
+
+  void _goToLogin() {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const SignInScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: AppSecureStorage.getAccessToken(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final token = snapshot.data;
-
-        if (token != null && token.isNotEmpty) {
-          return const HomeScreen();
-        } else {
-          return const SignInScreen();
-        }
-      },
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
