@@ -91,45 +91,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadProfile() async {
     try {
       final data = await profileService.getMyProfile();
+      if (data == null) return;
 
-      if (data != null) {
-        setState(() {
-          profile = data;
-          
-          final user = data['user'];
-          if (user != null) {
-            name = user['full_name'] ?? name;
-            headline = user['headline'] ?? headline;
-            location = user['location'] ?? location;
-            profileImage = user['avatar_url'] ?? profileImage;
-            about = user['about_text'] ?? about;
-          }
-          
-          // data level fallbacks
-          about = data['about'] ?? about;
-          openTo = data['openTo'] ?? openTo;
-          availability = data['availability'] ?? availability;
-          preference = data['preference'] ?? preference;
-          
-          if (data['skills'] != null) {
-            skills = (data['skills'] as List)
-                .map((s) => s is String ? s : s['name'].toString())
-                .toList();
-          }
+      setState(() {
+        profile = data;
 
-          if (data['experiences'] != null) {
-            experiences = (data['experiences'] as List)
-                .map((e) => Experience.fromJson(e))
-                .toList();
-          }
+        final user = data['user'];
 
-          if (data['educations'] != null) {
-            educations = (data['educations'] as List)
-                .map((e) => Education.fromJson(e))
-                .toList();
-          }
-        });
-      }
+        // 🔥 HEADER DATA (FROM DB)
+        name = user['full_name'] ?? '';
+        headline = user['headline'] ?? '';
+        location = user['location'] ?? '';
+        about = user['about_text'] ?? '';
+
+        profileImage = user['avatar_url'] ?? profileImage;
+
+        // 🔥 PROFILE META
+        openTo = user['open_to'] ?? '';
+        availability = user['availability'] ?? '';
+        preference = user['work_preference'] ?? '';
+
+        // 🔥 EXPERIENCES
+        experiences = (data['experiences'] as List)
+            .map((e) => Experience.fromJson(e))
+            .toList();
+
+        // 🔥 EDUCATIONS
+        educations = (data['educations'] as List)
+            .map((e) => Education.fromJson(e))
+            .toList();
+
+        // 🔥 SKILLS
+        skills = (data['skills'] as List)
+            .map((s) => s['name'].toString())
+            .toList();
+      });
     } catch (e) {
       debugPrint("❌ Profile load error: $e");
     } finally {
@@ -214,45 +210,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showExperienceModal({Experience? experience, int? index}) async {
-    final result = await showModalBottomSheet<Experience?>(
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ExperienceModal(experience: experience),
     );
 
-    setState(() {
-      if (index != null) {
-        if (result == null) {
-          experiences.removeAt(index);
-        } else {
-          experiences[index] = result;
-        }
-      } else if (result != null) {
-        experiences.add(result);
-      }
-    });
+    if (result == true) {
+      await _loadProfile();
+    }
   }
 
   void _showEducationModal({Education? education, int? index}) async {
-    final result = await showModalBottomSheet<Education?>(
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => EducationModal(education: education),
     );
 
-    setState(() {
-      if (index != null) {
-        if (result == null) {
-          educations.removeAt(index);
-        } else {
-          educations[index] = result;
-        }
-      } else if (result != null) {
-        educations.add(result);
-      }
-    });
+    if (result == true) {
+      await _loadProfile();
+    }
   }
 
   void _showSkillsModal() async {

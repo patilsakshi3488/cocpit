@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'profile_models.dart';
+import '../../services/profile_service.dart';
 
 class EditIdentityModal extends StatefulWidget {
   final String initialOpenTo;
@@ -227,6 +228,7 @@ class ExperienceModal extends StatefulWidget {
 }
 
 class _ExperienceModalState extends State<ExperienceModal> {
+  final ProfileService profileService = ProfileService();
   late TextEditingController _titleController;
   late TextEditingController _companyController;
   late TextEditingController _startDateController;
@@ -234,6 +236,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
   late TextEditingController _locationController;
   late TextEditingController _descriptionController;
   late bool _currentlyWorking;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -258,6 +261,58 @@ class _ExperienceModalState extends State<ExperienceModal> {
     super.dispose();
   }
 
+  Future<void> _handleSave() async {
+    setState(() => _isLoading = true);
+    try {
+      bool success;
+      if (widget.experience != null) {
+        success = await profileService.updateExperience(
+          id: widget.experience!.id!, // 🔥 Added ! because id is nullable in model but guaranteed here
+          title: _titleController.text,
+          company: _companyController.text,
+          location: _locationController.text,
+          startDate: _startDateController.text,
+          endDate: _endDateController.text,
+          isCurrent: _currentlyWorking,
+          description: _descriptionController.text,
+        );
+      } else {
+        success = await profileService.addExperience(
+          title: _titleController.text,
+          company: _companyController.text,
+          location: _locationController.text,
+          startDate: _startDateController.text,
+          endDate: _endDateController.text,
+          currentlyWorking: _currentlyWorking,
+          description: _descriptionController.text,
+        );
+      }
+
+      if (success && mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      debugPrint("Error saving experience: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleDelete() async {
+    if (widget.experience == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final success = await profileService.deleteExperience(widget.experience!.id!); // 🔥 Added ! because id is nullable in model but guaranteed here
+      if (success && mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      debugPrint("Error deleting experience: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -265,7 +320,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
     bool isEdit = widget.experience != null;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 32),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -285,7 +340,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
                 ),
                 IconButton(
                   icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color),
-                  onPressed: () => Navigator.pop(context, widget.experience),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
@@ -340,69 +395,59 @@ class _ExperienceModalState extends State<ExperienceModal> {
             _buildLabel("Description"),
             _buildTextField(_descriptionController, "Describe your responsibilities...", maxLines: 4),
             const SizedBox(height: 32),
-            Row(
-              children: [
-                if (isEdit)
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              Row(
+                children: [
+                  if (isEdit)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ElevatedButton(
+                          onPressed: _handleDelete,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.error.withOpacity(0.1),
+                            foregroundColor: colorScheme.error,
+                            side: BorderSide(color: colorScheme.error.withOpacity(0.5)),
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Delete", style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: BorderSide(color: theme.dividerColor),
+                        ),
+                        child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context, null),
+                        onPressed: _handleSave,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.error.withValues(alpha: 0.1),
-                          foregroundColor: colorScheme.error,
-                          side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
+                          backgroundColor: theme.primaryColor,
+                          foregroundColor: colorScheme.onPrimary,
                           minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text("Delete", style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, widget.experience),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: BorderSide(color: theme.dividerColor),
-                      ),
-                      child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(
-                          context,
-                          Experience(
-                            title: _titleController.text,
-                            company: _companyController.text,
-                            startDate: _startDateController.text,
-                            endDate: _endDateController.text,
-                            currentlyWorking: _currentlyWorking,
-                            location: _locationController.text,
-                            description: _descriptionController.text,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        foregroundColor: colorScheme.onPrimary,
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),
@@ -427,7 +472,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
         hintText: hint,
         hintStyle: theme.textTheme.bodySmall,
         filled: true,
-        fillColor: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
+        fillColor: theme.colorScheme.surfaceContainer.withOpacity(0.5),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
         contentPadding: const EdgeInsets.all(16),
@@ -444,7 +489,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
       decoration: InputDecoration(
         suffixIcon: Icon(Icons.calendar_today, color: theme.textTheme.bodySmall?.color, size: 18),
         filled: true,
-        fillColor: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
+        fillColor: theme.colorScheme.surfaceContainer.withOpacity(0.5),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -476,23 +521,35 @@ class EducationModal extends StatefulWidget {
 }
 
 class _EducationModalState extends State<EducationModal> {
+  final ProfileService profileService = ProfileService();
+
   late TextEditingController _schoolController;
   late TextEditingController _degreeController;
   late TextEditingController _fieldController;
-  late TextEditingController _startYearController;
-  late TextEditingController _endYearController;
+  late TextEditingController _startDateController;
+  late TextEditingController _endDateController;
   late TextEditingController _descriptionController;
-  late bool _currentlyStudying;
+
+  bool _currentlyStudying = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _schoolController = TextEditingController(text: widget.education?.school ?? "");
-    _degreeController = TextEditingController(text: widget.education?.degree ?? "");
-    _fieldController = TextEditingController(text: widget.education?.fieldOfStudy ?? "");
-    _startYearController = TextEditingController(text: widget.education?.startYear ?? "Select year...");
-    _endYearController = TextEditingController(text: widget.education?.endYear ?? "Select year...");
-    _descriptionController = TextEditingController(text: widget.education?.description ?? "");
+
+    _schoolController =
+        TextEditingController(text: widget.education?.school ?? "");
+    _degreeController =
+        TextEditingController(text: widget.education?.degree ?? "");
+    _fieldController =
+        TextEditingController(text: widget.education?.fieldOfStudy ?? "");
+    _startDateController =
+        TextEditingController(text: widget.education?.startYear ?? "");
+    _endDateController =
+        TextEditingController(text: widget.education?.endYear ?? "");
+    _descriptionController =
+        TextEditingController(text: widget.education?.description ?? "");
+
     _currentlyStudying = widget.education?.currentlyStudying ?? false;
   }
 
@@ -501,64 +558,128 @@ class _EducationModalState extends State<EducationModal> {
     _schoolController.dispose();
     _degreeController.dispose();
     _fieldController.dispose();
-    _startYearController.dispose();
-    _endYearController.dispose();
+    _startDateController.dispose();
+    _endDateController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  // ================= SAVE =================
+  Future<void> _handleSave() async {
+    setState(() => _isLoading = true);
+
+    try {
+      bool success;
+
+      if (widget.education != null) {
+        // ✏️ UPDATE
+        success = await profileService.updateEducation(
+          id: widget.education!.id!,
+          school: _schoolController.text,
+          degree: _degreeController.text,
+          fieldOfStudy: _fieldController.text,
+          startDate: _startDateController.text,
+          endDate: _currentlyStudying ? null : _endDateController.text,
+          description: _descriptionController.text,
+        );
+      } else {
+        // ➕ ADD
+        success = await profileService.addEducation(
+          school: _schoolController.text,
+          degree: _degreeController.text,
+          fieldOfStudy: _fieldController.text,
+          startDate: _startDateController.text,
+          endDate: _currentlyStudying ? null : _endDateController.text,
+          description: _descriptionController.text,
+        );
+      }
+
+      if (success && mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      debugPrint("Education save error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ================= DELETE =================
+  Future<void> _handleDelete() async {
+    if (widget.education == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final success =
+      await profileService.deleteEducation(widget.education!.id!);
+      if (success && mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      debugPrint("Education delete error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    bool isEdit = widget.education != null;
+    final isEdit = widget.education != null;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        16,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 32,
+      ),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: SingleChildScrollView(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// HEADER
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const SizedBox(width: 48),
                 Text(
                   isEdit ? "Edit Education" : "Add Education",
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color),
-                  onPressed: () => Navigator.pop(context, widget.education),
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-            Center(
-              child: Text(
-                isEdit ? "Edit the details of your education." : "Add a new education to your profile.",
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
+
             const SizedBox(height: 24),
+
             _buildLabel("School"),
             _buildTextField(_schoolController, "Ex: Stanford University"),
+
             _buildLabel("Degree"),
-            _buildTextField(_degreeController, "Ex: MBA"),
+            _buildTextField(_degreeController, "Ex: B.Tech"),
+
             _buildLabel("Field of Study"),
-            _buildTextField(_fieldController, "Ex: Business Administration"),
+            _buildTextField(_fieldController, "Ex: Computer Science"),
+
             Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel("Start Year"),
-                      _buildYearPicker(_startYearController),
+                      _buildLabel("Start Date"),
+                      _buildDateField(_startDateController),
                     ],
                   ),
                 ),
@@ -567,174 +688,123 @@ class _EducationModalState extends State<EducationModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel("End Year"),
-                      _buildYearPicker(_endYearController, enabled: !_currentlyStudying),
+                      _buildLabel("End Date"),
+                      _buildDateField(
+                        _endDateController,
+                        enabled: !_currentlyStudying,
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+
             Row(
               children: [
                 Checkbox(
                   value: _currentlyStudying,
-                  onChanged: (val) => setState(() => _currentlyStudying = val ?? false),
-                  side: BorderSide(color: theme.dividerColor),
-                  activeColor: theme.primaryColor,
+                  onChanged: (v) {
+                    setState(() {
+                      _currentlyStudying = v ?? false;
+                      if (_currentlyStudying) {
+                        _endDateController.clear();
+                      }
+                    });
+                  },
                 ),
-                Text("I'm still studying", style: theme.textTheme.bodyMedium),
+                const Text("I'm still studying"),
               ],
             ),
+
             _buildLabel("Description"),
-            _buildTextField(_descriptionController, "Describe your activities, societies, etc.", maxLines: 4),
+            _buildTextField(_descriptionController, "Description", maxLines: 4),
+
             const SizedBox(height: 32),
-            Row(
-              children: [
-                if (isEdit)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8),
+
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              Row(
+                children: [
+                  if (isEdit)
+                    Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context, null),
+                        onPressed: _handleDelete,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.error.withValues(alpha: 0.1),
+                          backgroundColor:
+                          colorScheme.error.withOpacity(0.1),
                           foregroundColor: colorScheme.error,
-                          side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text("Delete", style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text("Delete"),
                       ),
                     ),
-                  ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, widget.education),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: BorderSide(color: theme.dividerColor),
-                      ),
-                      child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4),
+                  if (isEdit) const SizedBox(width: 8),
+                  Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(
-                          context,
-                          Education(
-                            school: _schoolController.text,
-                            degree: _degreeController.text,
-                            fieldOfStudy: _fieldController.text,
-                            startYear: _startYearController.text,
-                            endYear: _endYearController.text,
-                            currentlyStudying: _currentlyStudying,
-                            description: _descriptionController.text,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        foregroundColor: colorScheme.onPrimary,
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: _handleSave,
+                      child: const Text("Save"),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String label) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 16),
-      child: Text(label, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-    );
-  }
+  // ================= UI HELPERS =================
 
-  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
-    final theme = Theme.of(context);
+  Widget _buildLabel(String label) => Padding(
+    padding: const EdgeInsets.only(top: 16, bottom: 8),
+    child:
+    Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+  );
+
+  Widget _buildTextField(
+      TextEditingController controller,
+      String hint, {
+        int maxLines = 1,
+      }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: theme.textTheme.bodyLarge,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: theme.textTheme.bodySmall,
-        filled: true,
-        fillColor: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
-        contentPadding: const EdgeInsets.all(16),
-      ),
+      decoration: InputDecoration(hintText: hint),
     );
   }
 
-  Widget _buildYearPicker(TextEditingController controller, {bool enabled = true}) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: enabled ? () async {
-        await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              backgroundColor: theme.scaffoldBackgroundColor,
-              title: Text("Select Year", style: theme.textTheme.titleLarge),
-              content: SizedBox(
-                width: 300,
-                height: 300,
-                child: YearPicker(
-                  firstDate: DateTime(1950),
-                  lastDate: DateTime(2100),
-                  selectedDate: DateTime.now(),
-                  onChanged: (DateTime dateTime) {
-                    controller.text = dateTime.year.toString();
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-            );
-          },
-        );
-      } : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              controller.text,
-              style: theme.textTheme.bodyLarge?.copyWith(color: enabled ? null : theme.textTheme.bodySmall?.color),
-            ),
-            Icon(Icons.unfold_more, color: theme.textTheme.bodySmall?.color, size: 20),
-          ],
-        ),
+  Widget _buildDateField(
+      TextEditingController controller, {
+        bool enabled = true,
+      }) {
+    return TextField(
+      controller: controller,
+      readOnly: true,
+      enabled: enabled,
+      decoration: const InputDecoration(
+        suffixIcon: Icon(Icons.calendar_today),
       ),
+      onTap: () async {
+        if (!enabled) return;
+
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(1950),
+          lastDate: DateTime(2100),
+        );
+
+        if (picked != null) {
+          controller.text =
+          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+        }
+      },
     );
   }
 }
 
 class SkillsModal extends StatefulWidget {
-  final List<String> initialSkills;
+  final List<Skill> initialSkills;
 
   const SkillsModal({super.key, required this.initialSkills});
 
@@ -743,13 +813,16 @@ class SkillsModal extends StatefulWidget {
 }
 
 class _SkillsModalState extends State<SkillsModal> {
-  late List<String> _currentSkills;
+  final ProfileService profileService = ProfileService();
+
+  late List<Skill> _skills;
   final TextEditingController _skillController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _currentSkills = List.from(widget.initialSkills);
+    _skills = List.from(widget.initialSkills);
   }
 
   @override
@@ -758,15 +831,49 @@ class _SkillsModalState extends State<SkillsModal> {
     super.dispose();
   }
 
-  void _addSkill() {
+  /// ➕ ADD SKILL (BACKEND)
+  Future<void> _addSkill() async {
     final text = _skillController.text.trim();
-    if (text.isNotEmpty) {
-      setState(() {
-        if (!_currentSkills.contains(text)) {
-          _currentSkills.add(text);
-        }
+    if (text.isEmpty) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final success = await profileService.addSkill(text);
+
+      if (success) {
         _skillController.clear();
-      });
+
+        // 🔥 Reload skills from backend
+        final profile = await profileService.getMyProfile();
+        if (profile != null && profile['skills'] != null) {
+          setState(() {
+            _skills = (profile['skills'] as List)
+                .map((s) => Skill.fromJson(s))
+                .toList();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Add skill error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// 🗑️ DELETE SKILL (BACKEND)
+  Future<void> _removeSkill(Skill skill) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final success = await profileService.deleteSkill(skill.id);
+      if (success) {
+        setState(() => _skills.removeWhere((s) => s.id == skill.id));
+      }
+    } catch (e) {
+      debugPrint("Delete skill error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -776,7 +883,12 @@ class _SkillsModalState extends State<SkillsModal> {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        16,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 32,
+      ),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -799,80 +911,93 @@ class _SkillsModalState extends State<SkillsModal> {
               ),
             ],
           ),
+
           const SizedBox(height: 24),
+
+          /// ➕ ADD INPUT
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _skillController,
-                  style: theme.textTheme.bodyLarge,
                   decoration: InputDecoration(
                     hintText: "Add a new skill...",
-                    hintStyle: theme.textTheme.bodySmall,
                     filled: true,
-                    fillColor: colorScheme.surfaceContainer.withValues(alpha: 0.5),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    fillColor: colorScheme.surfaceContainer.withOpacity(0.5),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onSubmitted: (_) => _addSkill(),
                 ),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
-                onPressed: _addSkill,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primaryColor,
-                  foregroundColor: colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.all(16),
-                ),
-                child: const Icon(Icons.add),
+                onPressed: _isLoading ? null : _addSkill,
+                child: _isLoading
+                    ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : const Icon(Icons.add),
               ),
             ],
           ),
+
           const SizedBox(height: 24),
+
+          /// 🧠 SKILL CHIPS
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: _currentSkills.map((skill) => Container(
-              padding: const EdgeInsets.only(left: 16, right: 8, top: 4, bottom: 4),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(skill, style: theme.textTheme.bodyMedium),
-                  IconButton(
-                    icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color, size: 16),
-                    onPressed: () => setState(() => _currentSkills.remove(skill)),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-            )).toList(),
+            children: _skills.map((skill) {
+              return Container(
+                padding: const EdgeInsets.only(left: 16, right: 6),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: theme.dividerColor),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(skill.name),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16),
+                      onPressed: _isLoading ? null : () => _removeSkill(skill),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
+
           const SizedBox(height: 48),
+
+          /// ✅ SAVE
+          /// ✅ SAVE
           ElevatedButton(
-            onPressed: () {
+            onPressed: _isLoading
+                ? null
+                : () async {
               final text = _skillController.text.trim();
-              if (text.isNotEmpty && !_currentSkills.contains(text)) {
-                _currentSkills.add(text);
+
+              // 🔥 AUTO-ADD LAST TYPED SKILL
+              if (text.isNotEmpty) {
+                await _addSkill();
               }
-              Navigator.pop(context, List<String>.from(_currentSkills));
+
+              if (mounted) Navigator.pop(context, true);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: theme.primaryColor,
-              foregroundColor: colorScheme.onPrimary,
               minimumSize: const Size(double.infinity, 56),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            child: const Text("Save Changes", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "Save Changes",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
+
         ],
       ),
     );

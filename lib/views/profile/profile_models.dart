@@ -1,73 +1,97 @@
+// ===================== EXPERIENCE =====================
 class Experience {
+  final String? id;
   final String title;
   final String company;
   final String startDate;
-  final String endDate;
+  final String? endDate;
   final bool currentlyWorking;
   final String location;
   final String description;
 
   Experience({
+    this.id,
     required this.title,
     required this.company,
     required this.startDate,
-    required this.endDate,
+    this.endDate,
     required this.currentlyWorking,
     required this.location,
     required this.description,
   });
 
-  /// 🔥 BACKEND → FLUTTER MAPPER
-  /// Backend keys:
-  /// title, company_name, start_date, end_date, is_current, location, description
   factory Experience.fromJson(Map<String, dynamic> json) {
     return Experience(
+      id: json['experience_id']?.toString(),
       title: json['title'] ?? '',
-      company: json['company_name'] ?? '', // ✅ FIXED
-      startDate: json['start_date'] ?? '', // ✅ FIXED
-      endDate: json['end_date'] ?? '',
-      currentlyWorking: json['is_current'] ?? false, // ✅ FIXED
+      company: json['company_name'] ?? '',
+      startDate: json['start_date'] ?? '',
+      endDate: json['end_date'],
+      currentlyWorking: json['is_current'] ?? false,
       location: json['location'] ?? '',
       description: json['description'] ?? '',
     );
   }
 }
 
+// ===================== EDUCATION (✅ FINAL FIX) =====================
 class Education {
+  final String? id; // ✅ REQUIRED for update/delete
   final String school;
   final String degree;
   final String fieldOfStudy;
   final String startYear;
-  final String endYear;
-  final bool currentlyStudying;
+  final String? endYear;
+  final bool currentlyStudying; // ✅ REQUIRED by UI
   final String description;
 
   Education({
+    this.id,
     required this.school,
     required this.degree,
     required this.fieldOfStudy,
     required this.startYear,
-    required this.endYear,
+    this.endYear,
     required this.currentlyStudying,
     required this.description,
   });
 
-  /// 🔥 BACKEND → FLUTTER MAPPER
-  /// Backend keys:
-  /// school_name, degree, field_of_study, start_date, end_date, description
+  /// 🔥 BACKEND → FLUTTER
+  /// Backend fields:
+  /// education_id, school_name, degree, field_of_study, start_date, end_date, description
   factory Education.fromJson(Map<String, dynamic> json) {
     return Education(
-      school: json['school_name'] ?? '', // ✅ FIXED
+      id: json['education_id']?.toString(),
+      school: json['school_name'] ?? '',
       degree: json['degree'] ?? '',
-      fieldOfStudy: json['field_of_study'] ?? '', // ✅ FIXED
+      fieldOfStudy: json['field_of_study'] ?? '',
       startYear: json['start_date'] ?? '',
-      endYear: json['end_date'] ?? '',
-      currentlyStudying: false, // backend does not send this
+      endYear: json['end_date'],
+      currentlyStudying: json['end_date'] == null, // ✅ auto derived
       description: json['description'] ?? '',
     );
   }
 }
 
+// ===================== SKILL =====================
+class Skill {
+  final String id;
+  final String name;
+
+  Skill({
+    required this.id,
+    required this.name,
+  });
+
+  factory Skill.fromJson(Map<String, dynamic> json) {
+    return Skill(
+      id: json['skill_id']?.toString() ?? '',
+      name: json['name'] ?? '',
+    );
+  }
+}
+
+// ===================== POSTS =====================
 class UserPost {
   final String title;
   final String content;
