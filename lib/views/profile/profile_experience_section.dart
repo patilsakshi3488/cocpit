@@ -4,11 +4,13 @@ import 'profile_models.dart';
 class ProfileExperienceSection extends StatelessWidget {
   final List<Experience> experiences;
   final Function({Experience? experience, int? index}) onAddEditExperience;
+  final bool isReadOnly;
 
   const ProfileExperienceSection({
     super.key,
     required this.experiences,
     required this.onAddEditExperience,
+    this.isReadOnly = false,
   });
 
   @override
@@ -26,10 +28,11 @@ class ProfileExperienceSection extends StatelessWidget {
                 "Experience",
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
-              TextButton(
-                onPressed: () => onAddEditExperience(),
-                child: Text("Add", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
-              ),
+              if (!isReadOnly)
+                TextButton(
+                  onPressed: () => onAddEditExperience(),
+                  child: Text("Add", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -58,19 +61,26 @@ class ProfileExperienceSection extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(exp.title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                            IconButton(
-                              icon: Icon(Icons.edit_outlined, color: theme.iconTheme.color?.withValues(alpha: 0.5), size: 20),
-                              onPressed: () => onAddEditExperience(experience: exp, index: idx),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            Expanded(
+                              child: Text(
+                                exp.title,
+                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                            if (!isReadOnly)
+                              IconButton(
+                                icon: Icon(Icons.edit_outlined, color: theme.iconTheme.color?.withValues(alpha: 0.5), size: 20),
+                                onPressed: () => onAddEditExperience(experience: exp, index: idx),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
                           ],
                         ),
                         Text(exp.company, style: theme.textTheme.bodyLarge),
                         const SizedBox(height: 4),
                         Text(
-                          "${exp.startDate} - ${exp.currentlyWorking ? 'Present' : exp.endDate} • ${exp.location}",
+                          "${exp.startDate} - ${exp.currentlyWorking ? 'Present' : exp.endDate ?? ''} • ${exp.location}",
                           style: theme.textTheme.bodySmall,
                         ),
                         const SizedBox(height: 8),

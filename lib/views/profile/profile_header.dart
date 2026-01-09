@@ -3,13 +3,13 @@ import '../fullscreen_image.dart';
 
 class ProfileHeader extends StatelessWidget {
   final Map<String, dynamic>? user;
-
   final String profileImage;
   final String? coverImage;
   final VoidCallback onMenuPressed;
   final VoidCallback onCameraPressed;
   final VoidCallback onCoverCameraPressed;
   final Color backgroundColor;
+  final bool isReadOnly;
 
   const ProfileHeader({
     super.key,
@@ -20,6 +20,7 @@ class ProfileHeader extends StatelessWidget {
     required this.onCameraPressed,
     required this.onCoverCameraPressed,
     required this.backgroundColor,
+    this.isReadOnly = false,
   });
 
   bool _isNetworkImage(String path) {
@@ -95,16 +96,19 @@ class ProfileHeader extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          icon: Icon(Icons.camera_alt_outlined,
-                              color: colorScheme.onPrimary),
-                          onPressed: onCoverCameraPressed,
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.menu,
-                              color: colorScheme.onPrimary),
-                          onPressed: onMenuPressed,
-                        ),
+                        if (!isReadOnly) ...[
+                          IconButton(
+                            icon: Icon(Icons.camera_alt_outlined,
+                                color: colorScheme.onPrimary),
+                            onPressed: onCoverCameraPressed,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.menu,
+                                color: colorScheme.onPrimary),
+                            onPressed: onMenuPressed,
+                          ),
+                        ] else
+                          const BackButton(color: Colors.white),
                       ],
                     ),
                   ),
@@ -158,30 +162,31 @@ class ProfileHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: onCameraPressed,
-                  child: Container(
-                    height: 44,
-                    width: 44,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.primaryColor,
-                          theme.primaryColor.withValues(alpha: 0.8),
-                        ],
+              if (!isReadOnly)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: onCameraPressed,
+                    child: Container(
+                      height: 44,
+                      width: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.primaryColor,
+                            theme.primaryColor.withValues(alpha: 0.8),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        border:
+                        Border.all(color: backgroundColor, width: 3),
                       ),
-                      shape: BoxShape.circle,
-                      border:
-                      Border.all(color: backgroundColor, width: 3),
+                      child: Icon(Icons.camera_alt_outlined,
+                          color: colorScheme.onPrimary),
                     ),
-                    child: Icon(Icons.camera_alt_outlined,
-                        color: colorScheme.onPrimary),
                   ),
                 ),
-              ),
             ],
           ),
         ),

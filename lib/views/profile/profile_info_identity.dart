@@ -9,6 +9,9 @@ class ProfileInfoIdentity extends StatelessWidget {
   final String preference;
   final VoidCallback onEditProfile;
   final VoidCallback onEditIdentity;
+  final bool isReadOnly;
+  final VoidCallback? onMessage;
+  final VoidCallback? onFollow;
 
   const ProfileInfoIdentity({
     super.key,
@@ -20,6 +23,9 @@ class ProfileInfoIdentity extends StatelessWidget {
     required this.preference,
     required this.onEditProfile,
     required this.onEditIdentity,
+    this.isReadOnly = false,
+    this.onMessage,
+    this.onFollow,
   });
 
   @override
@@ -49,10 +55,11 @@ class ProfileInfoIdentity extends StatelessWidget {
               const SizedBox(width: 8),
               Text("• 2nd", style: theme.textTheme.bodyLarge?.copyWith(color: theme.textTheme.bodySmall?.color)),
               const Spacer(),
-              IconButton(
-                icon: Icon(Icons.edit_outlined, color: theme.iconTheme.color?.withValues(alpha: 0.5), size: 28),
-                onPressed: onEditProfile,
-              ),
+              if (!isReadOnly)
+                IconButton(
+                  icon: Icon(Icons.edit_outlined, color: theme.iconTheme.color?.withValues(alpha: 0.5), size: 28),
+                  onPressed: onEditProfile,
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -85,8 +92,39 @@ class ProfileInfoIdentity extends StatelessWidget {
             style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
           ),
           const SizedBox(height: 24),
+          if (isReadOnly) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onFollow,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                      elevation: 0,
+                    ),
+                    child: const Text("Follow", style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onMessage,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: theme.primaryColor),
+                      foregroundColor: theme.primaryColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    ),
+                    child: const Text("Message", style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
           GestureDetector(
-            onTap: onEditIdentity,
+            onTap: isReadOnly ? null : onEditIdentity,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -106,7 +144,6 @@ class ProfileInfoIdentity extends StatelessWidget {
 
   Widget _identityRow(BuildContext context, String label, String value, Color bgColor, Color textColor) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

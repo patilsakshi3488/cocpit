@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class ProfileSkillsSection extends StatelessWidget {
   final List<String> skills;
   final VoidCallback onAddSkill;
+  final bool isReadOnly;
 
   const ProfileSkillsSection({
     super.key,
     required this.skills,
     required this.onAddSkill,
+    this.isReadOnly = false,
   });
 
   @override
@@ -27,10 +29,11 @@ class ProfileSkillsSection extends StatelessWidget {
                 "Skills",
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
-              TextButton(
-                onPressed: onAddSkill,
-                child: Text("Add", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
-              ),
+              if (!isReadOnly)
+                TextButton(
+                  onPressed: onAddSkill,
+                  child: Text("Add", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
+                ),
             ],
           ),
           const SizedBox(height: 16),
