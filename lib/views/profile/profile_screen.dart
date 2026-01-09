@@ -123,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         // 🔥 SKILLS
         skills = (data['skills'] as List)
-            .map((s) => s['name'].toString())
+            .map((s) => s.toString())
             .toList();
       });
     } catch (e) {

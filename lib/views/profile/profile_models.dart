@@ -83,13 +83,19 @@ class Skill {
     required this.name,
   });
 
-  factory Skill.fromJson(Map<String, dynamic> json) {
+  factory Skill.fromJson(dynamic json) {
+    // 🔒 SAFETY: handle String or Map
+    if (json is String) {
+      return Skill(id: json, name: json);
+    }
+
     return Skill(
       id: json['skill_id']?.toString() ?? '',
       name: json['name'] ?? '',
     );
   }
 }
+
 
 // ===================== POSTS =====================
 class UserPost {

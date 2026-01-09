@@ -16,6 +16,22 @@ class ProfileService {
   }
 
   /// =========================
+  /// 🔍 GET ANY USER PROFILE
+  /// =========================
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async {
+    try {
+      final response = await ApiClient.get("/users/$userId");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// =========================
   /// 🧑‍💼 EXPERIENCE
   /// =========================
 

@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+
+import '../../models/search_user.dart';
+import '../../services/user_search_service.dart';
+import '../../services/secure_storage.dart';
+import '../profile/profile_screen.dart';
+import '../profile/public_profile_screen.dart';
+
 
 import 'chat_screen.dart';
 import 'notification_screen.dart';
@@ -19,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
+
+  // 🔽 BACKEND SEARCH STATE
+  List<SearchUser> _searchResults = [];
+  Timer? _debounce;
 
   final List<Map<String, dynamic>> careerMoments = [
     {
@@ -197,6 +209,93 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      if (query.trim().isEmpty) {
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+        return;
+      }
+
+      try {
+        final token = await AppSecureStorage.getAccessToken();
+        if (token == null) return;
+
+        final results = await UserSearchService.searchUsers(
+          query: query,
+          token: token,
+        );
+
+        _searchResults = results;
+        _showBackendOverlay();
+      } catch (e) {
+        debugPrint("Search error: $e");
+      }
+    });
+  }
+
+  void _showBackendOverlay() {
+    _overlayEntry?.remove();
+
+    if (_searchResults.isEmpty) return;
+
+    _overlayEntry = _createBackendOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  OverlayEntry _createBackendOverlayEntry() {
+    final theme = Theme.of(context);
+
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        width: 300,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          offset: const Offset(0, 50),
+          showWhenUnlinked: false,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surface,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: _searchResults.take(5).map((user) {
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: user.avatarUrl != null
+                        ? NetworkImage(user.avatarUrl!)
+                        : const AssetImage('lib/images/profile.png')
+                            as ImageProvider,
+                  ),
+                  title: Text(user.fullName),
+                  subtitle: Text(
+                    user.headline ?? user.accountType ?? "",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () {
+                    _searchController.clear();
+                    _overlayEntry?.remove();
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PublicProfileScreen(userId: user.id),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _updateOverlay(String query) {
     if (_overlayEntry != null) {
       _overlayEntry!.remove();
@@ -283,6 +382,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _overlayEntry?.remove();
     _searchController.dispose();
     super.dispose();
@@ -296,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppTopBar(
         searchType: SearchType.feed,
         controller: _searchController,
-        onChanged: _updateOverlay,
+        onChanged: _onSearchChanged,
         layerLink: _layerLink,
       ),
       body: ListView(
@@ -469,16 +569,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(user['name'], style: theme.textTheme.titleSmall, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                     Text(user['role'], style: theme.textTheme.bodySmall, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
-                    Text("${user['followers']} followers", style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)),
+                    Text("${user['followers']} followers", style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
                     const Spacer(),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        minimumSize: const Size(double.infinity, 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text("Follow", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                      child: Text("Follow", style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 13)),
                     ),
                   ],
                 ),
@@ -486,473 +591,79 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        Divider(color: theme.dividerColor, height: 8, thickness: 8),
       ],
     );
   }
 
   Widget _postView(Map<String, dynamic> post, ThemeData theme) {
-    String likesText = post['likes'] >= 1000 ? "${(post['likes'] / 1000).toStringAsFixed(1)}k" : "${post['likes']}";
-    bool isLiked = post['isLiked'] ?? false;
-    bool isPrivate = post['isPrivate'] ?? false;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                CircleAvatar(radius: 24, backgroundImage: AssetImage(post['profile'] ?? 'lib/images/profile.png')),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(post['name'], style: theme.textTheme.titleMedium),
-                      Text(post['title'], style: theme.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Row(
-                        children: [
-                          Text(post['time'], style: theme.textTheme.bodySmall?.copyWith(fontSize: 12)),
-                          if (isPrivate) ...[
-                            const SizedBox(width: 4),
-                            Icon(Icons.visibility_off_outlined, color: theme.textTheme.bodySmall?.color, size: 12),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Theme(
-                  data: theme.copyWith(
-                    popupMenuTheme: PopupMenuThemeData(
-                      color: theme.colorScheme.surface,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                  child: PopupMenuButton<String>(
-                    icon: Icon(Icons.more_horiz, color: theme.textTheme.bodySmall?.color),
-                    padding: EdgeInsets.zero,
-                    onSelected: (value) {
-                      if (value == 'private') {
-                        setState(() {
-                          post['isPrivate'] = !(post['isPrivate'] ?? false);
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(post['isPrivate'] ? "Post is now private" : "Post is now public")),
-                        );
-                      } else if (value == 'delete') {
-                        setState(() {
-                          _posts.removeWhere((p) => p['id'] == post['id']);
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post deleted")));
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'private',
-                        child: Row(
-                          children: [
-                            Icon(post['isPrivate'] == true ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: theme.iconTheme.color, size: 20),
-                            const SizedBox(width: 12),
-                            Text(post['isPrivate'] == true ? "Make Public" : "Make Private", style: theme.textTheme.bodyLarge),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline, color: theme.colorScheme.error, size: 20),
-                            const SizedBox(width: 12),
-                            Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(post['text'], style: theme.textTheme.bodyLarge?.copyWith(height: 1.5)),
-          ),
-          const SizedBox(height: 16),
-          if (post['image'] != null) Image.asset(post['image'], width: double.infinity, fit: BoxFit.cover),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.favorite, color: theme.colorScheme.secondary, size: 16),
-                        const SizedBox(width: 4),
-                        Text("$likesText likes", style: theme.textTheme.bodySmall),
-                      ],
-                    ),
-                    Text("${post['comments_count']} comments • ${post['shares']} shares", style: theme.textTheme.bodySmall),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Divider(color: theme.dividerColor, height: 1),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _actionBtn(
-                      isLiked ? Icons.favorite : Icons.favorite_border, 
-                      "Like", 
-                      isLiked ? theme.colorScheme.secondary : theme.textTheme.bodySmall?.color ?? Colors.grey,
-                      () {
-                        setState(() {
-                          post['isLiked'] = !isLiked;
-                          post['likes'] += isLiked ? -1 : 1;
-                        });
-                      }
-                    ),
-                    _actionBtn(Icons.chat_bubble_outline, "Comment", theme.textTheme.bodySmall?.color ?? Colors.grey, () => _showCommentSheet(context, post, theme)),
-                    _actionBtn(Icons.share_outlined, "Share", theme.textTheme.bodySmall?.color ?? Colors.grey, () => _showShareSheet(context, theme)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Divider(color: theme.dividerColor, height: 8, thickness: 8),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionBtn(IconData icon, String text, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap, 
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20), 
-          const SizedBox(width: 6), 
-          Text(text, style: TextStyle(color: color, fontSize: 13))
-        ]
-      )
-    );
-  }
-
-  void _showCommentSheet(BuildContext context, Map<String, dynamic> post, ThemeData theme) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _CommentSheet(post: post, theme: theme),
-    );
-  }
-
-  void _showShareSheet(BuildContext context, ThemeData theme) {
-    int selectedIndex = 0;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.75,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      "Share to",
-                      style: theme.textTheme.titleLarge,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(color: theme.dividerColor, height: 1),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: TextField(
-                        style: theme.textTheme.bodyLarge,
-                        decoration: InputDecoration(
-                          hintText: "Search",
-                          hintStyle: theme.textTheme.bodySmall,
-                          icon: Icon(Icons.search, color: theme.textTheme.bodySmall?.color, size: 20),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                  ),
+                  CircleAvatar(radius: 24, backgroundImage: AssetImage(post['profile'])),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: shareToUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = shareToUsers[index];
-                        final isSelected = selectedIndex == index;
-                        return InkWell(
-                          onTap: () => setSheetState(() => selectedIndex = index),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isSelected ? theme.primaryColor.withValues(alpha: 0.05) : Colors.transparent,
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 24,
-                                  backgroundColor: user['color'],
-                                  child: Text(
-                                    user['name'][0],
-                                    style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(user['name'], style: theme.textTheme.titleSmall),
-                                      Text(user['role'], style: theme.textTheme.bodySmall),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: isSelected ? theme.primaryColor : theme.dividerColor, width: 2),
-                                    color: isSelected ? theme.primaryColor : Colors.transparent,
-                                  ),
-                                  child: isSelected ? Icon(Icons.check, color: theme.colorScheme.onPrimary, size: 16) : null,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: theme.dividerColor)),
-                    ),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: theme.scaffoldBackgroundColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: TextField(
-                            style: theme.textTheme.bodyLarge,
-                            decoration: InputDecoration(
-                              hintText: "Write a message...",
-                              hintStyle: theme.textTheme.bodySmall,
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text("Shared successfully"),
-                                backgroundColor: theme.primaryColor,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.primaryColor,
-                            minimumSize: const Size(double.infinity, 50),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.send, color: theme.colorScheme.onPrimary, size: 20),
-                              const SizedBox(width: 8),
-                              Text("Send", style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold)),
+                        Row(
+                          children: [
+                            Text(post['name'], style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                            if (post['isPrivate']) ...[
+                              const SizedBox(width: 4),
+                              Icon(Icons.lock, size: 12, color: theme.textTheme.bodySmall?.color),
                             ],
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
+                        Text(post['title'], style: theme.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(post['time'], style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)),
                       ],
                     ),
                   ),
+                  IconButton(onPressed: () {}, icon: const Icon(Icons.more_horiz)),
                 ],
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _CommentSheet extends StatefulWidget {
-  final Map<String, dynamic> post;
-  final ThemeData theme;
-  const _CommentSheet({required this.post, required this.theme});
-
-  @override
-  State<_CommentSheet> createState() => _CommentSheetState();
-}
-
-class _CommentSheetState extends State<_CommentSheet> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: BoxDecoration(color: widget.theme.colorScheme.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.dividerColor, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            Text("Comments", style: widget.theme.textTheme.titleLarge),
-            const SizedBox(height: 16),
-            Divider(color: widget.theme.dividerColor, height: 1),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: widget.post['comments'].length,
-                itemBuilder: (context, index) => _CommentItem(comment: widget.post['comments'][index], theme: widget.theme),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border(top: BorderSide(color: widget.theme.dividerColor))),
-              child: Row(
-                children: [
-                  const CircleAvatar(radius: 18, backgroundImage: AssetImage('lib/images/profile.png')),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(color: widget.theme.scaffoldBackgroundColor, borderRadius: BorderRadius.circular(24)),
-                      child: TextField(
-                        controller: _controller,
-                        style: widget.theme.textTheme.bodyLarge,
-                        decoration: InputDecoration(hintText: "Add a comment...", hintStyle: widget.theme.textTheme.bodySmall, border: InputBorder.none),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      if (_controller.text.isNotEmpty) {
-                        setState(() {
-                          widget.post['comments'].insert(0, {'name': 'You', 'time': 'Just now', 'text': _controller.text, 'likes': 0, 'isLiked': false});
-                          widget.post['comments_count']++;
-                        });
-                        _controller.clear();
-                      }
-                    },
-                    child: Text("Post", style: TextStyle(color: widget.theme.primaryColor, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CommentItem extends StatefulWidget {
-  final Map<String, dynamic> comment;
-  final ThemeData theme;
-  const _CommentItem({required this.comment, required this.theme});
-
-  @override
-  State<_CommentItem> createState() => _CommentItemState();
-}
-
-class _CommentItemState extends State<_CommentItem> {
-  @override
-  Widget build(BuildContext context) {
-    bool isLiked = widget.comment['isLiked'] ?? false;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CircleAvatar(radius: 18, backgroundImage: AssetImage('lib/images/profile.png')),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: widget.theme.scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(widget.comment['name'], style: widget.theme.textTheme.titleSmall),
-                          Text(widget.comment['time'], style: widget.theme.textTheme.bodySmall),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(widget.comment['text'], style: widget.theme.textTheme.bodyMedium, ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => setState(() {
-                        widget.comment['isLiked'] = !isLiked;
-                        widget.comment['likes'] += isLiked ? -1 : 1;
-                      }),
-                      child: Text("Like", style: TextStyle(color: isLiked ? widget.theme.colorScheme.secondary : widget.theme.textTheme.bodySmall?.color, fontSize: 12, fontWeight: isLiked ? FontWeight.bold : FontWeight.normal)),
-                    ),
-                    const SizedBox(width: 16),
-                    Text("Reply", style: widget.theme.textTheme.bodySmall?.copyWith(fontSize: 12)),
-                    const SizedBox(width: 16),
-                    if (widget.comment['likes'] > 0)
-                      Text("${widget.comment['likes']} likes", style: widget.theme.textTheme.bodySmall?.copyWith(fontSize: 12)),
-                  ],
+              const SizedBox(height: 12),
+              Text(post['text'], style: theme.textTheme.bodyMedium),
+              if (post['image'] != null) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(post['image'], fit: BoxFit.cover, width: double.infinity, height: 200),
                 ),
               ],
-            ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _postAction(Icons.favorite_border, post['likes'].toString(), theme),
+                  const SizedBox(width: 20),
+                  _postAction(Icons.chat_bubble_outline, post['comments_count'].toString(), theme),
+                  const SizedBox(width: 20),
+                  _postAction(Icons.share_outlined, post['shares'].toString(), theme),
+                  const Spacer(),
+                  Icon(Icons.bookmark_border, color: theme.iconTheme.color?.withValues(alpha: 0.6)),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Divider(color: theme.dividerColor, height: 1),
+      ],
+    );
+  }
+
+  Widget _postAction(IconData icon, String count, ThemeData theme) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.iconTheme.color?.withValues(alpha: 0.6)),
+        const SizedBox(width: 6),
+        Text(count, style: theme.textTheme.bodySmall),
+      ],
     );
   }
 }

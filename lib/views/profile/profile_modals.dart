@@ -804,9 +804,13 @@ class _EducationModalState extends State<EducationModal> {
 }
 
 class SkillsModal extends StatefulWidget {
-  final List<Skill> initialSkills;
+  /// Can be List<String> OR List<Map> from backend
+  final List<dynamic> initialSkills;
 
-  const SkillsModal({super.key, required this.initialSkills});
+  const SkillsModal({
+    super.key,
+    required this.initialSkills,
+  });
 
   @override
   State<SkillsModal> createState() => _SkillsModalState();
@@ -814,15 +818,30 @@ class SkillsModal extends StatefulWidget {
 
 class _SkillsModalState extends State<SkillsModal> {
   final ProfileService profileService = ProfileService();
-
-  late List<Skill> _skills;
   final TextEditingController _skillController = TextEditingController();
-  bool _isLoading = false;
+
+  /// Skills already saved in DB
+  final List<Skill> _existingSkills = [];
+
+  /// Skills added locally but not yet saved
+  final List<String> _newSkills = [];
+
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _skills = List.from(widget.initialSkills);
+
+    /// 🔥 NORMALIZE INITIAL SKILLS (THIS FIXES YOUR ERROR)
+    for (final item in widget.initialSkills) {
+      if (item is String) {
+        _existingSkills.add(
+          Skill(id: item, name: item), // temp id
+        );
+      } else if (item is Map<String, dynamic>) {
+        _existingSkills.add(Skill.fromJson(item));
+      }
+    }
   }
 
   @override
@@ -831,56 +850,72 @@ class _SkillsModalState extends State<SkillsModal> {
     super.dispose();
   }
 
-  /// ➕ ADD SKILL (BACKEND)
-  Future<void> _addSkill() async {
+  /// ➕ ADD LOCALLY ONLY
+  void _addLocalSkill() {
     final text = _skillController.text.trim();
     if (text.isEmpty) return;
 
-    setState(() => _isLoading = true);
+    final exists = _existingSkills
+        .any((s) => s.name.toLowerCase() == text.toLowerCase()) ||
+        _newSkills.any((s) => s.toLowerCase() == text.toLowerCase());
 
-    try {
-      final success = await profileService.addSkill(text);
+    if (exists) return;
 
-      if (success) {
-        _skillController.clear();
-
-        // 🔥 Reload skills from backend
-        final profile = await profileService.getMyProfile();
-        if (profile != null && profile['skills'] != null) {
-          setState(() {
-            _skills = (profile['skills'] as List)
-                .map((s) => Skill.fromJson(s))
-                .toList();
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("Add skill error: $e");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    setState(() {
+      _newSkills.add(text);
+      _skillController.clear();
+    });
   }
 
-  /// 🗑️ DELETE SKILL (BACKEND)
-  Future<void> _removeSkill(Skill skill) async {
-    setState(() => _isLoading = true);
-
+  /// ❌ DELETE EXISTING SKILL (BACKEND)
+  Future<void> _deleteExistingSkill(Skill skill) async {
     try {
       final success = await profileService.deleteSkill(skill.id);
-      if (success) {
-        setState(() => _skills.removeWhere((s) => s.id == skill.id));
+      if (success && mounted) {
+        setState(() {
+          _existingSkills.removeWhere((s) => s.id == skill.id);
+        });
       }
     } catch (e) {
       debugPrint("Delete skill error: $e");
+    }
+  }
+
+  /// ❌ DELETE UNSAVED SKILL
+  void _deleteLocalSkill(String skill) {
+    setState(() {
+      _newSkills.remove(skill);
+    });
+  }
+
+  /// ✅ SAVE CHANGES (ONLY PLACE API IS CALLED)
+  Future<void> _saveChanges() async {
+    if (_newSkills.isEmpty) {
+      Navigator.pop(context, true);
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      for (final skill in _newSkills) {
+        await profileService.addSkill(skill);
+      }
+
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      debugPrint("Save skills error: $e");
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final scheme = theme.colorScheme;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -897,16 +932,18 @@ class _SkillsModalState extends State<SkillsModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// HEADER
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const SizedBox(width: 48),
               Text(
                 "Manage Skills",
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               IconButton(
-                icon: Icon(Icons.close, color: theme.textTheme.bodySmall?.color),
+                icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -914,7 +951,7 @@ class _SkillsModalState extends State<SkillsModal> {
 
           const SizedBox(height: 24),
 
-          /// ➕ ADD INPUT
+          /// INPUT
           Row(
             children: [
               Expanded(
@@ -923,83 +960,95 @@ class _SkillsModalState extends State<SkillsModal> {
                   decoration: InputDecoration(
                     hintText: "Add a new skill...",
                     filled: true,
-                    fillColor: colorScheme.surfaceContainer.withOpacity(0.5),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    fillColor: scheme.surfaceContainer.withOpacity(0.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  onSubmitted: (_) => _addSkill(),
+                  onSubmitted: (_) => _addLocalSkill(),
                 ),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
-                onPressed: _isLoading ? null : _addSkill,
-                child: _isLoading
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Icon(Icons.add),
+                onPressed: _addLocalSkill,
+                child: const Icon(Icons.add),
               ),
             ],
           ),
 
           const SizedBox(height: 24),
 
-          /// 🧠 SKILL CHIPS
+          /// SKILLS
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: _skills.map((skill) {
-              return Container(
-                padding: const EdgeInsets.only(left: 16, right: 6),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: theme.dividerColor),
+            children: [
+              ..._existingSkills.map(
+                    (skill) => _chip(
+                  skill.name,
+                      () => _deleteExistingSkill(skill),
+                  theme,
+                  scheme,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(skill.name),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 16),
-                      onPressed: _isLoading ? null : () => _removeSkill(skill),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ],
+              ),
+              ..._newSkills.map(
+                    (skill) => _chip(
+                  skill,
+                      () => _deleteLocalSkill(skill),
+                  theme,
+                  scheme,
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
 
           const SizedBox(height: 48),
 
-          /// ✅ SAVE
-          /// ✅ SAVE
+          /// SAVE
           ElevatedButton(
-            onPressed: _isLoading
-                ? null
-                : () async {
-              final text = _skillController.text.trim();
-
-              // 🔥 AUTO-ADD LAST TYPED SKILL
-              if (text.isNotEmpty) {
-                await _addSkill();
-              }
-
-              if (mounted) Navigator.pop(context, true);
-            },
+            onPressed: _isSaving ? null : _saveChanges,
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 56),
             ),
-            child: const Text(
+            child: _isSaving
+                ? const CircularProgressIndicator()
+                : const Text(
               "Save Changes",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style:
+              TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
+        ],
+      ),
+    );
+  }
 
+  Widget _chip(
+      String label,
+      VoidCallback onDelete,
+      ThemeData theme,
+      ColorScheme scheme,
+      ) {
+    return Container(
+      padding: const EdgeInsets.only(left: 16, right: 6),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: onDelete,
+            padding: EdgeInsets.zero,
+          ),
         ],
       ),
     );
   }
 }
+
+

@@ -19,4 +19,5 @@ class ApiConfig {
   static const String logout = "$baseUrl/auth/logout";
   static const String me = "$baseUrl/auth/me";
   static const String searchUsers = "$baseUrl/users/search";
+  static const String getPublicProfile = "$baseUrl/users";
 }
