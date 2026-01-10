@@ -1,4 +1,17 @@
-// ===================== EXPERIENCE =====================
+import 'package:intl/intl.dart';
+
+class DateFormatter {
+  static String format(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return "";
+    try {
+      DateTime dt = DateTime.parse(dateStr);
+      return DateFormat('MMM yyyy').format(dt);
+    } catch (e) {
+      return dateStr; // Return original if parsing fails
+    }
+  }
+}
+
 class Experience {
   final String? id;
   final String title;
@@ -20,6 +33,12 @@ class Experience {
     required this.description,
   });
 
+  String get dateRange {
+    String start = DateFormatter.format(startDate);
+    String end = currentlyWorking ? "Present" : DateFormatter.format(endDate);
+    return "$start - $end";
+  }
+
   factory Experience.fromJson(Map<String, dynamic> json) {
     return Experience(
       id: json['experience_id']?.toString(),
@@ -34,15 +53,14 @@ class Experience {
   }
 }
 
-// ===================== EDUCATION (✅ FINAL FIX) =====================
 class Education {
-  final String? id; // ✅ REQUIRED for update/delete
+  final String? id;
   final String school;
   final String degree;
   final String fieldOfStudy;
   final String startYear;
   final String? endYear;
-  final bool currentlyStudying; // ✅ REQUIRED by UI
+  final bool currentlyStudying;
   final String description;
 
   Education({
@@ -56,9 +74,12 @@ class Education {
     required this.description,
   });
 
-  /// 🔥 BACKEND → FLUTTER
-  /// Backend fields:
-  /// education_id, school_name, degree, field_of_study, start_date, end_date, description
+  String get dateRange {
+    String start = DateFormatter.format(startYear);
+    String end = currentlyStudying ? "Present" : DateFormatter.format(endYear);
+    return "$start - $end";
+  }
+
   factory Education.fromJson(Map<String, dynamic> json) {
     return Education(
       id: json['education_id']?.toString(),
@@ -67,28 +88,20 @@ class Education {
       fieldOfStudy: json['field_of_study'] ?? '',
       startYear: json['start_date'] ?? '',
       endYear: json['end_date'],
-      currentlyStudying: json['end_date'] == null, // ✅ auto derived
+      currentlyStudying: json['end_date'] == null,
       description: json['description'] ?? '',
     );
   }
 }
 
-// ===================== SKILL =====================
 class Skill {
   final String id;
   final String name;
 
-  Skill({
-    required this.id,
-    required this.name,
-  });
+  Skill({required this.id, required this.name});
 
   factory Skill.fromJson(dynamic json) {
-    // 🔒 SAFETY: handle String or Map
-    if (json is String) {
-      return Skill(id: json, name: json);
-    }
-
+    if (json is String) return Skill(id: json, name: json);
     return Skill(
       id: json['skill_id']?.toString() ?? '',
       name: json['name'] ?? '',
@@ -96,8 +109,6 @@ class Skill {
   }
 }
 
-
-// ===================== POSTS =====================
 class UserPost {
   final String title;
   final String content;

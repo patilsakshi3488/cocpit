@@ -16,6 +16,8 @@ class ProfileEducationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bodySmall = theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600], fontSize: 13);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -48,10 +50,10 @@ class ProfileEducationSection extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withValues(alpha: 0.8),
+                      color: theme.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.school, color: theme.colorScheme.onPrimary),
+                    child: Icon(Icons.school, color: theme.primaryColor),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -65,7 +67,6 @@ class ProfileEducationSection extends StatelessWidget {
                               child: Text(
                                 edu.school,
                                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (!isReadOnly)
@@ -78,16 +79,16 @@ class ProfileEducationSection extends StatelessWidget {
                           ],
                         ),
                         Text("${edu.degree}, ${edu.fieldOfStudy}", style: theme.textTheme.bodyLarge),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
-                          "${edu.startYear} - ${edu.currentlyStudying ? 'Present' : edu.endYear ?? ''}",
-                          style: theme.textTheme.bodySmall,
+                          edu.dateRange,
+                          style: bodySmall,
                         ),
                         const SizedBox(height: 8),
                         if (edu.description.isNotEmpty)
                           Text(
                             edu.description,
-                            style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+                            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5, color: theme.textTheme.bodyLarge?.color?.withOpacity(0.8)),
                           ),
                       ],
                     ),

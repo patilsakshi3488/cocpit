@@ -39,18 +39,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isLoading = true;
 
   // Profile Data State
-  String name = "Sally Liang";
-  String headline = "Senior Financial Analyst at Johnson & Johnson";
-  String jobTitle = "Senior Financial Analyst";
-  String company = "Johnson & Johnson";
-  String school = "Stanford University";
-  String degree = "MBA in Business Administration";
-  String location = "Berkeley, California, United States";
-  String about = "Passionate product manager with 7+ years of experience building user-centric solutions that drive business growth. Proven track record in agile development, user research, and cross-functional team leadership. Successfully launched 15+ features that improved user engagement by 40% and increased revenue by \$2M annually.";
+  String name = "";
+  String headline = "";
+  String location = "";
+  String about = "";
   
-  String openTo = "Full-time";
-  String availability = "Immediate";
-  String preference = "Hybrid";
+  String openTo = "";
+  String availability = "";
+  String preference = "";
   String profileImage = 'lib/images/profile.jpg';
   String? coverImage;
 
@@ -95,36 +91,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() {
         profile = data;
-
         final user = data['user'];
 
-        // 🔥 HEADER DATA (FROM DB)
         name = user['full_name'] ?? '';
         headline = user['headline'] ?? '';
         location = user['location'] ?? '';
         about = user['about_text'] ?? '';
-
         profileImage = user['avatar_url'] ?? profileImage;
 
-        // 🔥 PROFILE META
-        openTo = user['open_to'] ?? '';
-        availability = user['availability'] ?? '';
-        preference = user['work_preference'] ?? '';
+        openTo = user['open_to'] ?? 'Full-time';
+        availability = user['availability'] ?? 'Immediate';
+        preference = user['work_preference'] ?? 'Hybrid';
 
-        // 🔥 EXPERIENCES
         experiences = (data['experiences'] as List)
             .map((e) => Experience.fromJson(e))
             .toList();
 
-        // 🔥 EDUCATIONS
         educations = (data['educations'] as List)
             .map((e) => Education.fromJson(e))
             .toList();
 
-        // 🔥 SKILLS
-        skills = (data['skills'] as List)
-            .map((s) => s.toString())
-            .toList();
+        // 🔥 Normalize skills to list of names for UI
+        skills = (data['skills'] as List).map((s) {
+          if (s is String) return s;
+          if (s is Map) return (s['name'] ?? '').toString();
+          return s.toString();
+        }).where((s) => s.isNotEmpty).toList();
       });
     } catch (e) {
       debugPrint("❌ Profile load error: $e");
@@ -132,6 +124,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) setState(() => isLoading = false);
     }
   }
+
+  void _showSkillsModal() async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SkillsModal(initialSkills: profile?['skills'] ?? []),
+    );
+
+    if (result == true) {
+      await _loadProfile();
+    }
+  }
+
+  void _showExperienceModal({Experience? experience, int? index}) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ExperienceModal(experience: experience),
+    );
+
+    if (result == true) {
+      await _loadProfile();
+    }
+  }
+
+  void _showEducationModal({Education? education, int? index}) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EducationModal(education: education),
+    );
+
+    if (result == true) {
+      await _loadProfile();
+    }
+  }
+
+  // ... rest of the methods (edit identity, edit profile, logout, etc)
 
   void _handleProfilePhotoActions() {
     PhotoActionHelper.showPhotoActions(
@@ -184,10 +217,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           initialData: {
             'name': name,
             'headline': headline,
-            'jobTitle': jobTitle,
-            'company': company,
-            'school': school,
-            'degree': degree,
             'location': location,
             'about': about,
           },
@@ -195,58 +224,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
 
-    if (result != null && result is Map<String, String>) {
-      setState(() {
-        name = result['name'] ?? name;
-        headline = result['headline'] ?? headline;
-        jobTitle = result['jobTitle'] ?? jobTitle;
-        company = result['company'] ?? company;
-        school = result['school'] ?? school;
-        degree = result['degree'] ?? degree;
-        location = result['location'] ?? location;
-        about = result['about'] ?? about;
-      });
-    }
-  }
-
-  void _showExperienceModal({Experience? experience, int? index}) async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ExperienceModal(experience: experience),
-    );
-
     if (result == true) {
       await _loadProfile();
-    }
-  }
-
-  void _showEducationModal({Education? education, int? index}) async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => EducationModal(education: education),
-    );
-
-    if (result == true) {
-      await _loadProfile();
-    }
-  }
-
-  void _showSkillsModal() async {
-    final result = await showModalBottomSheet<List<String>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => SkillsModal(initialSkills: List.from(skills)),
-    );
-
-    if (result != null) {
-      setState(() {
-        skills = result;
-      });
     }
   }
 
@@ -281,78 +260,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       endDrawer: _buildMenuDrawer(theme),
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 4),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ProfileHeader(
-              user: profile!['user'], // 🔥 BACKEND USER
-              profileImage: profileImage,
-              coverImage: coverImage,
-              onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-              onCameraPressed: _handleProfilePhotoActions,
-              onCoverCameraPressed: _handleCoverPhotoActions,
-              backgroundColor: theme.scaffoldBackgroundColor,
-            ),
-            const SizedBox(height: 80),
-            ProfileInfoIdentity(
-              name: name,
-              headline: headline,
-              location: location,
-              openTo: openTo,
-              availability: availability,
-              preference: preference,
-              onEditProfile: _navigateToEditProfile,
-              onEditIdentity: _showEditIdentityModal,
-            ),
-            _buildDivider(theme),
-            const ProfileStats(),
-            _buildDivider(theme),
-            ProfileLivingResume(
-              isOverviewSelected: isOverviewSelected,
-              onTabChanged: (selected) => setState(() => isOverviewSelected = selected),
-              onUploadResume: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => const UploadResumeModal(),
-                );
-              },
-              onDownloadPDF: () {},
-            ),
-            _buildDivider(theme),
-            ProfileAboutSection(about: about),
-            _buildDivider(theme),
-            ProfileExperienceSection(
-              experiences: experiences,
-              onAddEditExperience: _showExperienceModal,
-            ),
-            _buildDivider(theme),
-            ProfileEducationSection(
-              educations: educations,
-              onAddEditEducation: _showEducationModal,
-            ),
-            _buildDivider(theme),
-            ProfileSkillsSection(
-              skills: skills,
-              onAddSkill: _showSkillsModal,
-            ),
-            _buildDivider(theme),
-            ProfileLatestPostsSection(
-              posts: posts,
-              userName: name,
-              onSeeAllPosts: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AllPostsScreen(posts: posts, userName: name),
+      body: RefreshIndicator(
+        onRefresh: _loadProfile,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProfileHeader(
+                user: profile!['user'],
+                profileImage: profileImage,
+                coverImage: coverImage,
+                onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                onCameraPressed: _handleProfilePhotoActions,
+                onCoverCameraPressed: _handleCoverPhotoActions,
+                backgroundColor: theme.scaffoldBackgroundColor,
+              ),
+              const SizedBox(height: 80),
+              ProfileInfoIdentity(
+                name: name,
+                headline: headline,
+                location: location,
+                openTo: openTo,
+                availability: availability,
+                preference: preference,
+                onEditProfile: _navigateToEditProfile,
+                onEditIdentity: _showEditIdentityModal,
+              ),
+              _buildDivider(theme),
+              const ProfileStats(),
+              _buildDivider(theme),
+              ProfileLivingResume(
+                isOverviewSelected: isOverviewSelected,
+                onTabChanged: (selected) => setState(() => isOverviewSelected = selected),
+                onUploadResume: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const UploadResumeModal(),
+                  );
+                },
+                onDownloadPDF: () {},
+              ),
+              _buildDivider(theme),
+              ProfileAboutSection(about: about),
+              _buildDivider(theme),
+              ProfileExperienceSection(
+                experiences: experiences,
+                onAddEditExperience: _showExperienceModal,
+              ),
+              _buildDivider(theme),
+              ProfileEducationSection(
+                educations: educations,
+                onAddEditEducation: _showEducationModal,
+              ),
+              _buildDivider(theme),
+              ProfileSkillsSection(
+                skills: skills,
+                onAddSkill: _showSkillsModal,
+              ),
+              _buildDivider(theme),
+              ProfileLatestPostsSection(
+                posts: posts,
+                userName: name,
+                onSeeAllPosts: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AllPostsScreen(posts: posts, userName: name),
+                  ),
                 ),
               ),
-            ),
-            _buildDivider(theme),
-            ProfileSuggestedSection(suggestedUsers: suggestedUsers),
-            const SizedBox(height: 80),
-          ],
+              _buildDivider(theme),
+              ProfileSuggestedSection(suggestedUsers: suggestedUsers),
+              const SizedBox(height: 80),
+            ],
+          ),
         ),
       ),
     );

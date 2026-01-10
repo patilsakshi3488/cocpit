@@ -7,6 +7,7 @@ enum SearchType { feed, jobs, events, chat, notifications }
 class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   final SearchType searchType;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onSearchTap;
   final LayerLink? layerLink;
@@ -16,6 +17,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.searchType,
     this.controller,
+    this.focusNode,
     this.onChanged,
     this.onSearchTap,
     this.layerLink,
@@ -60,6 +62,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               onChanged: onChanged,
               onTap: onSearchTap,
               readOnly: onSearchTap != null,

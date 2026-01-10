@@ -267,12 +267,12 @@ class _ExperienceModalState extends State<ExperienceModal> {
       bool success;
       if (widget.experience != null) {
         success = await profileService.updateExperience(
-          id: widget.experience!.id!, // 🔥 Added ! because id is nullable in model but guaranteed here
+          id: widget.experience!.id!,
           title: _titleController.text,
           company: _companyController.text,
           location: _locationController.text,
           startDate: _startDateController.text,
-          endDate: _endDateController.text,
+          endDate: _currentlyWorking ? null : _endDateController.text,
           isCurrent: _currentlyWorking,
           description: _descriptionController.text,
         );
@@ -282,7 +282,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
           company: _companyController.text,
           location: _locationController.text,
           startDate: _startDateController.text,
-          endDate: _endDateController.text,
+          endDate: _currentlyWorking ? null : _endDateController.text,
           currentlyWorking: _currentlyWorking,
           description: _descriptionController.text,
         );
@@ -302,7 +302,7 @@ class _ExperienceModalState extends State<ExperienceModal> {
     if (widget.experience == null) return;
     setState(() => _isLoading = true);
     try {
-      final success = await profileService.deleteExperience(widget.experience!.id!); // 🔥 Added ! because id is nullable in model but guaranteed here
+      final success = await profileService.deleteExperience(widget.experience!.id!);
       if (success && mounted) {
         Navigator.pop(context, true);
       }
@@ -343,12 +343,6 @@ class _ExperienceModalState extends State<ExperienceModal> {
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
-            ),
-            Center(
-              child: Text(
-                isEdit ? "Edit the details of your experience." : "Add a new experience to your profile.",
-                style: theme.textTheme.bodySmall,
-              ),
             ),
             const SizedBox(height: 24),
             _buildLabel("Title"),
@@ -409,7 +403,6 @@ class _ExperienceModalState extends State<ExperienceModal> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colorScheme.error.withOpacity(0.1),
                             foregroundColor: colorScheme.error,
-                            side: BorderSide(color: colorScheme.error.withOpacity(0.5)),
                             minimumSize: const Size(double.infinity, 50),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -418,32 +411,15 @@ class _ExperienceModalState extends State<ExperienceModal> {
                       ),
                     ),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: BorderSide(color: theme.dividerColor),
-                        ),
-                        child: Text("Cancel", style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
+                    child: ElevatedButton(
+                      onPressed: _handleSave,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primaryColor,
+                        foregroundColor: colorScheme.onPrimary,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: ElevatedButton(
-                        onPressed: _handleSave,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
-                          foregroundColor: colorScheme.onPrimary,
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
+                      child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -497,14 +473,20 @@ class _ExperienceModalState extends State<ExperienceModal> {
       readOnly: true,
       onTap: () async {
         if (!enabled) return;
+        DateTime? initial = DateTime.now();
+        if (controller.text.isNotEmpty) {
+          try {
+            initial = DateTime.parse(controller.text);
+          } catch (_) {}
+        }
         DateTime? pickedDate = await showDatePicker(
           context: context,
-          initialDate: DateTime.now(),
+          initialDate: initial,
           firstDate: DateTime(1950),
           lastDate: DateTime(2100),
         );
         if (pickedDate != null) {
-          controller.text = "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
+          controller.text = pickedDate.toIso8601String();
         }
       },
     );
@@ -536,20 +518,12 @@ class _EducationModalState extends State<EducationModal> {
   @override
   void initState() {
     super.initState();
-
-    _schoolController =
-        TextEditingController(text: widget.education?.school ?? "");
-    _degreeController =
-        TextEditingController(text: widget.education?.degree ?? "");
-    _fieldController =
-        TextEditingController(text: widget.education?.fieldOfStudy ?? "");
-    _startDateController =
-        TextEditingController(text: widget.education?.startYear ?? "");
-    _endDateController =
-        TextEditingController(text: widget.education?.endYear ?? "");
-    _descriptionController =
-        TextEditingController(text: widget.education?.description ?? "");
-
+    _schoolController = TextEditingController(text: widget.education?.school ?? "");
+    _degreeController = TextEditingController(text: widget.education?.degree ?? "");
+    _fieldController = TextEditingController(text: widget.education?.fieldOfStudy ?? "");
+    _startDateController = TextEditingController(text: widget.education?.startYear ?? "");
+    _endDateController = TextEditingController(text: widget.education?.endYear ?? "");
+    _descriptionController = TextEditingController(text: widget.education?.description ?? "");
     _currentlyStudying = widget.education?.currentlyStudying ?? false;
   }
 
@@ -564,15 +538,11 @@ class _EducationModalState extends State<EducationModal> {
     super.dispose();
   }
 
-  // ================= SAVE =================
   Future<void> _handleSave() async {
     setState(() => _isLoading = true);
-
     try {
       bool success;
-
       if (widget.education != null) {
-        // ✏️ UPDATE
         success = await profileService.updateEducation(
           id: widget.education!.id!,
           school: _schoolController.text,
@@ -583,7 +553,6 @@ class _EducationModalState extends State<EducationModal> {
           description: _descriptionController.text,
         );
       } else {
-        // ➕ ADD
         success = await profileService.addEducation(
           school: _schoolController.text,
           degree: _degreeController.text,
@@ -593,7 +562,6 @@ class _EducationModalState extends State<EducationModal> {
           description: _descriptionController.text,
         );
       }
-
       if (success && mounted) {
         Navigator.pop(context, true);
       }
@@ -604,15 +572,11 @@ class _EducationModalState extends State<EducationModal> {
     }
   }
 
-  // ================= DELETE =================
   Future<void> _handleDelete() async {
     if (widget.education == null) return;
-
     setState(() => _isLoading = true);
-
     try {
-      final success =
-      await profileService.deleteEducation(widget.education!.id!);
+      final success = await profileService.deleteEducation(widget.education!.id!);
       if (success && mounted) {
         Navigator.pop(context, true);
       }
@@ -630,12 +594,7 @@ class _EducationModalState extends State<EducationModal> {
     final isEdit = widget.education != null;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        16,
-        24,
-        MediaQuery.of(context).viewInsets.bottom + 32,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 32),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -644,15 +603,13 @@ class _EducationModalState extends State<EducationModal> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// HEADER
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const SizedBox(width: 48),
                 Text(
                   isEdit ? "Edit Education" : "Add Education",
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -660,18 +617,13 @@ class _EducationModalState extends State<EducationModal> {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-
             _buildLabel("School"),
             _buildTextField(_schoolController, "Ex: Stanford University"),
-
             _buildLabel("Degree"),
             _buildTextField(_degreeController, "Ex: B.Tech"),
-
             _buildLabel("Field of Study"),
             _buildTextField(_fieldController, "Ex: Computer Science"),
-
             Row(
               children: [
                 Expanded(
@@ -689,16 +641,12 @@ class _EducationModalState extends State<EducationModal> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildLabel("End Date"),
-                      _buildDateField(
-                        _endDateController,
-                        enabled: !_currentlyStudying,
-                      ),
+                      _buildDateField(_endDateController, enabled: !_currentlyStudying),
                     ],
                   ),
                 ),
               ],
             ),
-
             Row(
               children: [
                 Checkbox(
@@ -706,21 +654,16 @@ class _EducationModalState extends State<EducationModal> {
                   onChanged: (v) {
                     setState(() {
                       _currentlyStudying = v ?? false;
-                      if (_currentlyStudying) {
-                        _endDateController.clear();
-                      }
+                      if (_currentlyStudying) _endDateController.clear();
                     });
                   },
                 ),
                 const Text("I'm still studying"),
               ],
             ),
-
             _buildLabel("Description"),
             _buildTextField(_descriptionController, "Description", maxLines: 4),
-
             const SizedBox(height: 32),
-
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else
@@ -731,8 +674,7 @@ class _EducationModalState extends State<EducationModal> {
                       child: ElevatedButton(
                         onPressed: _handleDelete,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          colorScheme.error.withOpacity(0.1),
+                          backgroundColor: colorScheme.error.withOpacity(0.1),
                           foregroundColor: colorScheme.error,
                         ),
                         child: const Text("Delete"),
@@ -753,50 +695,46 @@ class _EducationModalState extends State<EducationModal> {
     );
   }
 
-  // ================= UI HELPERS =================
-
   Widget _buildLabel(String label) => Padding(
     padding: const EdgeInsets.only(top: 16, bottom: 8),
-    child:
-    Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+    child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
   );
 
-  Widget _buildTextField(
-      TextEditingController controller,
-      String hint, {
-        int maxLines = 1,
-      }) {
+  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      decoration: InputDecoration(hintText: hint),
+      decoration: InputDecoration(
+        hintText: hint,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.5),
+      ),
     );
   }
 
-  Widget _buildDateField(
-      TextEditingController controller, {
-        bool enabled = true,
-      }) {
+  Widget _buildDateField(TextEditingController controller, {bool enabled = true}) {
     return TextField(
       controller: controller,
       readOnly: true,
       enabled: enabled,
-      decoration: const InputDecoration(
-        suffixIcon: Icon(Icons.calendar_today),
-      ),
+      decoration: const InputDecoration(suffixIcon: Icon(Icons.calendar_today)),
       onTap: () async {
         if (!enabled) return;
-
+        DateTime? initial = DateTime.now();
+        if (controller.text.isNotEmpty) {
+          try {
+            initial = DateTime.parse(controller.text);
+          } catch (_) {}
+        }
         final picked = await showDatePicker(
           context: context,
-          initialDate: DateTime.now(),
+          initialDate: initial,
           firstDate: DateTime(1950),
           lastDate: DateTime(2100),
         );
-
         if (picked != null) {
-          controller.text =
-          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+          controller.text = picked.toIso8601String();
         }
       },
     );
@@ -804,13 +742,9 @@ class _EducationModalState extends State<EducationModal> {
 }
 
 class SkillsModal extends StatefulWidget {
-  /// Can be List<String> OR List<Map> from backend
   final List<dynamic> initialSkills;
 
-  const SkillsModal({
-    super.key,
-    required this.initialSkills,
-  });
+  const SkillsModal({super.key, required this.initialSkills});
 
   @override
   State<SkillsModal> createState() => _SkillsModalState();
@@ -820,27 +754,17 @@ class _SkillsModalState extends State<SkillsModal> {
   final ProfileService profileService = ProfileService();
   final TextEditingController _skillController = TextEditingController();
 
-  /// Skills already saved in DB
-  final List<Skill> _existingSkills = [];
-
-  /// Skills added locally but not yet saved
-  final List<String> _newSkills = [];
-
+  List<Skill> _workingSkills = [];
+  List<Skill> _originalSkills = [];
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-
-    /// 🔥 NORMALIZE INITIAL SKILLS (THIS FIXES YOUR ERROR)
     for (final item in widget.initialSkills) {
-      if (item is String) {
-        _existingSkills.add(
-          Skill(id: item, name: item), // temp id
-        );
-      } else if (item is Map<String, dynamic>) {
-        _existingSkills.add(Skill.fromJson(item));
-      }
+      final skill = Skill.fromJson(item);
+      _originalSkills.add(skill);
+      _workingSkills.add(skill);
     }
   }
 
@@ -850,63 +774,43 @@ class _SkillsModalState extends State<SkillsModal> {
     super.dispose();
   }
 
-  /// ➕ ADD LOCALLY ONLY
   void _addLocalSkill() {
     final text = _skillController.text.trim();
     if (text.isEmpty) return;
-
-    final exists = _existingSkills
-        .any((s) => s.name.toLowerCase() == text.toLowerCase()) ||
-        _newSkills.any((s) => s.toLowerCase() == text.toLowerCase());
-
-    if (exists) return;
+    if (_workingSkills.any((s) => s.name.toLowerCase() == text.toLowerCase())) return;
 
     setState(() {
-      _newSkills.add(text);
+      _workingSkills.add(Skill(id: 'temp_${DateTime.now().millisecondsSinceEpoch}', name: text));
       _skillController.clear();
     });
   }
 
-  /// ❌ DELETE EXISTING SKILL (BACKEND)
-  Future<void> _deleteExistingSkill(Skill skill) async {
-    try {
-      final success = await profileService.deleteSkill(skill.id);
-      if (success && mounted) {
-        setState(() {
-          _existingSkills.removeWhere((s) => s.id == skill.id);
-        });
-      }
-    } catch (e) {
-      debugPrint("Delete skill error: $e");
-    }
-  }
-
-  /// ❌ DELETE UNSAVED SKILL
-  void _deleteLocalSkill(String skill) {
+  void _removeLocalSkill(Skill skill) {
     setState(() {
-      _newSkills.remove(skill);
+      _workingSkills.removeWhere((s) => s.id == skill.id);
     });
   }
 
-  /// ✅ SAVE CHANGES (ONLY PLACE API IS CALLED)
   Future<void> _saveChanges() async {
-    if (_newSkills.isEmpty) {
-      Navigator.pop(context, true);
-      return;
-    }
-
     setState(() => _isSaving = true);
-
     try {
-      for (final skill in _newSkills) {
-        await profileService.addSkill(skill);
+      // 1. Identify added (temp IDs)
+      final added = _workingSkills.where((s) => s.id.startsWith('temp_')).toList();
+      // 2. Identify removed (not in working list)
+      final removed = _originalSkills.where((orig) => !_workingSkills.any((w) => w.id == orig.id)).toList();
+
+      // Process deletions
+      for (final s in removed) {
+        await profileService.deleteSkill(s.id);
+      }
+      // Process additions
+      for (final s in added) {
+        await profileService.addSkill(s.name);
       }
 
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      debugPrint("Save skills error: $e");
+      debugPrint("Save error: $e");
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -918,12 +822,7 @@ class _SkillsModalState extends State<SkillsModal> {
     final scheme = theme.colorScheme;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        16,
-        24,
-        MediaQuery.of(context).viewInsets.bottom + 32,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 32),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -932,26 +831,15 @@ class _SkillsModalState extends State<SkillsModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// HEADER
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const SizedBox(width: 48),
-              Text(
-                "Manage Skills",
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
+              Text("Manage Skills", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          /// INPUT
           Row(
             children: [
               Expanded(
@@ -961,76 +849,35 @@ class _SkillsModalState extends State<SkillsModal> {
                     hintText: "Add a new skill...",
                     filled: true,
                     fillColor: scheme.surfaceContainer.withOpacity(0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onSubmitted: (_) => _addLocalSkill(),
                 ),
               ),
               const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: _addLocalSkill,
-                child: const Icon(Icons.add),
-              ),
+              ElevatedButton(onPressed: _addLocalSkill, child: const Icon(Icons.add)),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          /// SKILLS
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: [
-              ..._existingSkills.map(
-                    (skill) => _chip(
-                  skill.name,
-                      () => _deleteExistingSkill(skill),
-                  theme,
-                  scheme,
-                ),
-              ),
-              ..._newSkills.map(
-                    (skill) => _chip(
-                  skill,
-                      () => _deleteLocalSkill(skill),
-                  theme,
-                  scheme,
-                ),
-              ),
-            ],
+            children: _workingSkills.map((skill) => _chip(skill, () => _removeLocalSkill(skill), theme, scheme)).toList(),
           ),
-
           const SizedBox(height: 48),
-
-          /// SAVE
           ElevatedButton(
             onPressed: _isSaving ? null : _saveChanges,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 56),
-            ),
-            child: _isSaving
-                ? const CircularProgressIndicator()
-                : const Text(
-              "Save Changes",
-              style:
-              TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
+            child: _isSaving ? const CircularProgressIndicator(color: Colors.white) : const Text("Save Changes", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  Widget _chip(
-      String label,
-      VoidCallback onDelete,
-      ThemeData theme,
-      ColorScheme scheme,
-      ) {
+  Widget _chip(Skill skill, VoidCallback onDelete, ThemeData theme, ColorScheme scheme) {
     return Container(
-      padding: const EdgeInsets.only(left: 16, right: 6),
+      padding: const EdgeInsets.only(left: 16, right: 6, top: 4, bottom: 4),
       decoration: BoxDecoration(
         color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
@@ -1039,16 +886,16 @@ class _SkillsModalState extends State<SkillsModal> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label),
+          Text(skill.name, style: theme.textTheme.bodyMedium),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.close, size: 16),
             onPressed: onDelete,
             padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),
     );
   }
 }
-
-

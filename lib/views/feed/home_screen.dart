@@ -7,7 +7,6 @@ import '../../services/secure_storage.dart';
 import '../profile/profile_screen.dart';
 import '../profile/public_profile_screen.dart';
 
-
 import 'chat_screen.dart';
 import 'notification_screen.dart';
 import '../bottom_navigation.dart';
@@ -24,14 +23,251 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool showTop = false;
-  final TextEditingController _searchController = TextEditingController();
+  late TextEditingController _searchController;
+  late FocusNode _searchFocusNode;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
-  // 🔽 BACKEND SEARCH STATE
+  // 🔽 SEARCH STATE
   List<SearchUser> _searchResults = [];
+  bool _isSearching = false;
+  bool _hasError = false;
+  String _lastQuery = "";
   Timer? _debounce;
 
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
+    _searchFocusNode.addListener(_onSearchFocusChange);
+  }
+
+  void _onSearchFocusChange() {
+    if (_searchFocusNode.hasFocus) {
+      if (_searchController.text.isNotEmpty) {
+        _showSearchOverlay();
+      }
+    } else {
+      // Delay removal to allow tap events on overlay to register
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted && !_searchFocusNode.hasFocus) {
+          _closeOverlay();
+        }
+      });
+    }
+  }
+
+  void _closeOverlay() {
+    if (_overlayEntry != null) {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+    }
+  }
+
+  /// Reset all search-related state to defaults
+  void resetSearchState() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _closeOverlay();
+    setState(() {
+      _searchController.clear();
+      _searchResults = [];
+      _isSearching = false;
+      _hasError = false;
+      _lastQuery = "";
+    });
+  }
+
+  void _onSearchChanged(String query) {
+    _lastQuery = query;
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+        _hasError = false;
+      });
+      _closeOverlay();
+      return;
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      if (query.trim().isEmpty) return;
+
+      if (mounted) {
+        setState(() {
+          _isSearching = true;
+          _hasError = false;
+        });
+        _showSearchOverlay();
+      }
+
+      try {
+        final token = await AppSecureStorage.getAccessToken();
+        if (token == null) return;
+
+        final results = await UserSearchService.searchUsers(
+          query: query,
+          token: token,
+        );
+
+        if (mounted && _lastQuery == query) {
+          setState(() {
+            _searchResults = results;
+            _isSearching = false;
+          });
+          _showSearchOverlay();
+        }
+      } catch (e) {
+        debugPrint("❌ Search API Error: $e");
+        if (mounted) {
+          setState(() {
+            _isSearching = false;
+            _hasError = true;
+          });
+          _showSearchOverlay();
+        }
+      }
+    });
+  }
+
+  void _showSearchOverlay() {
+    // MANDATORY: Remove existing before inserting new
+    _closeOverlay();
+    
+    _overlayEntry = _createSearchOverlayEntry();
+    if (_overlayEntry != null) {
+      Overlay.of(context).insert(_overlayEntry!);
+    }
+  }
+
+  OverlayEntry _createSearchOverlayEntry() {
+    final theme = Theme.of(context);
+    final query = _searchController.text.trim();
+
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        width: MediaQuery.of(context).size.width - 32,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          offset: const Offset(0, 50),
+          showWhenUnlinked: false,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surface,
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 400),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: theme.dividerColor),
+              ),
+              child: _buildOverlayContent(theme, query),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverlayContent(ThemeData theme, String query) {
+    if (_isSearching) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_hasError) {
+      return _messageItem(
+        theme, 
+        "Something went wrong. Try again", 
+        Icons.error_outline,
+        onAction: () => _onSearchChanged(query),
+        actionLabel: "Retry",
+      );
+    }
+
+    if (query.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (_searchResults.isEmpty) {
+      return _messageItem(theme, "User not found for '$query'", Icons.search_off);
+    }
+
+    return _buildResultsList(theme);
+  }
+
+  Widget _buildResultsList(ThemeData theme) {
+    return ListView(
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      children: _searchResults.take(10).map((user) => _userTile(theme, user)).toList(),
+    );
+  }
+
+  Widget _userTile(ThemeData theme, SearchUser user) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
+            ? NetworkImage(user.avatarUrl!)
+            : const AssetImage('lib/images/profile.png') as ImageProvider,
+      ),
+      title: Text(user.fullName, style: theme.textTheme.titleSmall),
+      subtitle: (user.headline ?? user.accountType) != null 
+          ? Text(user.headline ?? user.accountType!, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall) 
+          : null,
+      onTap: () async {
+        // 1️⃣ VALIDATION: Block if ID is invalid
+        if (user.id.isEmpty) {
+          debugPrint("❌ UUID Safety: Invalid User ID blocked.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Profile unavailable"))
+          );
+          return;
+        }
+
+        // 2️⃣ OVERLAY + NAVIGATION SEQUENCE
+        _closeOverlay();
+        FocusScope.of(context).unfocus();
+        
+        // Ensure UI thread clears before navigation
+        await Future.microtask(() {});
+
+        if (mounted) {
+          // 3️⃣ STATE RESET ON RETURN
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: user.id)),
+          ).then((_) {
+            if (mounted) resetSearchState();
+          });
+        }
+      },
+    );
+  }
+
+  Widget _messageItem(ThemeData theme, String text, IconData icon, {VoidCallback? onAction, String? actionLabel}) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: theme.textTheme.bodySmall?.color, size: 32),
+          const SizedBox(height: 12),
+          Text(text, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+          if (onAction != null && actionLabel != null) ...[
+            const SizedBox(height: 12),
+            TextButton(onPressed: onAction, child: Text(actionLabel)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // --- Static UI Data ---
   final List<Map<String, dynamic>> careerMoments = [
     {
       'name': 'You',
@@ -48,11 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'image': 'lib/images/story1.png',
       'profile': 'lib/images/profile2.jpg',
       'stories': [
-        {
-          'image': 'lib/images/story1.png',
-          'text': 'Excited to share a sneak peek of our latest product feature!',
-          'time': '6h ago'
-        },
+        {'image': 'lib/images/story1.png', 'text': 'Sneak peek of our latest feature!', 'time': '6h ago'},
       ],
     },
     {
@@ -61,11 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'image': 'lib/images/story4.png',
       'profile': 'lib/images/profile3.jpg',
       'stories': [
-        {
-          'image': 'lib/images/story4.png',
-          'text': 'Sharing some insights from our latest data analysis project.',
-          'time': '8h ago'
-        },
+        {'image': 'lib/images/story4.png', 'text': 'Insights from our data analysis project.', 'time': '8h ago'},
       ],
     },
   ];
@@ -76,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': 'Sarah Chen',
       'title': 'UX Designer at Design Studio',
       'time': '2h ago',
-      'text': "🎨 Just launched our new design system! Working with an amazing team to create consistent, accessible experiences across all our products.",
+      'text': "🎨 Just launched our new design system!",
       'image': 'lib/images/post1.jpg',
       'profile': 'lib/images/profile3.jpg',
       'likes': 234,
@@ -84,29 +312,13 @@ class _HomeScreenState extends State<HomeScreen> {
       'isPrivate': false,
       'comments_count': 47,
       'shares': 12,
-      'comments': [
-        {
-          'name': 'Alex Johnson',
-          'time': '2h',
-          'text': 'This looks amazing! Can\'t wait to see it in action.',
-          'likes': 15,
-          'isLiked': false,
-        },
-        {
-          'name': 'Maria Garcia',
-          'time': '1h',
-          'text': 'Great work, Maria! The component library is so clean.',
-          'likes': 8,
-          'isLiked': false,
-        }
-      ],
     },
     {
       'id': '2',
       'name': 'Sally Liang',
       'title': 'Senior Financial Analyst',
       'time': '1d ago',
-      'text': "Just finished a deep dive into data analysis trends for 2024. The shift towards AI-driven forecasting is fascinating!",
+      'text': "Deep dive into data analysis trends for 2024.",
       'image': null,
       'profile': 'lib/images/profile4.jpg',
       'likes': 1200,
@@ -114,56 +326,10 @@ class _HomeScreenState extends State<HomeScreen> {
       'isPrivate': false,
       'comments_count': 15,
       'shares': 8,
-      'comments': [],
     },
     {
       'id': 'suggested',
       'type': 'suggested',
-    },
-    {
-      'id': '3',
-      'name': 'Sally Liang',
-      'title': 'Senior Financial Analyst at Johnson & Johnson',
-      'time': '3d ago',
-      'text': "Great session on Product Strategy today. Always learning! 📚",
-      'image': null,
-      'profile': 'lib/images/profile4.jpg',
-      'likes': 850,
-      'isLiked': false,
-      'isPrivate': false,
-      'comments_count': 12,
-      'shares': 3,
-      'comments': [],
-    },
-    {
-      'id': '4',
-      'name': 'Sally Liang',
-      'title': 'Senior Financial Analyst at Johnson & Johnson',
-      'time': '1w ago',
-      'text': "Honored to be recognized as Top Contributor of the Month! 🏆 Thanks to my amazing team.",
-      'image': null,
-      'profile': 'lib/images/profile4.jpg',
-      'likes': 2100,
-      'isLiked': false,
-      'isPrivate': true,
-      'comments_count': 45,
-      'shares': 12,
-      'comments': [],
-    },
-    {
-      'id': '5',
-      'name': 'John Smith',
-      'title': 'Senior Software Engineer at Meta',
-      'time': '5h ago',
-      'text': "Great discussions at today’s architecture review 🚀",
-      'image': 'lib/images/post2.jpg',
-      'profile': 'lib/images/profile2.jpg',
-      'likes': 189,
-      'isLiked': false,
-      'isPrivate': false,
-      'comments_count': 23,
-      'shares': 8,
-      'comments': [],
     },
   ];
 
@@ -182,209 +348,14 @@ class _HomeScreenState extends State<HomeScreen> {
       'profile': 'lib/images/profile2.jpg',
       'isVerified': false,
     },
-    {
-      'name': 'Alex Johnson',
-      'role': 'Product Manager',
-      'followers': '3.5k',
-      'profile': 'lib/images/profile4.jpg',
-      'isVerified': true,
-    },
   ];
-
-  final List<Map<String, dynamic>> shareToUsers = [
-    {'name': 'Michael Chen', 'role': 'Recruiter', 'profile': 'lib/images/profile2.jpg', 'color': Colors.lightBlue},
-    {'name': 'Emily Rodriguez', 'role': 'Hiring Manager', 'profile': 'lib/images/profile4.jpg', 'color': Colors.pinkAccent},
-    {'name': 'David Park', 'role': 'Connection', 'profile': 'lib/images/profile3.jpg', 'color': Colors.deepPurpleAccent},
-    {'name': 'Jessica Williams', 'role': 'Talent Acquisition', 'profile': 'lib/images/profile4.jpg', 'color': Colors.greenAccent},
-    {'name': 'Alex Thompson', 'role': 'Designer', 'profile': 'lib/images/profile2.jpg', 'color': Colors.orangeAccent},
-  ];
-
-  List<Map<String, dynamic>> get _allPeople {
-    return [
-      {'name': 'Sarah Chen', 'role': 'UX Designer at Design Studio', 'profile': 'lib/images/profile3.jpg', 'mutual': '5 mutual connections'},
-      {'name': 'Michael Chen', 'role': 'Recruiter', 'profile': 'lib/images/profile2.jpg', 'mutual': '12 mutual connections'},
-      {'name': 'Emily Rodriguez', 'role': 'Hiring Manager', 'profile': 'lib/images/profile4.jpg', 'mutual': '3 mutual connections'},
-      {'name': 'Mike Torres', 'role': 'Product Manager', 'profile': 'lib/images/profile2.jpg', 'mutual': '8 mutual connections'},
-      {'name': 'James Wilson', 'role': 'Software Engineer', 'profile': 'lib/images/profile3.jpg', 'mutual': '2 mutual connections'},
-    ];
-  }
-
-  void _onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-    _debounce = Timer(const Duration(milliseconds: 300), () async {
-      if (query.trim().isEmpty) {
-        _overlayEntry?.remove();
-        _overlayEntry = null;
-        return;
-      }
-
-      try {
-        final token = await AppSecureStorage.getAccessToken();
-        if (token == null) return;
-
-        final results = await UserSearchService.searchUsers(
-          query: query,
-          token: token,
-        );
-
-        _searchResults = results;
-        _showBackendOverlay();
-      } catch (e) {
-        debugPrint("Search error: $e");
-      }
-    });
-  }
-
-  void _showBackendOverlay() {
-    _overlayEntry?.remove();
-
-    if (_searchResults.isEmpty) return;
-
-    _overlayEntry = _createBackendOverlayEntry();
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  OverlayEntry _createBackendOverlayEntry() {
-    final theme = Theme.of(context);
-
-    return OverlayEntry(
-      builder: (context) => Positioned(
-        width: 300,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          offset: const Offset(0, 50),
-          showWhenUnlinked: false,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(16),
-            color: theme.colorScheme.surface,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: _searchResults.take(5).map((user) {
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: user.avatarUrl != null
-                        ? NetworkImage(user.avatarUrl!)
-                        : const AssetImage('lib/images/profile.png')
-                            as ImageProvider,
-                  ),
-                  title: Text(user.fullName),
-                  subtitle: Text(
-                    user.headline ?? user.accountType ?? "",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onTap: () {
-                    _searchController.clear();
-                    _overlayEntry?.remove();
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            PublicProfileScreen(userId: user.id),
-                      ),
-                    );
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _updateOverlay(String query) {
-    if (_overlayEntry != null) {
-      _overlayEntry!.remove();
-      _overlayEntry = null;
-    }
-
-    if (query.isEmpty) return;
-
-    final results = _allPeople.where((p) => p['name'].toString().toLowerCase().contains(query.toLowerCase())).toList();
-
-    if (results.isEmpty) return;
-
-    _overlayEntry = _createOverlayEntry(results);
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  OverlayEntry _createOverlayEntry(List<Map<String, dynamic>> results) {
-    final theme = Theme.of(context);
-    return OverlayEntry(
-      builder: (context) => Positioned(
-        width: 300,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, 50),
-          child: Material(
-            elevation: 8,
-            color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      "PEOPLE",
-                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2),
-                    ),
-                  ),
-                  ...results.take(3).map((person) => InkWell(
-                    onTap: () {
-                      _searchController.clear();
-                      _updateOverlay("");
-                      FocusScope.of(context).unfocus();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundImage: AssetImage(person['profile']),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(person['name'], style: theme.textTheme.titleSmall),
-                                Text(person['role'], style: theme.textTheme.bodySmall),
-                                Text(person['mutual'], style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   void dispose() {
     _debounce?.cancel();
     _overlayEntry?.remove();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -396,6 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppTopBar(
         searchType: SearchType.feed,
         controller: _searchController,
+        focusNode: _searchFocusNode,
         onChanged: _onSearchChanged,
         layerLink: _layerLink,
       ),
@@ -432,8 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _careerMomentsBar(ThemeData theme) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double itemWidth = screenWidth > 600 ? 150 : 120;
+    double itemWidth = MediaQuery.of(context).size.width > 600 ? 150 : 120;
 
     return SizedBox(
       height: 180,
@@ -521,8 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _suggestedForYouSection(ThemeData theme) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth > 600 ? 250 : 180;
+    double cardWidth = MediaQuery.of(context).size.width > 600 ? 250 : 180;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,26 +520,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Column(
                   children: [
-                    Stack(
-                      children: [
-                        CircleAvatar(radius: 40, backgroundImage: AssetImage(user['profile'])),
-                        if (user['isVerified'])
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: CircleAvatar(
-                              radius: 10,
-                              backgroundColor: theme.primaryColor,
-                              child: Icon(Icons.check, color: theme.colorScheme.onPrimary, size: 12),
-                            ),
-                          ),
-                      ],
-                    ),
+                    CircleAvatar(radius: 40, backgroundImage: AssetImage(user['profile'])),
                     const SizedBox(height: 12),
                     Text(user['name'], style: theme.textTheme.titleSmall, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                     Text(user['role'], style: theme.textTheme.bodySmall, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text("${user['followers']} followers", style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
@@ -577,10 +531,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.primaryColor,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                         child: const Text("Follow", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
@@ -611,21 +562,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(post['name'], style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                            if (post['isPrivate']) ...[
-                              const SizedBox(width: 4),
-                              Icon(Icons.lock, size: 12, color: theme.textTheme.bodySmall?.color),
-                            ],
-                          ],
-                        ),
-                        Text(post['title'], style: theme.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(post['name'], style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        Text(post['title'], style: theme.textTheme.bodySmall),
                         Text(post['time'], style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)),
                       ],
                     ),
                   ),
-                  IconButton(onPressed: () {}, icon: const Icon(Icons.more_horiz)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -643,8 +585,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   _postAction(Icons.favorite_border, post['likes'].toString(), theme),
                   const SizedBox(width: 20),
                   _postAction(Icons.chat_bubble_outline, post['comments_count'].toString(), theme),
-                  const SizedBox(width: 20),
-                  _postAction(Icons.share_outlined, post['shares'].toString(), theme),
                   const Spacer(),
                   Icon(Icons.bookmark_border, color: theme.iconTheme.color?.withValues(alpha: 0.6)),
                 ],
