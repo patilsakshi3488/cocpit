@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'services/theme_service.dart';
 import 'services/auth_service.dart';
@@ -13,8 +14,9 @@ import 'views/profile/profile_screen.dart';
 import 'views/feed/notification_screen.dart';
 import 'views/login/signin_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 

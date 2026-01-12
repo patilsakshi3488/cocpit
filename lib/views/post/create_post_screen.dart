@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../services/post_service.dart';
+import '../../services/secure_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -20,7 +23,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final pollOpt1 = TextEditingController();
   final pollOpt2 = TextEditingController();
 
-  // These were hardcoded, now using theme-based fallbacks to satisfy the "no rename" rule while adhering to the "theme feature" goal.
   Color get bg => Theme.of(context).scaffoldBackgroundColor;
   Color get card => Theme.of(context).colorScheme.surfaceContainer;
   Color get accent => Theme.of(context).primaryColor;
@@ -233,7 +235,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.file(imageFile!, width: double.infinity, fit: BoxFit.cover),
+            child: kIsWeb
+                ? Image.network(
+                    imageFile!.path, // Flutter Web → blob URL
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    imageFile!, // Android / iOS
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
           ),
           Positioned(
             top: 12,
@@ -360,9 +372,47 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           _actionIcon(Icons.emoji_emotions_outlined, "Emoji", () {}),
           const Spacer(),
           ElevatedButton(
-            onPressed: canPost ? () {
-              // Navigation back after success placeholder
-              Navigator.pop(context);
+            onPressed: canPost ? () async {
+              try {
+                // Show loading
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(child: CircularProgressIndicator()),
+                );
+
+                final token = await AppSecureStorage.getAccessToken();
+                if (token == null) throw Exception("Session expired");
+
+                await PostService.createPost(
+                  token: token,
+                  content: postCtrl.text,
+                  category: "Professional",
+                  postType: imageFile != null
+                      ? "image"
+                      : videoFile != null
+                          ? "video"
+                          : showPoll
+                              ? "poll"
+                              : "text",
+                  imageFile: imageFile,
+                  videoFile: videoFile,
+                  pollOptions: showPoll ? [pollOpt1.text, pollOpt2.text] : null,
+                  pollDuration: showPoll ? "1 week" : null,
+                );
+
+                if (mounted) {
+                  Navigator.pop(context); // Close loading
+                  Navigator.pop(context); // Close screen
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context); // Close loading
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString())),
+                  );
+                }
+              }
             } : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: accent,

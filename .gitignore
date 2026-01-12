@@ -8,6 +8,12 @@
 .buildlog/
 .history
 .svn/
+
+# Environment files
+.env
+.env.*
+
+
 migrate_working_dir/
 
 # IntelliJ related
